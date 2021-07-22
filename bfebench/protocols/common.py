@@ -15,22 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
-
-from . import environments
-from . import protocols
-from .utils.loader import get_named_subclasses
-
-
-def main() -> int:
-    environments_available = get_named_subclasses(environments, environments.Environment)
-    protocols_available = get_named_subclasses(protocols, protocols.Protocol)
-
-    argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument('environment', choices=environments_available.keys())
-    argument_parser.add_argument('protocol', choices=protocols_available.keys())
-    args = argument_parser.parse_args()
-
-    print('Hello world!')
-
-    return 0
+class Protocol(object):
+    pass

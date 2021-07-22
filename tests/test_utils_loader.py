@@ -15,22 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
+from unittest import TestCase
 
-from . import environments
-from . import protocols
-from .utils.loader import get_named_subclasses
+from bfebench import environments
+from bfebench import protocols
+from bfebench.utils.loader import get_named_subclasses
 
 
-def main() -> int:
-    environments_available = get_named_subclasses(environments, environments.Environment)
-    protocols_available = get_named_subclasses(protocols, protocols.Protocol)
+class GetNamedSubclassesTest(TestCase):
+    def test_get_named_subclasses_environments(self) -> None:
+        environments_available = get_named_subclasses(environments, environments.Environment)
+        self.assertEqual(environments_available, {
+            'Py-EVM': environments.PyEVMEnvironment
+        })
 
-    argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument('environment', choices=environments_available.keys())
-    argument_parser.add_argument('protocol', choices=protocols_available.keys())
-    args = argument_parser.parse_args()
-
-    print('Hello world!')
-
-    return 0
+    def test_get_named_subclasses_protocols(self) -> None:
+        protocols_available = get_named_subclasses(protocols, protocols.Protocol)
+        self.assertEqual(protocols_available, {
+            'FairSwap': protocols.FairSwap
+        })

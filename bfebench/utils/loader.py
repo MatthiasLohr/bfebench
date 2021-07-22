@@ -15,22 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
+import importlib
+import inspect
+import pkgutil
+from types import ModuleType
+from typing import Any, Dict, Type
 
-from . import environments
-from . import protocols
-from .utils.loader import get_named_subclasses
 
+def get_named_subclasses(package: ModuleType, base_cls: Type[Any]) -> Dict[str, Type[Any]]:
+    subclasses = {}
 
-def main() -> int:
-    environments_available = get_named_subclasses(environments, environments.Environment)
-    protocols_available = get_named_subclasses(protocols, protocols.Protocol)
+    for module_info in pkgutil.iter_modules(package.__path__):  # type: ignore
+        module = importlib.import_module('%s.%s' % (package.__name__, module_info.name))
+        for cls_name, cls in inspect.getmembers(module, inspect.isclass):
+            if issubclass(cls, base_cls) and hasattr(cls, 'name') and getattr(cls, 'name') is not None:
+                subclasses.update({getattr(cls, 'name'): cls})
 
-    argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument('environment', choices=environments_available.keys())
-    argument_parser.add_argument('protocol', choices=protocols_available.keys())
-    args = argument_parser.parse_args()
-
-    print('Hello world!')
-
-    return 0
+    return subclasses
