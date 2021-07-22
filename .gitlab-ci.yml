@@ -7,7 +7,7 @@ unittests:
   script:
     - coverage run -m unittest discover tests
     - coverage xml
-    - coverage report
+    - coverage report --precision=2
   parallel:
     matrix:
       - python_version: ["3.7", "3.8", "3.9"]

@@ -4,5 +4,6 @@
 /build/
 /dist/
 /venv/
+/.coverage
 __pycache__/
 *.pyc
