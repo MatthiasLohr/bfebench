@@ -18,6 +18,7 @@
 from typing import Dict, Type
 
 from bfebench.component import Component
+from bfebench.environments import Environment
 from bfebench.strategy import BuyerStrategy, SellerStrategy
 
 
@@ -27,3 +28,15 @@ class Protocol(Component):
 
     def get_buyer_strategies(self) -> Dict[str, Type[BuyerStrategy]]:
         raise NotImplementedError()
+
+    def set_up_simulation(self, environment: Environment) -> None:
+        pass
+
+    def set_up_iteration(self, environment: Environment) -> None:
+        pass
+
+    def tear_down_iteration(self, environment: Environment) -> None:
+        pass
+
+    def tear_down_simulation(self, environment: Environment) -> None:
+        pass

@@ -17,15 +17,17 @@
 
 from .data_providers import DataProvider
 from .environments import Environment
+from .party import PartySimulationProcess
 from .protocols import Protocol
 from .simulation_result import SimulationResult
 
 
 class Simulation(object):
-    def __init__(self, environment: Environment, protocol: Protocol, data_provider: DataProvider):
+    def __init__(self, environment: Environment, protocol: Protocol, data_provider: DataProvider, iterations: int):
         self._environment = environment
         self._protocol = protocol
         self._data_provider = data_provider
+        self._iterations = iterations
 
     @property
     def environment(self) -> Environment:
@@ -41,6 +43,20 @@ class Simulation(object):
 
     def run(self) -> SimulationResult:
         self.environment.set_up()
-        # TODO implement
+        self.protocol.set_up_simulation(self.environment)
+        for iteration in range(self._iterations):
+            self.protocol.set_up_iteration(self.environment)
+
+            seller_process = PartySimulationProcess(self.environment)
+            buyer_process = PartySimulationProcess(self.environment)
+
+            seller_process.start()
+            buyer_process.start()
+
+            seller_process.join()
+            buyer_process.join()
+
+            self.protocol.tear_down_iteration(self.environment)
+        self.protocol.tear_down_simulation(self.environment)
         self.environment.tear_down()
         return SimulationResult()  # TODO add result data

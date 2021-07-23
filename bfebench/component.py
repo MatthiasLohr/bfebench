@@ -26,7 +26,11 @@ from .errors import BaseError
 
 class Component(object):
     def __init__(self, **kwargs: Any) -> None:
-        pass
+        if len(kwargs) > 0:
+            raise BaseError('Component %s does not accept the following parameters: %s' % (
+                self.__class__.__name__,
+                ', '.join(kwargs.keys())
+            ))
 
 
 T = TypeVar('T', bound=Component)

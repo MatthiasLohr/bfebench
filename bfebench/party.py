@@ -15,31 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Optional
+from multiprocessing import Process
+from time import sleep
 
-from web3 import Web3
-from web3.providers.base import BaseProvider
-
-from bfebench.component import Component
+from .environments import Environment
 
 
-class Environment(Component):
-    def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
-
-        self._web3: Optional[Web3] = None
-
-    def set_up(self) -> None:
-        pass
-
-    def tear_down(self) -> None:
-        pass
-
-    def _get_web3_provider(self) -> BaseProvider:
-        raise NotImplementedError()
+class PartySimulationProcess(Process):
+    def __init__(self, environment: Environment):
+        super().__init__()
+        self._environment = environment
 
     @property
-    def web3(self) -> Web3:
-        if self._web3 is None:
-            self._web3 = Web3(self._get_web3_provider())
-        return self._web3
+    def environment(self) -> Environment:
+        return self._environment
+
+    def run(self) -> None:
+        while True:
+            print(self._environment.web3.eth.get_balance('0x77A2E07b4A3d54dB31f5E88475C3864A19163668'))
+            sleep(1)

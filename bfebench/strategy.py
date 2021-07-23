@@ -15,8 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .environments import Environment
+
+
 class Strategy(object):
-    pass
+    def __init__(self, environment: Environment):
+        self._environment = environment
+
+    @property
+    def environment(self) -> Environment:
+        return self._environment
 
 
 class SellerStrategy(Strategy):

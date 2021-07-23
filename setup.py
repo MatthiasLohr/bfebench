@@ -33,7 +33,9 @@ setup(
     author_email='mail@mlohr.com',
     url='https://gitlab.com/MatthiasLohr/bfebench',
     license='Apache License 2.0',
-    install_requires=[],
+    install_requires=[
+        'web3==5.21.0'
+    ],
     python_requires='>=3.7.*, <4',
     packages=find_packages(exclude=['tests', 'tests.*']),
     package_data={

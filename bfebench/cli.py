@@ -46,6 +46,7 @@ def main() -> int:
     argument_parser.add_argument('-d', '--data-provider-parameter', nargs=2, action='append', metavar=('KEY', 'VALUE'),
                                  dest='data_provider_parameters', default=[],
                                  help='pass additional parameters to the data provider')
+    argument_parser.add_argument('-n', '--iterations', help='Number of exchanges to be simulated', type=int, default=1)
 
     args = argument_parser.parse_args()
 
@@ -64,7 +65,12 @@ def main() -> int:
         args.data_provider_parameters
     )
 
-    simulation = Simulation(environment, protocol, data_provider)
+    simulation = Simulation(
+        environment=environment,
+        protocol=protocol,
+        data_provider=data_provider,
+        iterations=args.iterations
+    )
     simulation_result = simulation.run()
 
     print(simulation_result)
