@@ -19,10 +19,20 @@ import importlib
 import inspect
 import pkgutil
 from types import ModuleType
-from typing import Any, Dict, Type
+from typing import Any, Dict, List, Optional, Type, TypeVar
+
+from .errors import BaseError
 
 
-def get_named_subclasses(package: ModuleType, base_cls: Type[Any]) -> Dict[str, Type[Any]]:
+class Component(object):
+    def __init__(self, **kwargs: Any) -> None:
+        pass
+
+
+T = TypeVar('T', bound=Component)
+
+
+def get_component_subclasses(package: ModuleType, base_cls: Type[T]) -> Dict[str, Type[T]]:
     subclasses = {}
 
     for module_info in pkgutil.iter_modules(package.__path__):  # type: ignore
@@ -32,3 +42,15 @@ def get_named_subclasses(package: ModuleType, base_cls: Type[Any]) -> Dict[str, 
                 subclasses.update({getattr(cls, 'name'): cls})
 
     return subclasses
+
+
+def init_component_subclass(cls: Optional[Type[T]], parameters: List[List[str]]) -> T:
+    if cls is None:
+        raise BaseError('Class not found!')
+
+    args: Dict[str, str] = {}
+
+    for key, value in parameters:
+        args.update({key: value})
+
+    return cls(**args)

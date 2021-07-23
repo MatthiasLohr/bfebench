@@ -15,8 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any
+
 from .common import Environment
 
 
 class PyEVMEnvironment(Environment):
     name = 'Py-EVM'
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        # TODO implement
