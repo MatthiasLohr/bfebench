@@ -18,6 +18,7 @@ The following features are planned to be supported:
     * [ ] Max Benefit
     * [ ] Max Damage
   * Aspect Analysis
+    * [ ] Overall performance (exchanges/second)
     * [ ] Blockchain performance (tx/s, limiting factor?)
     * [ ] CPU performance of parties
     * [ ] cost (tx fees, CPU/RAM required)

@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import data_providers
-from . import environments
-from . import protocols
+from .common import DataProvider
+from .file_data_provider import FileDataProvider
+from .random_data_provider import RandomDataProvider
 
 
 __all__ = [
-    'data_providers',
-    'environments',
-    'protocols'
+    'DataProvider',
+    'FileDataProvider',
+    'RandomDataProvider'
 ]

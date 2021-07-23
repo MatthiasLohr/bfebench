@@ -17,6 +17,7 @@
 
 from unittest import TestCase
 
+from bfebench import data_providers
 from bfebench import environments
 from bfebench import protocols
 from bfebench.utils.loader import get_named_subclasses
@@ -33,4 +34,11 @@ class GetNamedSubclassesTest(TestCase):
         protocols_available = get_named_subclasses(protocols, protocols.Protocol)
         self.assertEqual(protocols_available, {
             'FairSwap': protocols.FairSwap
+        })
+
+    def test_get_named_subclasses_data_providers(self) -> None:
+        data_providers_available = get_named_subclasses(data_providers, data_providers.DataProvider)
+        self.assertEqual(data_providers_available, {
+            'FileDataProvider': data_providers.FileDataProvider,
+            'RandomDataProvider': data_providers.RandomDataProvider
         })

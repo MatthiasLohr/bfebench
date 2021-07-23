@@ -15,13 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import data_providers
-from . import environments
-from . import protocols
+from .common import DataProvider
 
 
-__all__ = [
-    'data_providers',
-    'environments',
-    'protocols'
-]
+class RandomDataProvider(DataProvider):
+    name = 'RandomDataProvider'
+
+    def __init__(self) -> None:
+        pass

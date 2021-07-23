@@ -17,18 +17,22 @@
 
 import argparse
 
+from . import data_providers
 from . import environments
 from . import protocols
 from .utils.loader import get_named_subclasses
 
 
 def main() -> int:
+    data_providers_available = get_named_subclasses(data_providers, data_providers.DataProvider)
     environments_available = get_named_subclasses(environments, environments.Environment)
     protocols_available = get_named_subclasses(protocols, protocols.Protocol)
 
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument('environment', choices=environments_available.keys())
     argument_parser.add_argument('protocol', choices=protocols_available.keys())
+    argument_parser.add_argument('--data-provider', choices=data_providers_available.keys(),
+                                 default=data_providers.RandomDataProvider.name)
     args = argument_parser.parse_args()
 
     print('Hello world!')

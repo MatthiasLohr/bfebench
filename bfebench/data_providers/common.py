@@ -15,13 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import data_providers
-from . import environments
-from . import protocols
-
-
-__all__ = [
-    'data_providers',
-    'environments',
-    'protocols'
-]
+class DataProvider(object):
+    pass
