@@ -16,11 +16,18 @@
 # limitations under the License.
 
 import argparse
+import logging
+from typing import Optional, Type, TypeVar
 
 from . import data_providers
 from . import environments
 from . import protocols
+from .errors import BaseError
+from .simulation import Simulation
 from .utils.loader import get_named_subclasses
+
+
+logger = logging.getLogger()
 
 
 def main() -> int:
@@ -35,6 +42,28 @@ def main() -> int:
                                  default=data_providers.RandomDataProvider.name)
     args = argument_parser.parse_args()
 
-    print('Hello world!')
+    environment = initialize_component_class(
+        environments_available.get(args.environment)
+    )
 
+    protocol = initialize_component_class(
+        protocols_available.get(args.protocol)
+    )
+
+    data_provider = initialize_component_class(
+        data_providers_available.get(args.data_provider)
+    )
+
+    simulation = Simulation(environment, protocol, data_provider)
+    simulation_result = simulation.run()
+    print(simulation_result)
     return 0
+
+
+T = TypeVar('T')
+
+
+def initialize_component_class(cls: Optional[Type[T]]) -> T:
+    if cls is None:
+        raise BaseError('Class not found!')
+    return cls()
