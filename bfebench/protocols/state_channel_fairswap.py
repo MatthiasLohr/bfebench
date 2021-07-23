@@ -16,12 +16,7 @@
 # limitations under the License.
 
 from .common import Protocol
-from .fairswap import Fairswap
-from .state_channel_fairswap import StateChannelFairswap
 
 
-__all__ = [
-    'Fairswap',
-    'Protocol',
-    'StateChannelFairswap'
-]
+class StateChannelFairswap(Protocol):
+    name = 'StateChannelFairswap'

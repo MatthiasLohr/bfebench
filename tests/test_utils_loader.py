@@ -33,7 +33,8 @@ class GetNamedSubclassesTest(TestCase):
     def test_get_named_subclasses_protocols(self) -> None:
         protocols_available = get_named_subclasses(protocols, protocols.Protocol)
         self.assertEqual(protocols_available, {
-            'FairSwap': protocols.FairSwap
+            'Fairswap': protocols.Fairswap,
+            'StateChannelFairswap': protocols.StateChannelFairswap
         })
 
     def test_get_named_subclasses_data_providers(self) -> None:

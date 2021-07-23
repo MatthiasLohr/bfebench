@@ -18,5 +18,5 @@
 from .common import Protocol
 
 
-class FairSwap(Protocol):
-    name = 'FairSwap'
+class Fairswap(Protocol):
+    name = 'Fairswap'
