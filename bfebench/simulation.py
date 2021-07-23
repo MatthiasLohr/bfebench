@@ -27,5 +27,20 @@ class Simulation(object):
         self._protocol = protocol
         self._data_provider = data_provider
 
+    @property
+    def environment(self) -> Environment:
+        return self._environment
+
+    @property
+    def protocol(self) -> Protocol:
+        return self._protocol
+
+    @property
+    def data_provider(self) -> DataProvider:
+        return self._data_provider
+
     def run(self) -> SimulationResult:
-        pass  # TODO implement
+        self.environment.set_up()
+        # TODO implement
+        self.environment.tear_down()
+        return SimulationResult()  # TODO add result data

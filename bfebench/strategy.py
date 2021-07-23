@@ -15,12 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bfebench.component import Component
+class Strategy(object):
+    pass
 
 
-class Environment(Component):
-    def set_up(self) -> None:
-        raise NotImplementedError()
+class SellerStrategy(Strategy):
+    pass
 
-    def tear_down(self) -> None:
-        raise NotImplementedError()
+
+class BuyerStrategy(Strategy):
+    pass

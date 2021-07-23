@@ -15,9 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
+from typing import Any, Dict, Type
 
+from bfebench.strategy import BuyerStrategy, SellerStrategy
 from .common import Protocol
+from .fairswap_strategies import HonestBuyer, HonestSeller
 
 
 class Fairswap(Protocol):
@@ -26,3 +28,13 @@ class Fairswap(Protocol):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         # TODO implement
+
+    def get_seller_strategies(self) -> Dict[str, Type[SellerStrategy]]:
+        return {
+            'Honest': HonestSeller
+        }
+
+    def get_buyer_strategies(self) -> Dict[str, Type[BuyerStrategy]]:
+        return {
+            'Honest': HonestBuyer
+        }

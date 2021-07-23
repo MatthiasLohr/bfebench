@@ -15,12 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bfebench.component import Component
+from bfebench.strategy import BuyerStrategy, SellerStrategy
 
 
-class Environment(Component):
-    def set_up(self) -> None:
-        raise NotImplementedError()
+class HonestSeller(SellerStrategy):
+    pass
 
-    def tear_down(self) -> None:
-        raise NotImplementedError()
+
+class HonestBuyer(BuyerStrategy):
+    pass

@@ -15,8 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Dict, Type
+
 from bfebench.component import Component
+from bfebench.strategy import BuyerStrategy, SellerStrategy
 
 
 class Protocol(Component):
-    pass
+    def get_seller_strategies(self) -> Dict[str, Type[SellerStrategy]]:
+        raise NotImplementedError()
+
+    def get_buyer_strategies(self) -> Dict[str, Type[BuyerStrategy]]:
+        raise NotImplementedError()
