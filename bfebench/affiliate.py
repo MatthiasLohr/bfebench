@@ -17,17 +17,16 @@
 
 from multiprocessing import Process
 from time import sleep
-from typing import Any, Dict, Generator
 
 from .environments import Environment
 from .strategy import Strategy
 
 
 class AffiliateProcess(Process):
-    def __init__(self, environment: Environment, strategy: Strategy,
-                 direct_messages: Generator[Dict[str, Any], None, None]):
+    def __init__(self, environment: Environment, strategy: Strategy):
         super().__init__()
         self._environment = environment
+        self._strategy = strategy
 
     @property
     def environment(self) -> Environment:

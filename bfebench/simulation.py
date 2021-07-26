@@ -66,8 +66,8 @@ class Simulation(object):
             seller_strategy_instance = self._seller_strategy()
             buyer_strategy_instance = self._buyer_strategy()
 
-            seller_process = AffiliateProcess(self.environment, seller_strategy_instance, None)
-            buyer_process = AffiliateProcess(self.environment, buyer_strategy_instance, None)
+            seller_process = AffiliateProcess(self.environment, seller_strategy_instance)
+            buyer_process = AffiliateProcess(self.environment, buyer_strategy_instance)
 
             logger.debug('starting exchange...')
 
