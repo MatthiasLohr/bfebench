@@ -44,7 +44,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'bfebench=bfebench.cli:main'
+            'bfebench=bfebench.cli.main:main'
         ]
     },
     classifiers=[

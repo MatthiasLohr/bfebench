@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+import sys
+
 from . import data_providers
 from . import environments
 from . import protocols
@@ -25,3 +28,11 @@ __all__ = [
     'environments',
     'protocols'
 ]
+
+
+# https://docs.python.org/3/library/logging.html#logrecord-attributes
+log = logging.getLogger(__name__)
+log_handler = logging.StreamHandler(sys.stderr)
+log_formatter = logging.Formatter(fmt='%(asctime)s %(name)-44s [%(levelname)s] %(message)s')
+log_handler.setFormatter(log_formatter)
+log.addHandler(log_handler)

@@ -82,6 +82,12 @@ class JsonObjectSocketStreamTest(TestCase):
         result = [x for x in json_object_socket_stream(self._get_reader_socket())]
         self.assertEqual(result, [{}, {}])
 
+    def test_double_empty_next(self) -> None:
+        self._send_to_socket(b'{}{}')
+        generator = json_object_socket_stream(self._get_reader_socket())
+        self.assertEqual({}, next(generator))
+        self.assertEqual({}, next(generator))
+
 
 class JsonObjectSocketStreamTestSenderThread(Thread):
     def __init__(self, sender_socket: socket.socket, data: bytes) -> None:

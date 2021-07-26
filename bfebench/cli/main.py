@@ -15,15 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 
-class Strategy(object):
-    def __init__(self) -> None:
-        pass
-
-
-class SellerStrategy(Strategy):
-    pass
+from bfebench.errors import BaseError
+from .command import SubCommandManager
+from .list_strategies import ListStrategiesCommand
+from .run import RunCommand
 
 
-class BuyerStrategy(Strategy):
-    pass
+logger = logging.getLogger(__name__)
+
+
+def main() -> int:
+    scm = SubCommandManager()
+
+    scm.add_sub_command('run', RunCommand)
+    scm.add_sub_command('list-strategies', ListStrategiesCommand)
+
+    try:
+        return scm.run()
+    except BaseError as e:
+        logger.error('A general error occurred.', exc_info=e)
+        return 1

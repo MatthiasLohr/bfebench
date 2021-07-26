@@ -23,10 +23,12 @@ from bfebench.strategy import BuyerStrategy, SellerStrategy
 
 
 class Protocol(Component):
-    def get_seller_strategies(self) -> Dict[str, Type[SellerStrategy]]:
+    @staticmethod
+    def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
         raise NotImplementedError()
 
-    def get_buyer_strategies(self) -> Dict[str, Type[BuyerStrategy]]:
+    @staticmethod
+    def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
         raise NotImplementedError()
 
     def set_up_simulation(self, environment: Environment) -> None:
