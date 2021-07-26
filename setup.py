@@ -34,6 +34,7 @@ setup(
     url='https://gitlab.com/MatthiasLohr/bfebench',
     license='Apache License 2.0',
     install_requires=[
+        'eth-tester==0.5.0b4',
         'web3==5.21.0'
     ],
     python_requires='>=3.7.*, <4',
