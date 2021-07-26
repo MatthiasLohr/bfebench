@@ -28,6 +28,7 @@ from eth_tester import EthereumTester, PyEVMBackend  # type: ignore
 from web3 import IPCProvider, EthereumTesterProvider
 from web3.providers.base import BaseProvider
 
+from bfebench.utils.jsonstream import json_object_socket_stream
 from .common import Environment
 
 
@@ -87,22 +88,8 @@ class PyEVMConnectionListener(Thread):
         self._eth_provider = EthereumTesterProvider(self._eth_tester)
 
     def run(self) -> None:
-
-        active = True
-        request_data = b''
-
-        while active:
-            buffer = self._connection.recv(4096)
-            if buffer == b'':
-                active = False
-
-            request_data += buffer
-            try:
-                json_object = json.loads(request_data)
-                self._handle_request(json_object)
-                request_data = b''
-            except json.JSONDecodeError:
-                pass
+        for request_object in json_object_socket_stream(self._connection):
+            self._handle_request(request_object)
 
     def _handle_request(self, request_object: Dict[str, Any]) -> None:
         result = self._eth_provider.make_request(
