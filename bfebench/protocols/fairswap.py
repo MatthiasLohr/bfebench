@@ -29,12 +29,14 @@ class Fairswap(Protocol):
         super().__init__(**kwargs)
         # TODO implement
 
-    def get_seller_strategies(self) -> Dict[str, Type[SellerStrategy]]:
+    @staticmethod
+    def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
         return {
             'Honest': HonestSeller
         }
 
-    def get_buyer_strategies(self) -> Dict[str, Type[BuyerStrategy]]:
+    @staticmethod
+    def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
         return {
             'Honest': HonestBuyer
         }
