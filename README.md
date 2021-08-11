@@ -4,10 +4,6 @@
 
 The following features are planned to be supported:
 
-  * Environments
-    * [ ] Ethereum -- public Ethereum networks (e.g. Mainnet, Ropsten, Goerli)
-    * [ ] [Quorum](https://consensys.net/quorum/) -- permissioned Ethereum network
-    * [ ] [Py-EVM](https://github.com/ethereum/py-evm) -- for testing purposes
   * Protocol Implementations
     * [ ] FairSwap
     * [ ] FairSwap with State Channels
@@ -23,6 +19,7 @@ The following features are planned to be supported:
     * [ ] CPU performance of parties
     * [ ] cost (tx fees, CPU/RAM required)
     * [ ] Cost Fairness
+
 
 ## Evaluation
 
