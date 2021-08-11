@@ -17,29 +17,14 @@
 
 from unittest import TestCase
 
-from bfebench import data_providers
-from bfebench import environments
 from bfebench import protocols
 from bfebench.component import get_component_subclasses
 
 
 class GetNamedSubclassesTest(TestCase):
-    def test_get_named_subclasses_environments(self) -> None:
-        environments_available = get_component_subclasses(environments, environments.Environment)
-        self.assertEqual(environments_available, {
-            'Py-EVM': environments.PyEVMEnvironment
-        })
-
     def test_get_named_subclasses_protocols(self) -> None:
         protocols_available = get_component_subclasses(protocols, protocols.Protocol)
         self.assertEqual(protocols_available, {
             'Fairswap': protocols.Fairswap,
             'StateChannelFairswap': protocols.StateChannelFairswap
-        })
-
-    def test_get_named_subclasses_data_providers(self) -> None:
-        data_providers_available = get_component_subclasses(data_providers, data_providers.DataProvider)
-        self.assertEqual(data_providers_available, {
-            'FileDataProvider': data_providers.FileDataProvider,
-            'RandomDataProvider': data_providers.RandomDataProvider
         })

@@ -18,8 +18,9 @@
 import logging
 from argparse import ArgumentParser, Namespace
 
-from bfebench import data_providers, environments, protocols
+from bfebench import protocols
 from bfebench.component import get_component_subclasses, init_component_subclass
+from bfebench.environments_configuration import EnvironmentsConfiguration
 from bfebench.simulation import Simulation
 from .command import SubCommand
 
@@ -31,40 +32,32 @@ class RunCommand(SubCommand):
     def __init__(self, argument_parser: ArgumentParser) -> None:
         super().__init__(argument_parser)
 
-        self._data_providers_available = get_component_subclasses(data_providers, data_providers.DataProvider)
-        self._environments_available = get_component_subclasses(environments, environments.Environment)
         self._protocols_available = get_component_subclasses(protocols, protocols.Protocol)
 
-        argument_parser.add_argument('environment', choices=self._environments_available.keys())
-        argument_parser.add_argument('-e', '--environment-parameter', nargs=2, action='append',
-                                     metavar=('KEY', 'VALUE'),
-                                     dest='environment_parameters', default=[],
-                                     help='pass additional parameters to the environment')
         argument_parser.add_argument('protocol', choices=self._protocols_available.keys())
         argument_parser.add_argument('-p', '--protocol-parameter', nargs=2, action='append', dest='protocol_parameters',
                                      default=[], metavar=('KEY', 'VALUE'),
                                      help='pass additional parameters to the protocol')
         argument_parser.add_argument('seller_strategy')
         argument_parser.add_argument('buyer_strategy')
-        argument_parser.add_argument('--data-provider', choices=self._data_providers_available.keys(),
-                                     default=data_providers.RandomDataProvider.name)
-        argument_parser.add_argument('-d', '--data-provider-parameter', nargs=2, action='append',
-                                     metavar=('KEY', 'VALUE'),
-                                     dest='data_provider_parameters', default=[],
-                                     help='pass additional parameters to the data provider')
         argument_parser.add_argument('-n', '--iterations', help='Number of exchanges to be simulated', type=int,
                                      default=1)
+        argument_parser.add_argument('-e', '--environments-configuration', default='.environments.yaml')
 
     def __call__(self, args: Namespace) -> int:
-        environment = init_component_subclass(
-            self._environments_available.get(args.environment),
-            args.environment_parameters
-        )
-
         protocol = init_component_subclass(
             self._protocols_available.get(args.protocol),
             args.protocol_parameters
         )
+
+        try:
+            environments_configuration = EnvironmentsConfiguration(args.environments_configuration)
+        except FileNotFoundError as e:
+            logger.error('Could not load environments configuration: %s: %s' % (
+                e.strerror,
+                e.filename
+            ))
+            return 1
 
         seller_strategy = protocol.get_seller_strategies().get(args.seller_strategy)
         if seller_strategy is None:
@@ -78,21 +71,16 @@ class RunCommand(SubCommand):
             logger.error('use `bfebench list-strategies %s` to list available strategies' % args.protocol)
             return 1
 
-        data_provider = init_component_subclass(
-            self._data_providers_available.get(args.data_provider),
-            args.data_provider_parameters
-        )
-
         simulation = Simulation(
-            environment=environment,
+            environments_configuration=environments_configuration,
             protocol=protocol,
-            data_provider=data_provider,
             seller_strategy=seller_strategy,
             buyer_strategy=buyer_strategy,
-            iterations=args.iterations,
+            iterations=args.iterations
         )
+
         simulation_result = simulation.run()
 
-        print(simulation_result)
+        print(simulation_result)  # TODO properly handle and print simulation result
 
         return 0

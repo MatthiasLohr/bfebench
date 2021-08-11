@@ -18,14 +18,12 @@
 import logging
 import sys
 
-from . import data_providers
-from . import environments
+from . import errors
 from . import protocols
 
 
 __all__ = [
-    'data_providers',
-    'environments',
+    'errors',
     'protocols'
 ]
 

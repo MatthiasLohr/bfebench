@@ -18,7 +18,7 @@
 from typing import Dict, Type
 
 from bfebench.component import Component
-from bfebench.environments import Environment
+from bfebench.environment import Environment
 from bfebench.strategy import BuyerStrategy, SellerStrategy
 
 

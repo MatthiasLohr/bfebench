@@ -15,31 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Optional
+from unittest import TestCase
 
-from web3 import Web3
-from web3.providers.base import BaseProvider
-
-from bfebench.component import Component
+from bfebench.environments_configuration import EnvironmentsConfiguration
 
 
-class Environment(Component):
-    def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
-
-        self._web3: Optional[Web3] = None
-
-    def set_up(self) -> None:
-        pass
-
-    def tear_down(self) -> None:
-        pass
-
-    def _get_web3_provider(self) -> BaseProvider:
-        raise NotImplementedError()
-
-    @property
-    def web3(self) -> Web3:
-        if self._web3 is None:
-            self._web3 = Web3(self._get_web3_provider())
-        return self._web3
+class EnvironmentsConfigurationTest(TestCase):
+    def test_init(self) -> None:
+        self.assertRaises(FileNotFoundError, EnvironmentsConfiguration, '/some/imaginary/file.yaml')

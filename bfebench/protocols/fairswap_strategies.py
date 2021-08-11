@@ -18,9 +18,9 @@
 from bfebench.strategy import BuyerStrategy, SellerStrategy
 
 
-class HonestSeller(SellerStrategy):
+class FaithfulSeller(SellerStrategy):
     pass
 
 
-class HonestBuyer(BuyerStrategy):
+class FaithfulBuyer(BuyerStrategy):
     pass

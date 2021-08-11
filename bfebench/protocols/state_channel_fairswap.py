@@ -15,8 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
+from typing import Any, Dict, Type
+
+from bfebench.strategy import BuyerStrategy, SellerStrategy
 from .common import Protocol
+from .state_channel_fairswap_strategies import FaithfulBuyer, FaithfulSeller
 
 
 class StateChannelFairswap(Protocol):
@@ -25,3 +28,15 @@ class StateChannelFairswap(Protocol):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         # TODO implement
+
+    @staticmethod
+    def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
+        return {
+            'Faithful': FaithfulSeller
+        }
+
+    @staticmethod
+    def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
+        return {
+            'Faithful': FaithfulBuyer
+        }

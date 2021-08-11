@@ -15,15 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .environment import Environment
+
 
 class Strategy(object):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, environment: Environment) -> None:
+        self._environment = environment
+
+    @property
+    def environment(self) -> Environment:
+        return self._environment
+
+    def run(self) -> None:
+        raise NotImplementedError()
 
 
 class SellerStrategy(Strategy):
-    pass
+    def run(self) -> None:
+        raise NotImplementedError()
 
 
 class BuyerStrategy(Strategy):
-    pass
+    def run(self) -> None:
+        raise NotImplementedError()

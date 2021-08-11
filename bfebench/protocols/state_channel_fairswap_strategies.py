@@ -15,8 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bfebench.component import Component
+from bfebench.strategy import BuyerStrategy, SellerStrategy
 
 
-class DataProvider(Component):
-    pass
+class FaithfulSeller(SellerStrategy):
+    pass  # TODO implement
+
+
+class FaithfulBuyer(BuyerStrategy):
+    pass  # TODO implement

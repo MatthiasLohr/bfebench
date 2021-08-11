@@ -17,3 +17,11 @@
 
 class BaseError(BaseException):
     pass
+
+
+class ConfigurationError(BaseError):
+    pass
+
+
+class EnvironmentsConfigurationError(BaseError):
+    pass

@@ -18,9 +18,7 @@
 import logging
 from typing import Type
 
-from .affiliate import AffiliateProcess
-from .data_providers import DataProvider
-from .environments import Environment
+from .environments_configuration import EnvironmentsConfiguration
 from .protocols import Protocol
 from .simulation_result import SimulationResult
 from .strategy import BuyerStrategy, SellerStrategy
@@ -30,59 +28,37 @@ logger = logging.getLogger(__name__)
 
 
 class Simulation(object):
-    def __init__(self, environment: Environment, protocol: Protocol, data_provider: DataProvider,
-                 seller_strategy: Type[SellerStrategy], buyer_strategy: Type[BuyerStrategy], iterations: int) -> None:
-        self._environment = environment
+    def __init__(self, environments_configuration: EnvironmentsConfiguration, protocol: Protocol,
+                 seller_strategy: Type[SellerStrategy], buyer_strategy: Type[BuyerStrategy],
+                 iterations: int = 1) -> None:
+        self._environments = environments_configuration
         self._protocol = protocol
-        self._data_provider = data_provider
         self._seller_strategy = seller_strategy
         self._buyer_strategy = buyer_strategy
         self._iterations = iterations
 
     @property
-    def environment(self) -> Environment:
-        return self._environment
+    def environments(self) -> EnvironmentsConfiguration:
+        return self._environments
 
     @property
     def protocol(self) -> Protocol:
         return self._protocol
 
-    @property
-    def data_provider(self) -> DataProvider:
-        return self._data_provider
-
     def run(self) -> SimulationResult:
         logger.debug('starting simulation')
-        logger.debug('setting up environment...')
-        self.environment.set_up()
         logger.debug('setting up protocol simulation...')
-        self.protocol.set_up_simulation(self.environment)
+        self.protocol.set_up_simulation(self.environments.operator_environment)
         for iteration in range(self._iterations):
             logger.debug('setting up protocol iteration...')
-            self.protocol.set_up_iteration(self.environment)
+            self.protocol.set_up_iteration(self.environments.operator_environment)
 
-            logger.debug('setting up affiliates...')
-
-            seller_strategy_instance = self._seller_strategy()
-            buyer_strategy_instance = self._buyer_strategy()
-
-            seller_process = AffiliateProcess(self.environment, seller_strategy_instance)
-            buyer_process = AffiliateProcess(self.environment, buyer_strategy_instance)
-
-            logger.debug('starting exchange...')
-
-            seller_process.start()
-            buyer_process.start()
-
-            seller_process.join()
-            buyer_process.join()
+            # TODO implement
 
             logger.debug('tearing down protocol iteration')
-            self.protocol.tear_down_iteration(self.environment)
+            self.protocol.tear_down_iteration(self.environments.operator_environment)
 
         logger.debug('tearing down protocol simulation')
-        self.protocol.tear_down_simulation(self.environment)
-        logger.debug('tearing down environment...')
-        self.environment.tear_down()
+        self.protocol.tear_down_simulation(self.environments.operator_environment)
         logger.debug('simulation has finished')
         return SimulationResult()  # TODO add result data

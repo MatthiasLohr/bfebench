@@ -19,7 +19,7 @@ from typing import Any, Dict, Type
 
 from bfebench.strategy import BuyerStrategy, SellerStrategy
 from .common import Protocol
-from .fairswap_strategies import HonestBuyer, HonestSeller
+from .fairswap_strategies import FaithfulBuyer, FaithfulSeller
 
 
 class Fairswap(Protocol):
@@ -32,11 +32,11 @@ class Fairswap(Protocol):
     @staticmethod
     def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
         return {
-            'Honest': HonestSeller
+            'Faithful': FaithfulSeller
         }
 
     @staticmethod
     def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
         return {
-            'Honest': HonestBuyer
+            'Faithful': FaithfulBuyer
         }
