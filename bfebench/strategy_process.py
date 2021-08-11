@@ -15,14 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bfebench.strategy import BuyerStrategy, SellerStrategy
+import logging
+from multiprocessing import Process
+from resource import getrusage, RUSAGE_SELF
+
+from .strategy import Strategy
 
 
-class FaithfulSeller(SellerStrategy):
+logger = logging.getLogger(__name__)
+
+
+class StrategyProcess(Process):
+    def __init__(self, strategy: Strategy) -> None:
+        super().__init__()
+        self._strategy = strategy
+
     def run(self) -> None:
-        pass  # TODO implement
+        resources_start = getrusage(RUSAGE_SELF)
+        self._strategy.run()
+        resources_end = getrusage(RUSAGE_SELF)
 
-
-class FaithfulBuyer(BuyerStrategy):
-    def run(self) -> None:
-        pass  # TODO implement
+        # TODO proper resource counting
+        print(resources_start)
+        print(resources_end)

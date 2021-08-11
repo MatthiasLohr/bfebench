@@ -22,6 +22,7 @@ from .environments_configuration import EnvironmentsConfiguration
 from .protocols import Protocol
 from .simulation_result import SimulationResult
 from .strategy import BuyerStrategy, SellerStrategy
+from .strategy_process import StrategyProcess
 
 
 logger = logging.getLogger(__name__)
@@ -33,8 +34,8 @@ class Simulation(object):
                  iterations: int = 1) -> None:
         self._environments = environments_configuration
         self._protocol = protocol
-        self._seller_strategy = seller_strategy
-        self._buyer_strategy = buyer_strategy
+        self._seller_strategy_type = seller_strategy
+        self._buyer_strategy_type = buyer_strategy
         self._iterations = iterations
 
     @property
@@ -53,7 +54,18 @@ class Simulation(object):
             logger.debug('setting up protocol iteration...')
             self.protocol.set_up_iteration(self.environments.operator_environment)
 
-            # TODO implement
+            logger.debug('setting up strategies...')
+            seller_strategy = self._seller_strategy_type(self.environments.seller_environment)
+            seller_process = StrategyProcess(seller_strategy)
+            buyer_strategy = self._buyer_strategy_type(self.environments.buyer_environment)
+            buyer_process = StrategyProcess(buyer_strategy)
+
+            logger.debug('launching exchange protocol')
+            seller_process.start()
+            buyer_process.start()
+
+            seller_process.join()
+            buyer_process.join()
 
             logger.debug('tearing down protocol iteration')
             self.protocol.tear_down_iteration(self.environments.operator_environment)
