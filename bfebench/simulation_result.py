@@ -44,6 +44,8 @@ class SimulationResult(object):
         return tabulate(
             tabular_data=[[
                 str(i + 1),
+                r.seller_resource_usage.realtime,
+                r.buyer_resource_usage.realtime,
                 r.seller_resource_usage.utime,
                 r.buyer_resource_usage.utime,
                 r.seller_resource_usage.stime,
@@ -58,6 +60,8 @@ class SimulationResult(object):
                 0  # TODO add buyer blockchain transaction fees
             ] for i, r in enumerate(self._iteration_results)] + [[
                 'Avg',
+                sum([r.seller_resource_usage.realtime for r in self._iteration_results]) / iterations,
+                sum([r.buyer_resource_usage.realtime for r in self._iteration_results]) / iterations,
                 sum([r.seller_resource_usage.utime for r in self._iteration_results]) / iterations,
                 sum([r.buyer_resource_usage.utime for r in self._iteration_results]) / iterations,
                 sum([r.seller_resource_usage.stime for r in self._iteration_results]) / iterations,
@@ -73,6 +77,8 @@ class SimulationResult(object):
             ]],
             headers=[
                 '#',  # iteration / 'Avg'
+                'S real',  # seller real time
+                'B real',  # buyer real time
                 'S user',  # seller user CPU time
                 'B user',  # buyer user CPU time
                 'S sys',  # seller system CPU time
