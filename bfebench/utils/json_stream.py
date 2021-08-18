@@ -112,7 +112,8 @@ class JsonObjectUnixDomainSocketServerStream(JsonObjectSocketStream):
 
     def __del__(self) -> None:
         self.close()
-        Path(self.socket_path).unlink(missing_ok=True)
+        if Path(self.socket_path).exists():
+            Path(self.socket_path).unlink()
 
 
 class JsonObjectUnixDomainSocketClientStream(JsonObjectSocketStream):
