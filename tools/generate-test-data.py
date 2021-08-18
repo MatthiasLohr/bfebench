@@ -22,7 +22,7 @@ argument_parser.add_argument('--random-seed', default=4, type=int,
 args = argument_parser.parse_args()
 
 
-def random_bytes(n: int):
+def random_bytes(n: int) -> bytes:
     return (b''.join(map(struct.Struct("!Q").pack, map(random.getrandbits, itertools.repeat(64, (n + 7) // 8)))))[:n]
 
 
