@@ -21,7 +21,11 @@ from tempfile import mkdtemp
 from time import sleep
 from unittest import TestCase
 
-from bfebench.utils.json_stream import JsonObjectUnixDomainSocketClientStream, JsonObjectUnixDomainSocketServerStream
+from bfebench.utils.json_stream import (
+    JsonObjectUnixDomainSocketClientStream,
+    JsonObjectUnixDomainSocketServerStream,
+    JsonObjectSocketStreamForwarder
+)
 
 
 class JsonObjectSocketStream(TestCase):
@@ -45,10 +49,45 @@ class JsonObjectSocketStream(TestCase):
 
         # send message from client to server
         client.send_object({'foo': 'bar'})
-        received = server.receive_object()
+        received, bytes_count = server.receive_object()
         self.assertEqual(received, {'foo': 'bar'})
+        self.assertEqual(bytes_count, 14)
 
         # send message from server to client
         server.send_object({'reply': 42})
-        received = client.receive_object()
+        received, bytes_count = client.receive_object()
         self.assertEqual(received, {'reply': 42})
+        self.assertEqual(bytes_count, 13)
+
+
+class JsonObjectSocketStreamForwarderTest(TestCase):
+    def setUp(self) -> None:
+        self._tmp_dir = mkdtemp(prefix='bfebench-test-')
+
+    def tearDown(self) -> None:
+        rmtree(self._tmp_dir, ignore_errors=True)
+
+    @property
+    def tmp_dir(self) -> str:
+        return self._tmp_dir
+
+    def test_forward(self) -> None:
+        s1 = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, 's1'))
+        s2 = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, 's2'))
+
+        forwarder = JsonObjectSocketStreamForwarder(s1, s2)
+        forwarder.start()
+
+        sleep(0.1)
+
+        c1 = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, 's1'))
+        c2 = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, 's2'))
+
+        sleep(0.1)
+        c1.send_object({'foo': 'bar'})
+        received, bytes_count = c2.receive_object()
+        self.assertEqual(received, {'foo': 'bar'})
+        self.assertEqual(bytes_count, 14)
+
+        self.assertEqual(forwarder.objects_1to2, 1)
+        self.assertEqual(forwarder.bytes_1to2, 14)
