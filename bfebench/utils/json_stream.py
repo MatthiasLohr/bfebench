@@ -79,6 +79,9 @@ class JsonObjectSocketStream(object):
     def send_object(self, obj: Any) -> int:
         return self.socket_connection.send(json.dumps(obj).encode('utf-8'))
 
+    def close(self) -> None:
+        self.socket_connection.close()
+
 
 class JsonObjectUnixDomainSocketServerStream(JsonObjectSocketStream):
     def __init__(self, socket_path: str, chunk_size: int = 4096) -> None:
@@ -102,11 +105,14 @@ class JsonObjectUnixDomainSocketServerStream(JsonObjectSocketStream):
             raise IOError('no active connection')
         return self._socket_connection
 
-    def __del__(self) -> None:
+    def close(self) -> None:
         if self._socket_connection is not None:
             self._socket_connection.close()
         self._socket.close()
-        Path(self.socket_path).unlink()
+
+    def __del__(self) -> None:
+        self.close()
+        Path(self.socket_path).unlink(missing_ok=True)
 
 
 class JsonObjectUnixDomainSocketClientStream(JsonObjectSocketStream):
@@ -120,8 +126,11 @@ class JsonObjectUnixDomainSocketClientStream(JsonObjectSocketStream):
     def socket_connection(self) -> socket.socket:
         return self._socket
 
-    def __del__(self) -> None:
+    def close(self) -> None:
         self._socket.close()
+
+    def __del__(self) -> None:
+        self.close()
 
 
 class JsonObjectSocketStreamForwarder(object):

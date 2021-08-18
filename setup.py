@@ -35,6 +35,7 @@ setup(
     license='Apache License 2.0',
     install_requires=[
         'PyYAML==5.4.1',
+        'tabulate==0.8.9',
         'web3==5.21.0'
     ],
     python_requires='>=3.7.*, <4',

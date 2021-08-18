@@ -23,7 +23,7 @@ from typing import Type
 
 from .environments_configuration import EnvironmentsConfiguration
 from .protocols import Protocol
-from .simulation_result import SimulationResult
+from .simulation_result import IterationResult, SimulationResult
 from .strategy import BuyerStrategy, SellerStrategy
 from .strategy_process import StrategyProcess
 from .utils.json_stream import (
@@ -59,6 +59,7 @@ class Simulation(object):
     def run(self) -> SimulationResult:
         logger.debug('starting simulation')
         logger.debug('setting up protocol simulation...')
+        simulation_result = SimulationResult()
         self.protocol.set_up_simulation(
             self.environments.operator_environment,
             self.environments.seller_environment,
@@ -73,21 +74,26 @@ class Simulation(object):
             )
 
             logger.debug('setting up strategies...')
-            seller_p2p_stream = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, 'seller.ipc'))
-            buyer_p2p_stream = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, 'buyer.ipc'))
+            seller_socket = 'seller-%d.ipc' % iteration
+            buyer_socket = 'buyer-%d.ipc' % iteration
+            seller_p2p_server = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, seller_socket))
+            buyer_p2p_server = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, buyer_socket))
 
-            p2p_forwarder = JsonObjectSocketStreamForwarder(seller_p2p_stream, buyer_p2p_stream)
+            p2p_forwarder = JsonObjectSocketStreamForwarder(seller_p2p_server, buyer_p2p_server)
             p2p_forwarder.start()
+
+            seller_p2p_client = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, seller_socket))
+            buyer_p2p_client = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, buyer_socket))
 
             seller_process = StrategyProcess(
                 strategy=self._seller_strategy_type(),
                 environment=self.environments.seller_environment,
-                p2p_stream=JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, 'seller.ipc'))
+                p2p_stream=seller_p2p_client
             )
             buyer_process = StrategyProcess(
                 strategy=self._buyer_strategy_type(),
                 environment=self.environments.buyer_environment,
-                p2p_stream=JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, 'buyer.ipc'))
+                p2p_stream=buyer_p2p_client
             )
 
             logger.debug('launching exchange protocol')
@@ -104,15 +110,38 @@ class Simulation(object):
                 self.environments.buyer_environment
             )
 
+            simulation_result.add_iteration_result(IterationResult(
+                seller_resource_usage=seller_process.get_resource_usage(),
+                buyer_resource_usage=buyer_process.get_resource_usage(),
+                seller2buyer_direct_bytes=p2p_forwarder.bytes_1to2,
+                buyer2seller_direct_bytes=p2p_forwarder.bytes_2to1,
+                seller2buyer_direct_objects=p2p_forwarder.objects_1to2,
+                buyer2seller_direct_objects=p2p_forwarder.objects_2to1
+            ))
+
+            seller_p2p_client.close()
+            buyer_p2p_client.close()
+            del seller_p2p_client
+            del buyer_p2p_client
+
+            del seller_process
+            del buyer_process
+
+            seller_p2p_server.close()
+            buyer_p2p_server.close()
+
+            del seller_p2p_server
+            del buyer_p2p_server
+
         logger.debug('tearing down protocol simulation')
         self.protocol.tear_down_simulation(
             self.environments.operator_environment,
             self.environments.seller_environment,
             self.environments.buyer_environment
         )
-        logger.debug('simulation has finished')
         rmtree(self._tmp_dir)
-        return SimulationResult()  # TODO add result data
+        logger.debug('simulation has finished')
+        return simulation_result
 
     def __del__(self) -> None:
         rmtree(self._tmp_dir, ignore_errors=True)
