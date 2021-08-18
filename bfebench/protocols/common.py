@@ -31,14 +31,18 @@ class Protocol(Component):
     def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
         raise NotImplementedError()
 
-    def set_up_simulation(self, environment: Environment) -> None:
+    def set_up_simulation(self, operator_environment: Environment, seller_environment: Environment,
+                          buyer_environment: Environment) -> None:
         pass
 
-    def set_up_iteration(self, environment: Environment) -> None:
+    def set_up_iteration(self, operator_environment: Environment, seller_environment: Environment,
+                         buyer_environment: Environment) -> None:
         pass
 
-    def tear_down_iteration(self, environment: Environment) -> None:
+    def tear_down_iteration(self, operator_environment: Environment, seller_environment: Environment,
+                            buyer_environment: Environment) -> None:
         pass
 
-    def tear_down_simulation(self, environment: Environment) -> None:
+    def tear_down_simulation(self, operator_environment: Environment, seller_environment: Environment,
+                             buyer_environment: Environment) -> None:
         pass

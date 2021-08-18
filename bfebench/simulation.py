@@ -16,6 +16,9 @@
 # limitations under the License.
 
 import logging
+import os
+from shutil import rmtree
+from tempfile import mkdtemp
 from typing import Type
 
 from .environments_configuration import EnvironmentsConfiguration
@@ -23,6 +26,11 @@ from .protocols import Protocol
 from .simulation_result import SimulationResult
 from .strategy import BuyerStrategy, SellerStrategy
 from .strategy_process import StrategyProcess
+from .utils.json_stream import (
+    JsonObjectUnixDomainSocketClientStream,
+    JsonObjectUnixDomainSocketServerStream,
+    JsonObjectSocketStreamForwarder
+)
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +46,8 @@ class Simulation(object):
         self._buyer_strategy_type = buyer_strategy
         self._iterations = iterations
 
+        self._tmp_dir = mkdtemp(prefix='bfebench-')
+
     @property
     def environments(self) -> EnvironmentsConfiguration:
         return self._environments
@@ -49,16 +59,36 @@ class Simulation(object):
     def run(self) -> SimulationResult:
         logger.debug('starting simulation')
         logger.debug('setting up protocol simulation...')
-        self.protocol.set_up_simulation(self.environments.operator_environment)
+        self.protocol.set_up_simulation(
+            self.environments.operator_environment,
+            self.environments.seller_environment,
+            self.environments.buyer_environment
+        )
         for iteration in range(self._iterations):
             logger.debug('setting up protocol iteration...')
-            self.protocol.set_up_iteration(self.environments.operator_environment)
+            self.protocol.set_up_iteration(
+                self.environments.operator_environment,
+                self.environments.seller_environment,
+                self.environments.buyer_environment
+            )
 
             logger.debug('setting up strategies...')
-            seller_strategy = self._seller_strategy_type(self.environments.seller_environment)
-            seller_process = StrategyProcess(seller_strategy)
-            buyer_strategy = self._buyer_strategy_type(self.environments.buyer_environment)
-            buyer_process = StrategyProcess(buyer_strategy)
+            seller_p2p_stream = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, 'seller.ipc'))
+            buyer_p2p_stream = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, 'buyer.ipc'))
+
+            p2p_forwarder = JsonObjectSocketStreamForwarder(seller_p2p_stream, buyer_p2p_stream)
+            p2p_forwarder.start()
+
+            seller_process = StrategyProcess(
+                strategy=self._seller_strategy_type(),
+                environment=self.environments.seller_environment,
+                p2p_stream=JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, 'seller.ipc'))
+            )
+            buyer_process = StrategyProcess(
+                strategy=self._buyer_strategy_type(),
+                environment=self.environments.buyer_environment,
+                p2p_stream=JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, 'buyer.ipc'))
+            )
 
             logger.debug('launching exchange protocol')
             seller_process.start()
@@ -68,9 +98,21 @@ class Simulation(object):
             buyer_process.join()
 
             logger.debug('tearing down protocol iteration')
-            self.protocol.tear_down_iteration(self.environments.operator_environment)
+            self.protocol.tear_down_iteration(
+                self.environments.operator_environment,
+                self.environments.seller_environment,
+                self.environments.buyer_environment
+            )
 
         logger.debug('tearing down protocol simulation')
-        self.protocol.tear_down_simulation(self.environments.operator_environment)
+        self.protocol.tear_down_simulation(
+            self.environments.operator_environment,
+            self.environments.seller_environment,
+            self.environments.buyer_environment
+        )
         logger.debug('simulation has finished')
+        rmtree(self._tmp_dir)
         return SimulationResult()  # TODO add result data
+
+    def __del__(self) -> None:
+        rmtree(self._tmp_dir, ignore_errors=True)

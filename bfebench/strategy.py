@@ -16,25 +16,22 @@
 # limitations under the License.
 
 from .environment import Environment
+from .utils.json_stream import JsonObjectSocketStream
 
 
 class Strategy(object):
-    def __init__(self, environment: Environment) -> None:
-        self._environment = environment
+    def __init__(self) -> None:
+        pass
 
-    @property
-    def environment(self) -> Environment:
-        return self._environment
-
-    def run(self) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
         raise NotImplementedError()
 
 
 class SellerStrategy(Strategy):
-    def run(self) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
         raise NotImplementedError()
 
 
 class BuyerStrategy(Strategy):
-    def run(self) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
         raise NotImplementedError()

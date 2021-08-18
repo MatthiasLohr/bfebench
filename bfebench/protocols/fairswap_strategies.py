@@ -15,14 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from bfebench.environment import Environment
 from bfebench.strategy import BuyerStrategy, SellerStrategy
+from bfebench.utils.json_stream import JsonObjectSocketStream
 
 
 class FaithfulSeller(SellerStrategy):
-    def run(self) -> None:
-        pass  # TODO implement
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
+        p2p_stream.send_object({'message': 'hello world'})
 
 
 class FaithfulBuyer(BuyerStrategy):
-    def run(self) -> None:
-        pass  # TODO implement
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
+        message, bytes_count = p2p_stream.receive_object()
+        print(message)
