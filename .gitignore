@@ -6,5 +6,6 @@
 /venv/
 /.coverage
 __pycache__/
+*.bin
 *.pyc
 .environments.yaml
