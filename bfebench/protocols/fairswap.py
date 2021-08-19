@@ -17,9 +17,14 @@
 
 from typing import Any, Dict, Type
 
+from Crypto.Hash import keccak
+
 from bfebench.strategy import BuyerStrategy, SellerStrategy
 from .common import Protocol
 from .fairswap_strategies import FaithfulBuyer, FaithfulSeller
+
+
+B032 = b'\x00' * 32
 
 
 class Fairswap(Protocol):
@@ -40,3 +45,7 @@ class Fairswap(Protocol):
         return {
             'Faithful': FaithfulBuyer
         }
+
+    @staticmethod
+    def keccak(data: bytes) -> bytes:
+        return keccak.new(data=data, digest_bytes=32).digest()

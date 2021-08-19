@@ -32,3 +32,19 @@ class KeccakEquivalenceTest(TestCase):
             self.assertEqual(eth_keccak(data), Web3.solidityKeccak(['bytes32'], [data]))
             self.assertEqual(eth_keccak(data), Web3.solidityKeccak(['bytes32[1]'], [[data]]))
             self.assertEqual(eth_keccak(data), Web3.keccak(data))
+
+    def test_keccak_compound_equivalence(self) -> None:
+        for i in range(10):
+            data1 = generate_bytes(32)
+            data2 = generate_bytes(32)
+            data3 = generate_bytes(32)
+
+            self.assertEqual(
+                keccak.new(data=data1+data2, digest_bytes=32).digest(),
+                Web3.solidityKeccak(['bytes32', 'bytes32'], [data1, data2])
+            )
+
+            self.assertEqual(
+                keccak.new(data=data1 + data2 + data3, digest_bytes=32).digest(),
+                Web3.solidityKeccak(['bytes32', 'bytes32', 'bytes32'], [data1, data2, data3])
+            )
