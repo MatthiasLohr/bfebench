@@ -81,6 +81,6 @@ class RunCommand(SubCommand):
 
         simulation_result = simulation.run()
 
-        print(simulation_result)  # TODO properly handle and print simulation result
+        print(simulation_result)
 
         return 0
