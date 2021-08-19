@@ -23,15 +23,15 @@ class Strategy(object):
     def __init__(self) -> None:
         pass
 
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
         raise NotImplementedError()
 
 
 class SellerStrategy(Strategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
         raise NotImplementedError()
 
 
 class BuyerStrategy(Strategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
         raise NotImplementedError()

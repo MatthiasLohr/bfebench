@@ -40,6 +40,8 @@ class RunCommand(SubCommand):
                                      help='pass additional parameters to the protocol')
         argument_parser.add_argument('seller_strategy')
         argument_parser.add_argument('buyer_strategy')
+        argument_parser.add_argument('filename', help='file to be exchanged')
+        argument_parser.add_argument('--price', type=int, default=1000000000, help='price to be paid for the file')
         argument_parser.add_argument('-n', '--iterations', help='Number of exchanges to be simulated', type=int,
                                      default=1)
         argument_parser.add_argument('-e', '--environments-configuration', default='.environments.yaml')
@@ -76,7 +78,9 @@ class RunCommand(SubCommand):
             protocol=protocol,
             seller_strategy=seller_strategy,
             buyer_strategy=buyer_strategy,
-            iterations=args.iterations
+            filename=args.filename,
+            iterations=args.iterations,
+            price=args.price
         )
 
         simulation_result = simulation.run()

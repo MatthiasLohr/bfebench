@@ -21,11 +21,14 @@ from bfebench.utils.json_stream import JsonObjectSocketStream
 
 
 class FaithfulSeller(SellerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
-        p2p_stream.send_object({'message': 'hello world'})
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
+        # === step 1: initialize ===
+        pass
+        # === step 3: reveal ===
+        pass
 
 
 class FaithfulBuyer(BuyerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream) -> None:
-        message, bytes_count = p2p_stream.receive_object()
-        print(message)
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
+        # === step 2: accept ===
+        pass
