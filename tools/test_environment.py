@@ -29,21 +29,25 @@ from bfebench.environment import Environment
 class EnvironmentTest(TestCase):
     TEST_WALLET_ADDRESS = ChecksumAddress(HexAddress(HexStr('0x1D89080880C060691558eC16EF104aF5d8db000b')))
     TEST_WALLET_KEY = HexBytes('0x1ac620dde6d7d3aeb4c462bfdd2a53555e1b90b44e977a468f413fc69ce5c4b4')
+    WEB3 = Web3(HTTPProvider('http://localhost:8545/'))
 
-    def test_private_key_check(self) -> None:
-        web3 = Web3(HTTPProvider('http://localhost:8545/'))
-
-        env = Environment(web3, self.TEST_WALLET_ADDRESS, self.TEST_WALLET_KEY)
+    def test_matching(self) -> None:
+        env = Environment(self.WEB3, self.TEST_WALLET_ADDRESS, self.TEST_WALLET_KEY)
         self.assertEqual(env.wallet_address, self.TEST_WALLET_ADDRESS)
         self.assertEqual(env.private_key, self.TEST_WALLET_KEY)
 
-        env = Environment(web3, self.TEST_WALLET_ADDRESS)
+    def test_address_only(self) -> None:
+        env = Environment(self.WEB3, self.TEST_WALLET_ADDRESS)
         self.assertEqual(env.wallet_address, self.TEST_WALLET_ADDRESS)
         self.assertIsNone(env.private_key)
 
-        env = Environment(web3, private_key=self.TEST_WALLET_KEY)
+    def test_key_only(self) -> None:
+        env = Environment(self.WEB3, private_key=self.TEST_WALLET_KEY)
         self.assertEqual(env.wallet_address, self.TEST_WALLET_ADDRESS)
         self.assertEqual(env.private_key, self.TEST_WALLET_KEY)
 
-        self.assertRaises(ValueError, Environment, web3)
-        self.assertRaises(ValueError, Environment, web3, self.TEST_WALLET_ADDRESS, '0x00')
+    def test_init_no_address_no_private_key(self) -> None:
+        self.assertRaises(ValueError, Environment, self.WEB3)
+
+    def test_init_key_address_mismatch(self) -> None:
+        self.assertRaises(ValueError, Environment, self.WEB3, self.TEST_WALLET_ADDRESS, '0x00')
