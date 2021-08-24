@@ -1,0 +1,98 @@
+version: '3'
+
+services:
+  node1:
+    image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
+    user: root:root
+    command:
+      - "--data-path=/data"
+      - "--genesis-file=/etc/besu/genesis.json"
+      - "--node-private-key-file=/etc/besu/node1.key"
+      - "--static-nodes-file=/etc/besu/static-nodes.json"
+      - "--rpc-http-enabled"
+      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--host-allowlist=*"
+      - "--rpc-http-cors-origins=all"
+    volumes:
+      - "node1:/data"
+      - "./genesis.json:/etc/besu/genesis.json:ro"
+      - "./static-nodes.json:/etc/besu/static-nodes.json:ro"
+      - "./node1.key:/etc/besu/node1.key:ro"
+    networks:
+      int:
+        ipv4_address: 172.31.255.11
+
+  node2:
+    image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
+    user: root:root
+    command:
+      - "--data-path=/data"
+      - "--genesis-file=/etc/besu/genesis.json"
+      - "--node-private-key-file=/etc/besu/node2.key"
+      - "--static-nodes-file=/etc/besu/static-nodes.json"
+      - "--rpc-http-enabled"
+      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--host-allowlist=*"
+      - "--rpc-http-cors-origins=all"
+    volumes:
+      - "node2:/data"
+      - "./genesis.json:/etc/besu/genesis.json:ro"
+      - "./static-nodes.json:/etc/besu/static-nodes.json:ro"
+      - "./node2.key:/etc/besu/node2.key:ro"
+    networks:
+      int:
+        ipv4_address: 172.31.255.12
+
+  node3:
+    image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
+    user: root:root
+    command:
+      - "--data-path=/data"
+      - "--genesis-file=/etc/besu/genesis.json"
+      - "--node-private-key-file=/etc/besu/node3.key"
+      - "--static-nodes-file=/etc/besu/static-nodes.json"
+      - "--rpc-http-enabled"
+      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--host-allowlist=*"
+      - "--rpc-http-cors-origins=all"
+    volumes:
+      - "node3:/data"
+      - "./genesis.json:/etc/besu/genesis.json:ro"
+      - "./static-nodes.json:/etc/besu/static-nodes.json:ro"
+      - "./node3.key:/etc/besu/node3.key:ro"
+    networks:
+      int:
+        ipv4_address: 172.31.255.13
+
+  node4:
+    image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
+    user: root:root
+    command:
+      - "--data-path=/data"
+      - "--genesis-file=/etc/besu/genesis.json"
+      - "--node-private-key-file=/etc/besu/node4.key"
+      - "--static-nodes-file=/etc/besu/static-nodes.json"
+      - "--rpc-http-enabled"
+      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--host-allowlist=*"
+      - "--rpc-http-cors-origins=all"
+    volumes:
+      - "node4:/data"
+      - "./genesis.json:/etc/besu/genesis.json:ro"
+      - "./static-nodes.json:/etc/besu/static-nodes.json:ro"
+      - "./node4.key:/etc/besu/node4.key:ro"
+    networks:
+      int:
+        ipv4_address: 172.31.255.14
+volumes:
+  node1:
+  node2:
+  node3:
+  node4:
+
+networks:
+  int:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.255.0/24
