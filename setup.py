@@ -34,6 +34,7 @@ setup(
     url='https://gitlab.com/MatthiasLohr/bfebench',
     license='Apache License 2.0',
     install_requires=[
+        'hexbytes==0.2.1',
         'pycryptodome==3.10.1',
         'PyYAML==5.4.1',
         'tabulate==0.8.9',

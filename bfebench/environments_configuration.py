@@ -18,6 +18,8 @@
 from typing import Any, Dict
 
 import yaml
+from web3 import Web3
+from web3.providers.rpc import HTTPProvider
 
 from .environment import Environment
 from .errors import EnvironmentsConfigurationError
@@ -37,8 +39,18 @@ class EnvironmentsConfiguration(object):
 
     @staticmethod
     def _yaml2environment(data: Dict[str, Any]) -> Environment:
+        endpoint_config = data.get('endpoint')
+        if endpoint_config is None:
+            raise ValueError('no endpoint configuration provided')
+
+        wallet_config = data.get('wallet')
+        if wallet_config is None:
+            raise ValueError('no wallet configuration provided')
+
         return Environment(
-             # TODO implement
+            web3=Web3(HTTPProvider(endpoint_config.get('url', 'http://localhost:8545/'))),
+            wallet_address=wallet_config.get('address'),
+            private_key=wallet_config.get('privateKey')
         )
 
     @property
