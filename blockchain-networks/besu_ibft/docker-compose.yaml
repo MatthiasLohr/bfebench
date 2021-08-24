@@ -10,7 +10,8 @@ services:
       - "--node-private-key-file=/etc/besu/node1.key"
       - "--static-nodes-file=/etc/besu/static-nodes.json"
       - "--rpc-http-enabled"
-      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--rpc-http-host=0.0.0.0"
+      - "--rpc-http-api=ETH,NET,WEB3,IBFT"
       - "--host-allowlist=*"
       - "--rpc-http-cors-origins=all"
     volumes:
@@ -18,6 +19,8 @@ services:
       - "./genesis.json:/etc/besu/genesis.json:ro"
       - "./static-nodes.json:/etc/besu/static-nodes.json:ro"
       - "./node1.key:/etc/besu/node1.key:ro"
+    ports:
+      - "8545:8545"
     networks:
       int:
         ipv4_address: 172.31.255.11
@@ -31,7 +34,8 @@ services:
       - "--node-private-key-file=/etc/besu/node2.key"
       - "--static-nodes-file=/etc/besu/static-nodes.json"
       - "--rpc-http-enabled"
-      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--rpc-http-host=0.0.0.0"
+      - "--rpc-http-api=ETH,NET,WEB3,IBFT"
       - "--host-allowlist=*"
       - "--rpc-http-cors-origins=all"
     volumes:
@@ -52,7 +56,8 @@ services:
       - "--node-private-key-file=/etc/besu/node3.key"
       - "--static-nodes-file=/etc/besu/static-nodes.json"
       - "--rpc-http-enabled"
-      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--rpc-http-host=0.0.0.0"
+      - "--rpc-http-api=ETH,NET,WEB3,IBFT"
       - "--host-allowlist=*"
       - "--rpc-http-cors-origins=all"
     volumes:
@@ -73,7 +78,8 @@ services:
       - "--node-private-key-file=/etc/besu/node4.key"
       - "--static-nodes-file=/etc/besu/static-nodes.json"
       - "--rpc-http-enabled"
-      - "--rpc-http-api=ETH,NET,IBFT"
+      - "--rpc-http-host=0.0.0.0"
+      - "--rpc-http-api=ETH,NET,WEB3,IBFT"
       - "--host-allowlist=*"
       - "--rpc-http-cors-origins=all"
     volumes:
@@ -84,6 +90,7 @@ services:
     networks:
       int:
         ipv4_address: 172.31.255.14
+
 volumes:
   node1:
   node2:
