@@ -37,7 +37,10 @@ class Environment(object):
             self._private_key = private_key
             self._wallet_address = Account.from_key(self._private_key).address
             if wallet_address is not None and self._wallet_address != wallet_address:
-                raise ValueError('provided wallet address does not match private key')
+                raise ValueError('provided wallet address (%s) does not match private key\'s public address (%s)' % (
+                    wallet_address,
+                    self._wallet_address
+                ))
 
     @property
     def web3(self) -> Web3:
