@@ -15,20 +15,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bfebench.environment import Environment
-from bfebench.strategy import BuyerStrategy, SellerStrategy
-from bfebench.utils.json_stream import JsonObjectSocketStream
+from typing import Any, Dict, Type
+
+from bfebench.strategy import SellerStrategy, BuyerStrategy
+from .strategies import FaithfulSeller, FaithfulBuyer
+from .. import Protocol
 
 
-class FaithfulSeller(SellerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
-        # === step 1: initialize ===
-        pass
-        # === step 3: reveal ===
-        pass
+class StateChannelFairswap(Protocol):
+    name = 'StateChannelFairswap'
 
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        # TODO implement
 
-class FaithfulBuyer(BuyerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
-        # === step 2: accept ===
-        pass
+    @staticmethod
+    def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
+        return {
+            'Faithful': FaithfulSeller
+        }
+
+    @staticmethod
+    def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
+        return {
+            'Faithful': FaithfulBuyer
+        }

@@ -18,7 +18,7 @@
 from math import log2
 from unittest import TestCase
 
-from bfebench.protocols.fairswap import Fairswap, B032
+from bfebench.protocols.fairswap.protocol import Fairswap, B032
 from bfebench.utils.bytes import generate_bytes
 from bfebench.utils.merkle import MerkleTreeNode, MerkleTreeLeaf, from_bytes
 

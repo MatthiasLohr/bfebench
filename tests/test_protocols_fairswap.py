@@ -17,7 +17,7 @@
 
 from unittest import TestCase
 
-from bfebench.protocols.fairswap import Fairswap, B032, NodeDigestMismatchError, LeafDigestMismatchError
+from bfebench.protocols.fairswap.protocol import Fairswap, B032, NodeDigestMismatchError, LeafDigestMismatchError
 from bfebench.utils.bytes import generate_bytes
 from bfebench.utils.merkle import from_bytes
 

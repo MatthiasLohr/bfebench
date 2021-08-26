@@ -15,16 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from unittest import TestCase
+from bfebench.environment import Environment
+from bfebench.strategy import BuyerStrategy, SellerStrategy
+from bfebench.utils.json_stream import JsonObjectSocketStream
 
-from bfebench import protocols
-from bfebench.component import get_component_subclasses
+
+class FaithfulSeller(SellerStrategy):
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
+        pass  # TODO implement
 
 
-class GetNamedSubclassesTest(TestCase):
-    def test_get_named_subclasses_protocols(self) -> None:
-        protocols_available = get_component_subclasses(protocols, protocols.Protocol)
-        self.assertEqual(protocols_available, {
-            'Fairswap': protocols.Fairswap,
-            'StateChannelFairswap': protocols.StateChannelFairswap
-        })
+class FaithfulBuyer(BuyerStrategy):
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
+        pass  # TODO implement

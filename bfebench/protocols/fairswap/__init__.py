@@ -15,11 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .common import Protocol
-from .loader import get_protocols
+from .protocol import Fairswap
 
 
 __all__ = [
-    'get_protocols',
-    'Protocol'
+    'Fairswap'
 ]

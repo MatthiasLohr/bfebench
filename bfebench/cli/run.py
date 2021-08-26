@@ -19,7 +19,6 @@ import logging
 from argparse import ArgumentParser, Namespace
 
 from bfebench import protocols
-from bfebench.component import get_component_subclasses, init_component_subclass
 from bfebench.environments_configuration import EnvironmentsConfiguration
 from bfebench.simulation import Simulation
 from .command import SubCommand
@@ -32,7 +31,7 @@ class RunCommand(SubCommand):
     def __init__(self, argument_parser: ArgumentParser) -> None:
         super().__init__(argument_parser)
 
-        self._protocols_available = get_component_subclasses(protocols, protocols.Protocol)
+        self._protocols_available = protocols.get_protocols()
 
         argument_parser.add_argument('protocol', choices=self._protocols_available.keys())
         argument_parser.add_argument('-p', '--protocol-parameter', nargs=2, action='append', dest='protocol_parameters',
@@ -47,10 +46,10 @@ class RunCommand(SubCommand):
         argument_parser.add_argument('-e', '--environments-configuration', default='.environments.yaml')
 
     def __call__(self, args: Namespace) -> int:
-        protocol = init_component_subclass(
-            self._protocols_available.get(args.protocol),
-            args.protocol_parameters
-        )
+        protocol_cls = self._protocols_available.get(args.protocol)
+        if protocol_cls is None:
+            raise RuntimeError('can not find protocol class')
+        protocol = protocol_cls(**{key: value for key, value in args.protocol_parameters})
 
         try:
             environments_configuration = EnvironmentsConfiguration(args.environments_configuration)

@@ -15,12 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bfebench.strategy import BuyerStrategy, SellerStrategy
+from .protocol import StateChannelFairswap
 
 
-class FaithfulSeller(SellerStrategy):
-    pass  # TODO implement
-
-
-class FaithfulBuyer(BuyerStrategy):
-    pass  # TODO implement
+__all__ = [
+    'StateChannelFairswap'
+]

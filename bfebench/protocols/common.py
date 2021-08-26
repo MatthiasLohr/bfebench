@@ -15,14 +15,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Type
+from typing import Any, Dict, Type
 
-from bfebench.component import Component
 from bfebench.environment import Environment
-from bfebench.strategy import BuyerStrategy, SellerStrategy
+from bfebench.errors import BaseError
+from bfebench.strategy import SellerStrategy, BuyerStrategy
 
 
-class Protocol(Component):
+class Protocol(object):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        if len(args) > 0:
+            raise BaseError('too many positional arguments for initializing %s' % self.__class__.__name__)
+        if len(kwargs) > 0:
+            raise BaseError('unrecognized keyword arguments for initializing %s: %s' % (
+                self.__class__.__name__,
+                ', '.join(kwargs.keys())
+            ))
+
     @staticmethod
     def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
         raise NotImplementedError()

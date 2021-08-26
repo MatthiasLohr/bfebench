@@ -18,7 +18,6 @@
 from argparse import ArgumentParser, Namespace
 
 from bfebench import protocols
-from bfebench.component import get_component_subclasses
 from .command import SubCommand
 
 
@@ -26,7 +25,7 @@ class ListStrategiesCommand(SubCommand):
     def __init__(self, argument_parser: ArgumentParser) -> None:
         super().__init__(argument_parser)
 
-        self._protocols_available = get_component_subclasses(protocols, protocols.Protocol)
+        self._protocols_available = protocols.get_protocols()
 
         argument_parser.add_argument('protocol', choices=self._protocols_available.keys())
 

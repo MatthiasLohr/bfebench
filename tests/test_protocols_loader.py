@@ -15,11 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .common import Protocol
-from .loader import get_protocols
+from unittest import TestCase
+
+from bfebench.protocols import get_protocols
+from bfebench.protocols.fairswap import Fairswap
+from bfebench.protocols.state_channel_fairswap import StateChannelFairswap
 
 
-__all__ = [
-    'get_protocols',
-    'Protocol'
-]
+class ProtocolsLoaderTest(TestCase):
+    def test_get_protocols(self) -> None:
+        protocols = get_protocols()
+        self.assertEqual(protocols.get('Fairswap'), Fairswap)
+        self.assertEqual(protocols.get('StateChannelFairswap'), StateChannelFairswap)
