@@ -89,6 +89,7 @@ class Simulation(object):
 
             seller_process = StrategyProcess(
                 strategy=self._seller_strategy_type(),
+                strategy_kwargs=self._protocol.get_seller_strategy_kwargs(),
                 environment=self.environments.seller_environment,
                 p2p_stream=seller_p2p_client,
                 filename=self._filename,
@@ -96,6 +97,7 @@ class Simulation(object):
             )
             buyer_process = StrategyProcess(
                 strategy=self._buyer_strategy_type(),
+                strategy_kwargs=self._protocol.get_buyer_strategy_kwargs(),
                 environment=self.environments.buyer_environment,
                 p2p_stream=buyer_p2p_client,
                 filename=self._filename,

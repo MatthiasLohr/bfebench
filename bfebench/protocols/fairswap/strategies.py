@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import logging
+from typing import Any
 
 from bfebench.environment import Environment
 from bfebench.strategy import BuyerStrategy, SellerStrategy
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 class FaithfulSeller(SellerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
+            **kwargs: Any) -> None:
         # === step 1: initialize ===
         print(environment.web3.eth.get_balance('0x598eC01a78be6945e5cB4C0451c5CF185211e96d'))
         pass
@@ -35,6 +37,7 @@ class FaithfulSeller(SellerStrategy):
 
 
 class FaithfulBuyer(BuyerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
+            **kwargs: Any) -> None:
         # === step 2: accept ===
         pass

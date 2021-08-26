@@ -36,6 +36,12 @@ class Protocol(object):
     def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
         raise NotImplementedError()
 
+    def get_seller_strategy_kwargs(self) -> Dict[str, Any]:
+        return {}
+
+    def get_buyer_strategy_kwargs(self) -> Dict[str, Any]:
+        return {}
+
     @staticmethod
     def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
         raise NotImplementedError()
