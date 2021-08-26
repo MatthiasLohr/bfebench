@@ -25,7 +25,7 @@ class EnvironmentsConfigurationTest(TestCase):
         self.assertRaises(FileNotFoundError, EnvironmentsConfiguration, '/some/imaginary/file.yaml')
 
     def test_load(self) -> None:
-        ec = EnvironmentsConfiguration('./testdata/environment-configuration.yaml')
+        ec = EnvironmentsConfiguration('./tests/testdata/environment-configuration.yaml')
 
         # operator configuration
         self.assertEqual(
