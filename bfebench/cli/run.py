@@ -18,8 +18,8 @@
 import logging
 from argparse import ArgumentParser, Namespace
 
-from bfebench import protocols
 from bfebench.environments_configuration import EnvironmentsConfiguration
+from bfebench.protocols import PROTOCOL_SPECIFICATIONS
 from bfebench.simulation import Simulation
 from .command import SubCommand
 
@@ -31,9 +31,7 @@ class RunCommand(SubCommand):
     def __init__(self, argument_parser: ArgumentParser) -> None:
         super().__init__(argument_parser)
 
-        self._protocols_available = protocols.get_protocols()
-
-        argument_parser.add_argument('protocol', choices=self._protocols_available.keys())
+        argument_parser.add_argument('protocol', choices=PROTOCOL_SPECIFICATIONS.keys())
         argument_parser.add_argument('-p', '--protocol-parameter', nargs=2, action='append', dest='protocol_parameters',
                                      default=[], metavar=('KEY', 'VALUE'),
                                      help='pass additional parameters to the protocol')
@@ -46,10 +44,9 @@ class RunCommand(SubCommand):
         argument_parser.add_argument('-e', '--environments-configuration', default='.environments.yaml')
 
     def __call__(self, args: Namespace) -> int:
-        protocol_cls = self._protocols_available.get(args.protocol)
-        if protocol_cls is None:
-            raise RuntimeError('can not find protocol class')
-        protocol = protocol_cls(**{key: value for key, value in args.protocol_parameters})
+        protocol_specification = PROTOCOL_SPECIFICATIONS.get(args.protocol)
+        if protocol_specification is None:
+            raise RuntimeError('cannot load protocol specification')
 
         try:
             environments_configuration = EnvironmentsConfiguration(args.environments_configuration)
@@ -60,17 +57,30 @@ class RunCommand(SubCommand):
             ))
             return 1
 
-        seller_strategy = protocol.get_seller_strategies().get(args.seller_strategy)
-        if seller_strategy is None:
+        protocol = protocol_specification.protocol(
+            environment=environments_configuration.operator_environment,
+            **{key: value for key, value in args.protocol_parameters}
+        )
+
+        seller_strategy_cls = protocol_specification.seller_strategies.get(args.seller_strategy)
+        if seller_strategy_cls is None:
             logger.error('could not find a seller strategy "%s"' % args.seller_strategy)
             logger.error('use `bfebench list-strategies %s` to list available strategies' % args.protocol)
             return 1
 
-        buyer_strategy = protocol.get_buyer_strategies().get(args.buyer_strategy)
-        if buyer_strategy is None:
+        buyer_strategy_cls = protocol_specification.buyer_strategies.get(args.buyer_strategy)
+        if buyer_strategy_cls is None:
             logger.error('could not find a buyer strategy "%s"' % args.buyer_strategy)
             logger.error('use `bfebench list-strategies %s` to list available strategies' % args.protocol)
             return 1
+
+        seller_strategy = seller_strategy_cls(
+            protocol=protocol
+        )
+
+        buyer_strategy = buyer_strategy_cls(
+            protocol=protocol
+        )
 
         simulation = Simulation(
             environments_configuration=environments_configuration,

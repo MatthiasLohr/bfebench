@@ -16,8 +16,16 @@
 # limitations under the License.
 
 from .protocol import Fairswap
+from .strategies import FaithfulSeller, FaithfulBuyer
+from ..protocol_spec import ProtocolSpec
 
 
-__all__ = [
-    'Fairswap'
-]
+PROTOCOL_SPEC = ProtocolSpec(
+    protocol=Fairswap,
+    seller_strategies={
+        'Faithful': FaithfulSeller
+    },
+    buyer_strategies={
+        'Faithful': FaithfulBuyer
+    }
+)

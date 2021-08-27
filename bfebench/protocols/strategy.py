@@ -15,28 +15,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
+from typing import Generic, TypeVar
 
-from .environment import Environment
-from .utils.json_stream import JsonObjectSocketStream
+from .protocol import Protocol
 
 
-class Strategy(object):
-    def __init__(self) -> None:
-        pass
+T = TypeVar('T', bound=Protocol)
 
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
-            **kwargs: Any) -> None:
+
+class Strategy(Generic[T]):
+    def __init__(self, protocol: T) -> None:
+        self._protocol = protocol
+
+    @property
+    def protocol(self) -> T:
+        return self._protocol
+
+    def run(self) -> None:
         raise NotImplementedError()
 
 
-class SellerStrategy(Strategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
-            **kwargs: Any) -> None:
+class SellerStrategy(Strategy[T]):
+    def run(self) -> None:
         raise NotImplementedError()
 
 
-class BuyerStrategy(Strategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
-            **kwargs: Any) -> None:
+class BuyerStrategy(Strategy[T]):
+    def run(self) -> None:
         raise NotImplementedError()

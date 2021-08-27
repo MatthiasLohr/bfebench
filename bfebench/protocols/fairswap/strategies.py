@@ -15,29 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-from typing import Any
-
-from bfebench.environment import Environment
-from bfebench.strategy import BuyerStrategy, SellerStrategy
-from bfebench.utils.json_stream import JsonObjectSocketStream
+from .protocol import Fairswap
+from ..strategy import SellerStrategy, BuyerStrategy
 
 
-logger = logging.getLogger(__name__)
-
-
-class FaithfulSeller(SellerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
-            **kwargs: Any) -> None:
-        # === step 1: initialize ===
-        print(environment.web3.eth.get_balance('0x598eC01a78be6945e5cB4C0451c5CF185211e96d'))
-        pass
-        # === step 3: reveal ===
+class FaithfulSeller(SellerStrategy[Fairswap]):
+    def run(self) -> None:
         pass
 
 
-class FaithfulBuyer(BuyerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
-            **kwargs: Any) -> None:
-        # === step 2: accept ===
+class FaithfulBuyer(BuyerStrategy[Fairswap]):
+    def run(self) -> None:
         pass

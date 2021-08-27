@@ -19,10 +19,10 @@ import logging
 import time
 from multiprocessing import Process, Queue
 from resource import getrusage, RUSAGE_SELF
-from typing import Any, Dict, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 from .environment import Environment
-from .strategy import Strategy
+from .protocols import Protocol, Strategy
 from .utils.json_stream import JsonObjectSocketStream
 
 
@@ -87,12 +87,11 @@ class ResourceUsage(NamedTuple):
 
 
 class StrategyProcess(Process):
-    def __init__(self, strategy: Strategy, strategy_kwargs: Dict[str, Any], environment: Environment,
-                 p2p_stream: JsonObjectSocketStream, filename: str, price: int) -> None:
+    def __init__(self, strategy: Strategy[Protocol], environment: Environment, p2p_stream: JsonObjectSocketStream,
+                 filename: str, price: int) -> None:
         super().__init__()
         self._environment = environment
         self._strategy = strategy
-        self._strategy_kwargs = strategy_kwargs
         self._p2p_stream = p2p_stream
         self._filename = filename
         self._price = price
@@ -103,7 +102,7 @@ class StrategyProcess(Process):
     def run(self) -> None:
         time_start = time.time()
         resources_start = getrusage(RUSAGE_SELF)
-        self._strategy.run(self._environment, self._p2p_stream, self._filename, self._price, **self._strategy_kwargs)
+        self._strategy.run()
         resources_end = getrusage(RUSAGE_SELF)
         time_end = time.time()
 

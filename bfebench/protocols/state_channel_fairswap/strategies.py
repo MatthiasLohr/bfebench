@@ -15,20 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
-
-from bfebench.environment import Environment
-from bfebench.strategy import BuyerStrategy, SellerStrategy
-from bfebench.utils.json_stream import JsonObjectSocketStream
+from .protocol import StateChannelFairswap
+from ..strategy import SellerStrategy, BuyerStrategy
 
 
-class FaithfulSeller(SellerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
-            **kwargs: Any) -> None:
-        pass  # TODO implement
+class FaithfulSeller(SellerStrategy[StateChannelFairswap]):
+    pass
 
 
-class FaithfulBuyer(BuyerStrategy):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream, filename: str, price: int,
-            **kwargs: Any) -> None:
-        pass  # TODO implement
+class FaithfulBuyer(BuyerStrategy[StateChannelFairswap]):
+    pass

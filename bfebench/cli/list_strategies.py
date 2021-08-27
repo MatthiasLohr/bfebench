@@ -17,7 +17,7 @@
 
 from argparse import ArgumentParser, Namespace
 
-from bfebench import protocols
+from bfebench.protocols import PROTOCOL_SPECIFICATIONS
 from .command import SubCommand
 
 
@@ -25,19 +25,16 @@ class ListStrategiesCommand(SubCommand):
     def __init__(self, argument_parser: ArgumentParser) -> None:
         super().__init__(argument_parser)
 
-        self._protocols_available = protocols.get_protocols()
-
-        argument_parser.add_argument('protocol', choices=self._protocols_available.keys())
+        argument_parser.add_argument('protocol', choices=PROTOCOL_SPECIFICATIONS.keys())
 
     def __call__(self, args: Namespace) -> int:
-        protocol = self._protocols_available.get(args.protocol)
-
-        if protocol is None:
-            raise RuntimeError('protocol should not be None here')
+        protocol_specification = PROTOCOL_SPECIFICATIONS.get(args.protocol)
+        if protocol_specification is None:
+            raise RuntimeError('cannot load protocol specification')
 
         roles = (
-            ('Seller', protocol.get_seller_strategies().keys()),
-            ('Buyer', protocol.get_buyer_strategies().keys())
+            ('Seller', protocol_specification.seller_strategies.keys()),
+            ('Buyer', protocol_specification.buyer_strategies.keys())
         )
 
         for role, strategies in roles:

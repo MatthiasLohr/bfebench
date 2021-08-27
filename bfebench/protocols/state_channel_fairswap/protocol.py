@@ -15,28 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, Type
-
-from bfebench.strategy import SellerStrategy, BuyerStrategy
-from .strategies import FaithfulSeller, FaithfulBuyer
-from .. import Protocol
+from ..protocol import Protocol
 
 
 class StateChannelFairswap(Protocol):
-    name = 'StateChannelFairswap'
-
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
-        # TODO implement
-
-    @staticmethod
-    def get_seller_strategies() -> Dict[str, Type[SellerStrategy]]:
-        return {
-            'Faithful': FaithfulSeller
-        }
-
-    @staticmethod
-    def get_buyer_strategies() -> Dict[str, Type[BuyerStrategy]]:
-        return {
-            'Faithful': FaithfulBuyer
-        }
+    pass

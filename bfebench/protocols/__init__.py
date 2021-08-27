@@ -15,11 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .common import Protocol
-from .loader import get_protocols
+from .fairswap import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP
+from .protocol import Protocol
+from .protocol_spec import ProtocolSpec
+from .strategy import Strategy, SellerStrategy, BuyerStrategy
 
+
+PROTOCOL_SPECIFICATIONS = {
+    'Fairswap': PROTOCOL_SPEC_FAIRSWAP
+}
 
 __all__ = [
-    'get_protocols',
-    'Protocol'
+    'BuyerStrategy',
+    'Protocol',
+    'ProtocolSpec',
+    'PROTOCOL_SPECIFICATIONS',
+    'SellerStrategy',
+    'Strategy'
 ]

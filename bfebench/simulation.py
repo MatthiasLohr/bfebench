@@ -19,12 +19,10 @@ import logging
 import os
 from shutil import rmtree
 from tempfile import mkdtemp
-from typing import Type
 
 from .environments_configuration import EnvironmentsConfiguration
-from .protocols import Protocol
+from .protocols import Protocol, SellerStrategy, BuyerStrategy
 from .simulation_result import IterationResult, SimulationResult
-from .strategy import BuyerStrategy, SellerStrategy
 from .strategy_process import StrategyProcess
 from .utils.json_stream import (
     JsonObjectUnixDomainSocketClientStream,
@@ -38,12 +36,12 @@ logger = logging.getLogger(__name__)
 
 class Simulation(object):
     def __init__(self, environments_configuration: EnvironmentsConfiguration, protocol: Protocol,
-                 seller_strategy: Type[SellerStrategy], buyer_strategy: Type[BuyerStrategy],
+                 seller_strategy: SellerStrategy[Protocol], buyer_strategy: BuyerStrategy[Protocol],
                  filename: str, price: int, iterations: int = 1) -> None:
         self._environments = environments_configuration
         self._protocol = protocol
-        self._seller_strategy_type = seller_strategy
-        self._buyer_strategy_type = buyer_strategy
+        self._seller_strategy = seller_strategy
+        self._buyer_strategy = buyer_strategy
         self._filename = filename
         self._price = price
         self._iterations = iterations
@@ -63,16 +61,14 @@ class Simulation(object):
         logger.debug('setting up protocol simulation...')
         simulation_result = SimulationResult()
         self.protocol.set_up_simulation(
-            self.environments.operator_environment,
-            self.environments.seller_environment,
-            self.environments.buyer_environment
+            seller_address=self.environments.seller_environment.wallet_address,
+            buyer_address=self.environments.buyer_environment.wallet_address
         )
         for iteration in range(self._iterations):
             logger.debug('setting up protocol iteration...')
             self.protocol.set_up_iteration(
-                self.environments.operator_environment,
-                self.environments.seller_environment,
-                self.environments.buyer_environment
+                seller_address=self.environments.seller_environment.wallet_address,
+                buyer_address=self.environments.buyer_environment.wallet_address
             )
 
             logger.debug('setting up strategies...')
@@ -88,16 +84,14 @@ class Simulation(object):
             buyer_p2p_client = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, buyer_socket))
 
             seller_process = StrategyProcess(
-                strategy=self._seller_strategy_type(),
-                strategy_kwargs=self._protocol.get_seller_strategy_kwargs(),
+                strategy=self._seller_strategy,
                 environment=self.environments.seller_environment,
                 p2p_stream=seller_p2p_client,
                 filename=self._filename,
                 price=self._price
             )
             buyer_process = StrategyProcess(
-                strategy=self._buyer_strategy_type(),
-                strategy_kwargs=self._protocol.get_buyer_strategy_kwargs(),
+                strategy=self._buyer_strategy,
                 environment=self.environments.buyer_environment,
                 p2p_stream=buyer_p2p_client,
                 filename=self._filename,
@@ -113,9 +107,8 @@ class Simulation(object):
 
             logger.debug('tearing down protocol iteration')
             self.protocol.tear_down_iteration(
-                self.environments.operator_environment,
-                self.environments.seller_environment,
-                self.environments.buyer_environment
+                seller_address=self.environments.seller_environment.wallet_address,
+                buyer_address=self.environments.buyer_environment.wallet_address
             )
 
             simulation_result.add_iteration_result(IterationResult(
@@ -143,9 +136,8 @@ class Simulation(object):
 
         logger.debug('tearing down protocol simulation')
         self.protocol.tear_down_simulation(
-            self.environments.operator_environment,
-            self.environments.seller_environment,
-            self.environments.buyer_environment
+            seller_address=self.environments.seller_environment.wallet_address,
+            buyer_address=self.environments.buyer_environment.wallet_address
         )
         rmtree(self._tmp_dir)
         logger.debug('simulation has finished')

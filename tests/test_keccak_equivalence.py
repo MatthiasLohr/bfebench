@@ -48,3 +48,10 @@ class KeccakEquivalenceTest(TestCase):
                 keccak.new(data=data1 + data2 + data3, digest_bytes=32).digest(),
                 Web3.solidityKeccak(['bytes32', 'bytes32', 'bytes32'], [data1, data2, data3])
             )
+
+    def test_keccak_heterogenous_compound_equivalence(self) -> None:
+        for index, key in [(1, generate_bytes(32))]:
+            self.assertEqual(
+                keccak.new(data=bytes(index.to_bytes(length=32, byteorder='big') + key), digest_bytes=32).digest(),
+                Web3.solidityKeccak(['uint256', 'bytes32'], [index, key])
+            )

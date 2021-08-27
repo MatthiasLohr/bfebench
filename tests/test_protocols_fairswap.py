@@ -17,29 +17,38 @@
 
 from unittest import TestCase
 
-from bfebench.protocols.fairswap.protocol import Fairswap, B032, NodeDigestMismatchError, LeafDigestMismatchError
+from bfebench.protocols.fairswap.util import (
+    B032,
+    keccak,
+    encode,
+    encode_forge_first_leaf,
+    encode_forge_first_leaf_first_hash,
+    decode,
+    LeafDigestMismatchError,
+    NodeDigestMismatchError
+)
 from bfebench.utils.bytes import generate_bytes
 from bfebench.utils.merkle import from_bytes
 
 
 class EncodingTest(TestCase):
     def test_encode_decode(self) -> None:
-        tree = from_bytes(generate_bytes(128, seed=42), Fairswap.keccak, 4)
-        tree_enc = Fairswap.encode(tree, B032)
-        tree_dec, errors = Fairswap.decode(tree_enc, B032)
+        tree = from_bytes(generate_bytes(128, seed=42), keccak, 4)
+        tree_enc = encode(tree, B032)
+        tree_dec, errors = decode(tree_enc, B032)
         self.assertEqual([], errors)
         self.assertEqual(tree, tree_dec)
 
     def test_encode_forge_first_leaf(self) -> None:
-        tree = from_bytes(generate_bytes(128, seed=42), Fairswap.keccak, 4)
-        tree_enc = Fairswap.encode_forge_first_leaf(tree, B032)
-        tree_dec, errors = Fairswap.decode(tree_enc, B032)
+        tree = from_bytes(generate_bytes(128, seed=42), keccak, 4)
+        tree_enc = encode_forge_first_leaf(tree, B032)
+        tree_dec, errors = decode(tree_enc, B032)
         self.assertEqual(1, len(errors))
         self.assertEqual(LeafDigestMismatchError, type(errors[0]))
 
     def test_encode_forge_first_leaf_first_hash(self) -> None:
-        tree = from_bytes(generate_bytes(128, seed=42), Fairswap.keccak, 4)
-        tree_enc = Fairswap.encode_forge_first_leaf_first_hash(tree, B032)
-        tree_dec, errors = Fairswap.decode(tree_enc, B032)
+        tree = from_bytes(generate_bytes(128, seed=42), keccak, 4)
+        tree_enc = encode_forge_first_leaf_first_hash(tree, B032)
+        tree_dec, errors = decode(tree_enc, B032)
         self.assertEqual(1, len(errors))
         self.assertEqual(NodeDigestMismatchError, type(errors[0]))
