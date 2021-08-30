@@ -17,7 +17,7 @@
 
 import itertools
 import math
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, List, Tuple, Union
 
 
 class MerkleTreeNode(object):
@@ -187,16 +187,16 @@ def from_leaves(leaves: List[MerkleTreeLeaf]) -> MerkleTreeNode:
     return nodes[0]
 
 
-def from_bytes(data: bytes, digest_func: Callable[[bytes], bytes], slices_count: int = 8) -> MerkleTreeNode:
-    if slices_count < 2 or not math.log2(slices_count).is_integer():
+def from_bytes(data: bytes, digest_func: Callable[[bytes], bytes], slice_count: int = 8) -> MerkleTreeNode:
+    if slice_count < 2 or not math.log2(slice_count).is_integer():
         raise ValueError('slices_count must be >= 2 integer and power of 2')
-    slice_len = math.ceil(len(data) / slices_count)
+    slice_len = math.ceil(len(data) / slice_count)
     return from_leaves(
         [
             MerkleTreeLeaf(
                 digest_func=digest_func,
                 data=data[slice_len * s:slice_len * (s + 1)]
-            ) for s in range(slices_count)
+            ) for s in range(slice_count)
         ]
     )
 
@@ -210,3 +210,22 @@ def from_list(items: List[bytes], digest_func: Callable[[bytes], bytes]) -> Merk
             ) for item in items
         ]
     )
+
+
+def mt2obj(node: MerkleTreeNode) -> Union[bytes, List[Any]]:
+    if isinstance(node, MerkleTreeLeaf):
+        return node.data
+    else:
+        return [mt2obj(child) for child in node.children]
+
+
+def obj2mt(data: Union[bytes, List[Any]], digest_func: Callable[[bytes], bytes]) -> MerkleTreeNode:
+    if isinstance(data, List):
+        return MerkleTreeNode(
+            digest_func,
+            *[obj2mt(child, digest_func) for child in data]
+        )
+    elif isinstance(data, bytes):
+        return MerkleTreeLeaf(digest_func, data)
+    else:
+        ValueError('cannot convert input of type %s to merkle tree' % type(data))

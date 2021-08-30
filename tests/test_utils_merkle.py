@@ -20,7 +20,7 @@ from unittest import TestCase
 
 from bfebench.protocols.fairswap.util import B032, keccak
 from bfebench.utils.bytes import generate_bytes
-from bfebench.utils.merkle import MerkleTreeNode, MerkleTreeLeaf, from_bytes
+from bfebench.utils.merkle import MerkleTreeNode, MerkleTreeLeaf, from_bytes, mt2obj, obj2mt
 
 
 class MerkleTest(TestCase):
@@ -41,3 +41,36 @@ class MerkleTest(TestCase):
                 proof = tree.get_proof(leaf)
                 self.assertEqual(len(proof), int(log2(slice_count)))
                 self.assertTrue(MerkleTreeNode.validate_proof(tree.digest, leaf, index, proof, keccak))
+
+    def test_mt2obj2mt(self) -> None:
+        mt = MerkleTreeNode(
+            keccak,
+            MerkleTreeNode(
+                keccak,
+                MerkleTreeLeaf(
+                    keccak,
+                    generate_bytes(32)
+                ),
+                MerkleTreeLeaf(
+                    keccak,
+                    generate_bytes(32)
+                )
+            ),
+            MerkleTreeNode(
+                keccak,
+                MerkleTreeLeaf(
+                    keccak,
+                    generate_bytes(32)
+                ),
+                MerkleTreeLeaf(
+                    keccak,
+                    generate_bytes(32)
+                )
+            )
+        )
+
+        obj = mt2obj(mt)
+        mt2 = obj2mt(obj, keccak)
+
+        self.assertEqual(mt, mt2)
+        self.assertEqual(mt.digest, mt2.digest)
