@@ -84,12 +84,14 @@ class Simulation(object):
             seller_process = StrategyProcess(
                 strategy=self._seller_strategy,
                 environment=self.environments.seller_environment,
-                p2p_stream=seller_p2p_client
+                p2p_stream=seller_p2p_client,
+                opposite_address=self.environments.buyer_environment.wallet_address
             )
             buyer_process = StrategyProcess(
                 strategy=self._buyer_strategy,
                 environment=self.environments.buyer_environment,
-                p2p_stream=buyer_p2p_client
+                p2p_stream=buyer_p2p_client,
+                opposite_address=self.environments.seller_environment.wallet_address
             )
 
             logger.debug('launching exchange protocol')

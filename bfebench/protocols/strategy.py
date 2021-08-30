@@ -17,6 +17,8 @@
 
 from typing import Generic, TypeVar
 
+from eth_typing.evm import ChecksumAddress
+
 from .protocol import Protocol
 from ..utils.json_stream import JsonObjectSocketStream
 
@@ -32,15 +34,15 @@ class Strategy(Generic[T]):
     def protocol(self) -> T:
         return self._protocol
 
-    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
+    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
         raise NotImplementedError()
 
 
 class SellerStrategy(Strategy[T]):
-    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
+    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
         raise NotImplementedError()
 
 
 class BuyerStrategy(Strategy[T]):
-    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
+    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
         raise NotImplementedError()

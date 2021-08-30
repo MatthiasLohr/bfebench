@@ -26,7 +26,7 @@ contract FileSale {
 
     uint constant depth = {{ merkle_tree_depth }};
     uint constant length = {{ slice_length }};
-    uint constant n = {{ slices_count }};
+    uint constant n = {{ slice_count }};
 
     enum stage {created, initialized, accepted, keyRevealed, finished}
     stage public phase = stage.created;

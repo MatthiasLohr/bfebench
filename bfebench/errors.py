@@ -25,3 +25,15 @@ class ConfigurationError(BaseError):
 
 class EnvironmentsConfigurationError(BaseError):
     pass
+
+
+class ProtocolError(BaseError):
+    pass
+
+
+class ProtocolInitializationError(ProtocolError):
+    pass
+
+
+class ProtocolRuntimeError(ProtocolError):
+    pass

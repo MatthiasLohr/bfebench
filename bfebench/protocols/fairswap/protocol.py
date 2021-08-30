@@ -15,11 +15,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+import os
+from math import log2
 from typing import Any
 
 from ..protocol import Protocol
+from ...errors import ProtocolInitializationError
+
+
+DEFAULT_SLICE_COUNT = 4
+DEFAULT_TIMEOUT = 60  # 60 seconds
+
+logger = logging.getLogger(__name__)
 
 
 class Fairswap(Protocol):
-    def __init__(self, slice_count: int = 4, **kwargs: Any) -> None:
+    CONTRACT_NAME = 'FileSale'
+    CONTRACT_TEMPLATE_FILE = 'fairswap.tpl.sol'
+
+    def __init__(self, slice_count: int = DEFAULT_SLICE_COUNT, timeout: int = DEFAULT_TIMEOUT, **kwargs: Any) -> None:
         super().__init__(**kwargs)
+
+        slice_count = int(slice_count)
+
+        if not log2(slice_count).is_integer():
+            raise ProtocolInitializationError('slice_count must be a power of 2')
+
+        self._slice_count = slice_count
+        self._timeout = timeout
+
+        file_size = os.path.getsize(self.filename)
+        if ((file_size / slice_count) % 32) > 0:
+            raise ProtocolInitializationError('file size must be a multiple of 32 bytes * %d slices' % slice_count)
+
+        self._slice_length = int(file_size / slice_count)
+
+    @property
+    def slice_count(self) -> int:
+        return self._slice_count
+
+    @property
+    def slice_length(self) -> int:
+        return self._slice_length
+
+    @property
+    def timeout(self) -> int:
+        return self._timeout
