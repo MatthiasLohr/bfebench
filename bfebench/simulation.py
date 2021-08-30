@@ -37,13 +37,11 @@ logger = logging.getLogger(__name__)
 class Simulation(object):
     def __init__(self, environments_configuration: EnvironmentsConfiguration, protocol: Protocol,
                  seller_strategy: SellerStrategy[Protocol], buyer_strategy: BuyerStrategy[Protocol],
-                 filename: str, price: int, iterations: int = 1) -> None:
+                 iterations: int = 1) -> None:
         self._environments = environments_configuration
         self._protocol = protocol
         self._seller_strategy = seller_strategy
         self._buyer_strategy = buyer_strategy
-        self._filename = filename
-        self._price = price
         self._iterations = iterations
 
         self._tmp_dir = mkdtemp(prefix='bfebench-')
@@ -86,16 +84,12 @@ class Simulation(object):
             seller_process = StrategyProcess(
                 strategy=self._seller_strategy,
                 environment=self.environments.seller_environment,
-                p2p_stream=seller_p2p_client,
-                filename=self._filename,
-                price=self._price
+                p2p_stream=seller_p2p_client
             )
             buyer_process = StrategyProcess(
                 strategy=self._buyer_strategy,
                 environment=self.environments.buyer_environment,
-                p2p_stream=buyer_p2p_client,
-                filename=self._filename,
-                price=self._price
+                p2p_stream=buyer_p2p_client
             )
 
             logger.debug('launching exchange protocol')

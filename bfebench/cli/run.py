@@ -59,6 +59,8 @@ class RunCommand(SubCommand):
 
         protocol = protocol_specification.protocol(
             environment=environments_configuration.operator_environment,
+            filename=args.filename,
+            price=args.price,
             **{key: value for key, value in args.protocol_parameters}
         )
 
@@ -87,9 +89,7 @@ class RunCommand(SubCommand):
             protocol=protocol,
             seller_strategy=seller_strategy,
             buyer_strategy=buyer_strategy,
-            filename=args.filename,
-            iterations=args.iterations,
-            price=args.price
+            iterations=args.iterations
         )
 
         simulation_result = simulation.run()

@@ -18,6 +18,7 @@
 from typing import Generic, TypeVar
 
 from .protocol import Protocol
+from ..utils.json_stream import JsonObjectSocketStream
 
 
 T = TypeVar('T', bound=Protocol)
@@ -31,15 +32,15 @@ class Strategy(Generic[T]):
     def protocol(self) -> T:
         return self._protocol
 
-    def run(self) -> None:
+    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
         raise NotImplementedError()
 
 
 class SellerStrategy(Strategy[T]):
-    def run(self) -> None:
+    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
         raise NotImplementedError()
 
 
 class BuyerStrategy(Strategy[T]):
-    def run(self) -> None:
+    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
         raise NotImplementedError()

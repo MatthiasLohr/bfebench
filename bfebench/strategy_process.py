@@ -87,14 +87,12 @@ class ResourceUsage(NamedTuple):
 
 
 class StrategyProcess(Process):
-    def __init__(self, strategy: Strategy[Protocol], environment: Environment, p2p_stream: JsonObjectSocketStream,
-                 filename: str, price: int) -> None:
+    def __init__(self, strategy: Strategy[Protocol], environment: Environment,
+                 p2p_stream: JsonObjectSocketStream) -> None:
         super().__init__()
         self._environment = environment
         self._strategy = strategy
         self._p2p_stream = p2p_stream
-        self._filename = filename
-        self._price = price
 
         self._resource_usage: Optional[ResourceUsage] = None
         self._result_queue: Queue[ResourceUsage] = Queue()
@@ -102,7 +100,7 @@ class StrategyProcess(Process):
     def run(self) -> None:
         time_start = time.time()
         resources_start = getrusage(RUSAGE_SELF)
-        self._strategy.run()
+        self._strategy.run(self._p2p_stream)
         resources_end = getrusage(RUSAGE_SELF)
         time_end = time.time()
 

@@ -17,13 +17,14 @@
 
 from .protocol import Fairswap
 from ..strategy import SellerStrategy, BuyerStrategy
+from ...utils.json_stream import JsonObjectSocketStream
 
 
 class FaithfulSeller(SellerStrategy[Fairswap]):
-    def run(self) -> None:
-        pass
+    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
+        p2p_stream.send_object({'message': 'Hello world!'})
 
 
 class FaithfulBuyer(BuyerStrategy[Fairswap]):
-    def run(self) -> None:
-        pass
+    def run(self, p2p_stream: JsonObjectSocketStream) -> None:
+        print(p2p_stream.receive_object())

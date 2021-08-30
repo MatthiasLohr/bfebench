@@ -18,9 +18,8 @@
 from typing import Any
 
 from ..protocol import Protocol
-from ...environment import Environment
 
 
 class Fairswap(Protocol):
-    def __init__(self, environment: Environment, **kwargs: Any) -> None:
-        super().__init__(environment, **kwargs)
+    def __init__(self, slice_count: int = 4, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
