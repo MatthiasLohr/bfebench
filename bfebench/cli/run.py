@@ -61,7 +61,7 @@ class RunCommand(SubCommand):
             environment=environments_configuration.operator_environment,
             filename=args.filename,
             price=args.price,
-            **{key: value for key, value in args.protocol_parameters}
+            **{str(key).replace('-', '_'): value for key, value in args.protocol_parameters}
         )
 
         seller_strategy_cls = protocol_specification.seller_strategies.get(args.seller_strategy)
