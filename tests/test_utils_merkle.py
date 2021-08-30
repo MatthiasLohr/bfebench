@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from base64 import b64encode, b64decode
 from math import log2
 from unittest import TestCase
 
@@ -24,6 +25,32 @@ from bfebench.utils.merkle import MerkleTreeNode, MerkleTreeLeaf, from_bytes, mt
 
 
 class MerkleTest(TestCase):
+    EXAMPLE_TREE1 = MerkleTreeNode(
+        keccak,
+        MerkleTreeNode(
+            keccak,
+            MerkleTreeLeaf(
+                keccak,
+                generate_bytes(32)
+            ),
+            MerkleTreeLeaf(
+                keccak,
+                generate_bytes(32)
+            )
+        ),
+        MerkleTreeNode(
+            keccak,
+            MerkleTreeLeaf(
+                keccak,
+                generate_bytes(32)
+            ),
+            MerkleTreeLeaf(
+                keccak,
+                generate_bytes(32)
+            )
+        )
+    )
+
     def test_init(self) -> None:
         self.assertRaises(
             ValueError,
@@ -42,35 +69,23 @@ class MerkleTest(TestCase):
                 self.assertEqual(len(proof), int(log2(slice_count)))
                 self.assertTrue(MerkleTreeNode.validate_proof(tree.digest, leaf, index, proof, keccak))
 
-    def test_mt2obj2mt(self) -> None:
-        mt = MerkleTreeNode(
-            keccak,
-            MerkleTreeNode(
-                keccak,
-                MerkleTreeLeaf(
-                    keccak,
-                    generate_bytes(32)
-                ),
-                MerkleTreeLeaf(
-                    keccak,
-                    generate_bytes(32)
-                )
-            ),
-            MerkleTreeNode(
-                keccak,
-                MerkleTreeLeaf(
-                    keccak,
-                    generate_bytes(32)
-                ),
-                MerkleTreeLeaf(
-                    keccak,
-                    generate_bytes(32)
-                )
-            )
-        )
-
-        obj = mt2obj(mt)
+    def test_mt2obj2mt_plain(self) -> None:
+        obj = mt2obj(self.EXAMPLE_TREE1)
         mt2 = obj2mt(obj, keccak)
 
-        self.assertEqual(mt, mt2)
-        self.assertEqual(mt.digest, mt2.digest)
+        self.assertEqual(self.EXAMPLE_TREE1, mt2)
+        self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)
+
+    def test_mt2obj2mt_b64(self) -> None:
+        obj = mt2obj(self.EXAMPLE_TREE1, b64encode)
+        mt2 = obj2mt(obj, keccak, b64decode)
+
+        self.assertEqual(self.EXAMPLE_TREE1, mt2)
+        self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)
+
+    def test_mt2obj2mt_hex(self) -> None:
+        obj = mt2obj(self.EXAMPLE_TREE1, lambda b: bytes(b).hex())
+        mt2 = obj2mt(obj, keccak, bytes.fromhex)
+
+        self.assertEqual(self.EXAMPLE_TREE1, mt2)
+        self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)

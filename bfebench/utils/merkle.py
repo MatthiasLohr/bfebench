@@ -17,7 +17,7 @@
 
 import itertools
 import math
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 
 class MerkleTreeNode(object):
@@ -212,20 +212,27 @@ def from_list(items: List[bytes], digest_func: Callable[[bytes], bytes]) -> Merk
     )
 
 
-def mt2obj(node: MerkleTreeNode) -> Union[bytes, List[Any]]:
+def mt2obj(node: MerkleTreeNode,
+           encode_func: Optional[Callable[[bytes], Union[bytes, str]]] = None) -> Union[bytes, str, List[Any]]:
     if isinstance(node, MerkleTreeLeaf):
-        return node.data
+        if encode_func is None:
+            return node.data
+        else:
+            return encode_func(node.data)
     else:
-        return [mt2obj(child) for child in node.children]
+        return [mt2obj(child, encode_func) for child in node.children]
 
 
-def obj2mt(data: Union[bytes, List[Any]], digest_func: Callable[[bytes], bytes]) -> MerkleTreeNode:
+def obj2mt(data: Union[bytes, List[Any]], digest_func: Callable[[bytes], bytes],
+           decode_func: Optional[Callable[[Union[bytes, str]], bytes]] = None) -> MerkleTreeNode:
     if isinstance(data, List):
         return MerkleTreeNode(
             digest_func,
-            *[obj2mt(child, digest_func) for child in data]
+            *[obj2mt(child, digest_func, decode_func) for child in data]
         )
-    elif isinstance(data, bytes):
+    elif isinstance(data, bytes) and decode_func is None:
         return MerkleTreeLeaf(digest_func, data)
+    elif (isinstance(data, bytes) or isinstance(data, str)) and decode_func is not None:
+        return MerkleTreeLeaf(digest_func, decode_func(data))
     else:
         ValueError('cannot convert input of type %s to merkle tree' % type(data))
