@@ -223,7 +223,7 @@ def mt2obj(node: MerkleTreeNode,
         return [mt2obj(child, encode_func) for child in node.children]
 
 
-def obj2mt(data: Union[bytes, List[Any]], digest_func: Callable[[bytes], bytes],
+def obj2mt(data: Union[bytes, str, List[Any]], digest_func: Callable[[bytes], bytes],
            decode_func: Optional[Callable[[Union[bytes, str]], bytes]] = None) -> MerkleTreeNode:
     if isinstance(data, List):
         return MerkleTreeNode(
@@ -235,4 +235,4 @@ def obj2mt(data: Union[bytes, List[Any]], digest_func: Callable[[bytes], bytes],
     elif (isinstance(data, bytes) or isinstance(data, str)) and decode_func is not None:
         return MerkleTreeLeaf(digest_func, decode_func(data))
     else:
-        ValueError('cannot convert input of type %s to merkle tree' % type(data))
+        raise ValueError('cannot convert input of type %s to merkle tree' % type(data))

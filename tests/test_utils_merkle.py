@@ -85,7 +85,10 @@ class MerkleTest(TestCase):
 
     def test_mt2obj2mt_hex(self) -> None:
         obj = mt2obj(self.EXAMPLE_TREE1, lambda b: bytes(b).hex())
-        mt2 = obj2mt(obj, keccak, bytes.fromhex)
+        mt2 = obj2mt(obj, keccak, lambda s: bytes.fromhex(str(s)))
 
         self.assertEqual(self.EXAMPLE_TREE1, mt2)
         self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)
+
+    def test_obj2mt_error(self) -> None:
+        self.assertRaises(ValueError, obj2mt, 3, keccak)
