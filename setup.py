@@ -35,7 +35,9 @@ setup(
     license='Apache License 2.0',
     install_requires=[
         'hexbytes==0.2.1',
+        'Jinja2==3.0.1',
         'pycryptodome==3.10.1',
+        'py-solc-x==1.1.0',
         'PyYAML==5.4.1',
         'tabulate==0.8.9',
         'web3==5.21.0'
