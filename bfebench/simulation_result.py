@@ -19,16 +19,14 @@ from typing import List, NamedTuple
 
 from tabulate import tabulate
 
-from .strategy_process import ResourceUsage
+from .strategy_process import StrategyProcessResult
+from .utils.json_stream import JsonObjectSocketStreamForwarderStats
 
 
 class IterationResult(NamedTuple):
-    seller_resource_usage: ResourceUsage
-    buyer_resource_usage: ResourceUsage
-    seller2buyer_direct_bytes: int
-    buyer2seller_direct_bytes: int
-    seller2buyer_direct_objects: int
-    buyer2seller_direct_objects: int
+    seller_result: StrategyProcessResult
+    buyer_result: StrategyProcessResult
+    p2p_result: JsonObjectSocketStreamForwarderStats
 
 
 class SimulationResult(object):
@@ -44,36 +42,40 @@ class SimulationResult(object):
         return tabulate(
             tabular_data=[[
                 str(i + 1),
-                r.seller_resource_usage.realtime,
-                r.buyer_resource_usage.realtime,
-                r.seller_resource_usage.utime,
-                r.buyer_resource_usage.utime,
-                r.seller_resource_usage.stime,
-                r.buyer_resource_usage.stime,
-                r.seller2buyer_direct_bytes,
-                r.buyer2seller_direct_bytes,
-                r.seller2buyer_direct_objects,
-                r.buyer2seller_direct_objects,
-                0,  # TODO add seller blockchain transaction count
-                0,  # TODO add buyer blockchain transaction count
-                0,  # TODO add seller blockchain transaction fees
-                0  # TODO add buyer blockchain transaction fees
+                r.seller_result.realtime,
+                r.buyer_result.realtime,
+                r.seller_result.system_resource_stats.utime,
+                r.buyer_result.system_resource_stats.utime,
+                r.seller_result.system_resource_stats.stime,
+                r.buyer_result.system_resource_stats.stime,
+                r.p2p_result.bytes_1to2,
+                r.p2p_result.bytes_2to1,
+                r.p2p_result.count_1to2,
+                r.p2p_result.count_2to1,
+                r.seller_result.environment_stats.tx_count,
+                r.buyer_result.environment_stats.tx_count,
+                r.seller_result.environment_stats.tx_fees,
+                r.buyer_result.environment_stats.tx_fees,
+                r.seller_result.environment_stats.funds_diff,
+                r.buyer_result.environment_stats.funds_diff,
             ] for i, r in enumerate(self._iteration_results)] + [[
                 'Avg',
-                sum([r.seller_resource_usage.realtime for r in self._iteration_results]) / iterations,
-                sum([r.buyer_resource_usage.realtime for r in self._iteration_results]) / iterations,
-                sum([r.seller_resource_usage.utime for r in self._iteration_results]) / iterations,
-                sum([r.buyer_resource_usage.utime for r in self._iteration_results]) / iterations,
-                sum([r.seller_resource_usage.stime for r in self._iteration_results]) / iterations,
-                sum([r.buyer_resource_usage.stime for r in self._iteration_results]) / iterations,
-                sum([r.seller2buyer_direct_bytes for r in self._iteration_results]) / iterations,
-                sum([r.buyer2seller_direct_bytes for r in self._iteration_results]) / iterations,
-                sum([r.seller2buyer_direct_objects for r in self._iteration_results]) / iterations,
-                sum([r.buyer2seller_direct_objects for r in self._iteration_results]) / iterations,
-                0,  # TODO add seller blockchain transaction count
-                0,  # TODO add buyer blockchain transaction count
-                0,  # TODO add seller blockchain transaction fees
-                0  # TODO add buyer blockchain transaction fees
+                sum([r.seller_result.realtime for r in self._iteration_results]) / iterations,
+                sum([r.buyer_result.realtime for r in self._iteration_results]) / iterations,
+                sum([r.seller_result.system_resource_stats.utime for r in self._iteration_results]) / iterations,
+                sum([r.buyer_result.system_resource_stats.utime for r in self._iteration_results]) / iterations,
+                sum([r.seller_result.system_resource_stats.stime for r in self._iteration_results]) / iterations,
+                sum([r.buyer_result.system_resource_stats.stime for r in self._iteration_results]) / iterations,
+                sum([r.p2p_result.bytes_1to2 for r in self._iteration_results]) / iterations,
+                sum([r.p2p_result.bytes_2to1 for r in self._iteration_results]) / iterations,
+                sum([r.p2p_result.count_1to2 for r in self._iteration_results]) / iterations,
+                sum([r.p2p_result.count_2to1 for r in self._iteration_results]) / iterations,
+                sum([r.seller_result.environment_stats.tx_count for r in self._iteration_results]) / iterations,
+                sum([r.buyer_result.environment_stats.tx_count for r in self._iteration_results]) / iterations,
+                sum([r.seller_result.environment_stats.tx_fees for r in self._iteration_results]) / iterations,
+                sum([r.buyer_result.environment_stats.tx_fees for r in self._iteration_results]) / iterations,
+                sum([r.seller_result.environment_stats.funds_diff for r in self._iteration_results]) / iterations,
+                sum([r.buyer_result.environment_stats.funds_diff for r in self._iteration_results]) / iterations,
             ]],
             headers=[
                 '#',  # iteration / 'Avg'
@@ -89,7 +91,9 @@ class SimulationResult(object):
                 'B>S obj',  # objects directly sent from seller to buyer
                 'S Tx Ct',  # seller blockchain transaction count
                 'B Tx Ct',  # buyer blockchain transaction count
-                'S Tx Fees',  # seller blockchain transaction fees
-                'B Tx Fees'  # buyer blockchain transaction fees
+                'S Tx Fees (Gas)',  # seller blockchain transaction fees
+                'B Tx Fees (Gas)',  # buyer blockchain transaction fees
+                'S Funds Diff (Eth)',  # seller funds diff (Eth)
+                'B Funds Diff (Eth)',  # buyer funds diff (Eth)
             ]
         )

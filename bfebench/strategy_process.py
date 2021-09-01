@@ -31,13 +31,10 @@ from .utils.json_stream import JsonObjectSocketStream
 logger = logging.getLogger(__name__)
 
 
-class ResourceUsage(NamedTuple):
+class SystemResourceUsage(NamedTuple):
     """
     https://man7.org/linux/man-pages/man2/getrusage.2.html
     """
-
-    """real time"""
-    realtime: float = 0.0
 
     """user CPU time used"""
     utime: float = 0.0
@@ -88,6 +85,18 @@ class ResourceUsage(NamedTuple):
     nivcsw: int = 0
 
 
+class EnvironmentStatistics(NamedTuple):
+    tx_count: int
+    tx_fees: int
+    funds_diff: int
+
+
+class StrategyProcessResult(NamedTuple):
+    realtime: float
+    system_resource_stats: SystemResourceUsage
+    environment_stats: EnvironmentStatistics
+
+
 class StrategyProcess(Process):
     def __init__(self, strategy: Strategy[Protocol], environment: Environment,
                  p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
@@ -97,8 +106,8 @@ class StrategyProcess(Process):
         self._p2p_stream = p2p_stream
         self._opposite_address = opposite_address
 
-        self._resource_usage: Optional[ResourceUsage] = None
-        self._result_queue: Queue[ResourceUsage] = Queue()
+        self._result: Optional[StrategyProcessResult] = None
+        self._result_queue: Queue[StrategyProcessResult] = Queue()
 
     def run(self) -> None:
         time_start = time.time()
@@ -107,27 +116,34 @@ class StrategyProcess(Process):
         resources_end = getrusage(RUSAGE_SELF)
         time_end = time.time()
 
-        self._result_queue.put(ResourceUsage(
+        self._result_queue.put(StrategyProcessResult(
             realtime=time_end - time_start,
-            utime=resources_end.ru_utime - resources_start.ru_utime,
-            stime=resources_end.ru_stime - resources_start.ru_stime,
-            maxrss=resources_end.ru_maxrss - resources_start.ru_maxrss,
-            ixrss=resources_end.ru_ixrss - resources_start.ru_ixrss,
-            idrss=resources_end.ru_idrss - resources_start.ru_idrss,
-            isrss=resources_end.ru_isrss - resources_start.ru_isrss,
-            minflt=resources_end.ru_minflt - resources_start.ru_minflt,
-            majflt=resources_end.ru_majflt - resources_start.ru_majflt,
-            nswap=resources_end.ru_nswap - resources_start.ru_nswap,
-            inblock=resources_end.ru_inblock - resources_start.ru_inblock,
-            oublock=resources_end.ru_oublock - resources_start.ru_oublock,
-            msgsnd=resources_end.ru_msgsnd - resources_start.ru_msgsnd,
-            msgrcv=resources_end.ru_msgrcv - resources_start.ru_msgrcv,
-            nsignals=resources_end.ru_nsignals - resources_start.ru_nsignals,
-            nvcsw=resources_end.ru_nvcsw - resources_start.ru_nvcsw,
-            nivcsw=resources_end.ru_nivcsw - resources_start.ru_nivcsw
+            system_resource_stats=SystemResourceUsage(
+                utime=resources_end.ru_utime - resources_start.ru_utime,
+                stime=resources_end.ru_stime - resources_start.ru_stime,
+                maxrss=resources_end.ru_maxrss - resources_start.ru_maxrss,
+                ixrss=resources_end.ru_ixrss - resources_start.ru_ixrss,
+                idrss=resources_end.ru_idrss - resources_start.ru_idrss,
+                isrss=resources_end.ru_isrss - resources_start.ru_isrss,
+                minflt=resources_end.ru_minflt - resources_start.ru_minflt,
+                majflt=resources_end.ru_majflt - resources_start.ru_majflt,
+                nswap=resources_end.ru_nswap - resources_start.ru_nswap,
+                inblock=resources_end.ru_inblock - resources_start.ru_inblock,
+                oublock=resources_end.ru_oublock - resources_start.ru_oublock,
+                msgsnd=resources_end.ru_msgsnd - resources_start.ru_msgsnd,
+                msgrcv=resources_end.ru_msgrcv - resources_start.ru_msgrcv,
+                nsignals=resources_end.ru_nsignals - resources_start.ru_nsignals,
+                nvcsw=resources_end.ru_nvcsw - resources_start.ru_nvcsw,
+                nivcsw=resources_end.ru_nivcsw - resources_start.ru_nivcsw
+            ),
+            environment_stats=EnvironmentStatistics(
+                tx_count=self._environment.total_tx_count,
+                tx_fees=self._environment.total_tx_fees,
+                funds_diff=0  # TODO
+            )
         ))
 
-    def get_resource_usage(self) -> ResourceUsage:
-        if self._resource_usage is None:
-            self._resource_usage = self._result_queue.get(block=True)
-        return self._resource_usage
+    def get_process_result(self) -> StrategyProcessResult:
+        if self._result is None:
+            self._result = self._result_queue.get(block=True)
+        return self._result

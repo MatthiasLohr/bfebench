@@ -89,5 +89,6 @@ class JsonObjectSocketStreamForwarderTest(TestCase):
         self.assertEqual(received, {'foo': 'bar'})
         self.assertEqual(bytes_count, 14)
 
-        self.assertEqual(forwarder.objects_1to2, 1)
-        self.assertEqual(forwarder.bytes_1to2, 14)
+        stats = forwarder.get_stats()
+        self.assertEqual(stats.count_1to2, 1)
+        self.assertEqual(stats.bytes_1to2, 14)

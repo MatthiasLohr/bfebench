@@ -42,6 +42,9 @@ class Environment(object):
                     self._wallet_address
                 ))
 
+        self._total_tx_count = 0
+        self._total_tx_fees = 0
+
     @property
     def web3(self) -> Web3:
         return self._web3
@@ -53,3 +56,11 @@ class Environment(object):
     @property
     def private_key(self) -> Optional[HexBytes]:
         return self._private_key
+
+    @property
+    def total_tx_count(self) -> int:
+        return self._total_tx_count
+
+    @property
+    def total_tx_fees(self) -> int:
+        return self._total_tx_fees

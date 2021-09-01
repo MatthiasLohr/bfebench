@@ -19,7 +19,7 @@ import json
 import socket
 from pathlib import Path
 from threading import Thread
-from typing import Any, Optional, Tuple
+from typing import Any, NamedTuple, Optional, Tuple
 
 
 class JsonObjectSocketStreamError(IOError):
@@ -134,11 +134,18 @@ class JsonObjectUnixDomainSocketClientStream(JsonObjectSocketStream):
         self.close()
 
 
+class JsonObjectSocketStreamForwarderStats(NamedTuple):
+    count_1to2: int
+    count_2to1: int
+    bytes_1to2: int
+    bytes_2to1: int
+
+
 class JsonObjectSocketStreamForwarder(object):
     class Counter(object):
         def __init__(self) -> None:
+            self.count = 0
             self.bytes = 0
-            self.objects = 0
 
     def __init__(self, stream1: JsonObjectSocketStream, stream2: JsonObjectSocketStream) -> None:
         self._stream1 = stream1
@@ -158,21 +165,13 @@ class JsonObjectSocketStreamForwarder(object):
             daemon=True
         )
 
-    @property
-    def bytes_1to2(self) -> int:
-        return self._counter_1to2.bytes
-
-    @property
-    def bytes_2to1(self) -> int:
-        return self._counter_2to1.bytes
-
-    @property
-    def objects_1to2(self) -> int:
-        return self._counter_1to2.objects
-
-    @property
-    def objects_2to1(self) -> int:
-        return self._counter_2to1.objects
+    def get_stats(self) -> JsonObjectSocketStreamForwarderStats:
+        return JsonObjectSocketStreamForwarderStats(
+            count_1to2=self._counter_1to2.count,
+            count_2to1=self._counter_2to1.count,
+            bytes_1to2=self._counter_1to2.bytes,
+            bytes_2to1=self._counter_2to1.bytes
+        )
 
     def start(self) -> None:
         self._thread_1to2.start()
@@ -185,6 +184,6 @@ class JsonObjectSocketStreamForwarder(object):
             received, bytes_count = source.receive_object()
             if received is None:  # socket has been closed cleanly
                 break
-            counter.objects += 1
+            counter.count += 1
             counter.bytes += bytes_count
             target.send_object(received)

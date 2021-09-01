@@ -108,12 +108,9 @@ class Simulation(object):
             )
 
             simulation_result.add_iteration_result(IterationResult(
-                seller_resource_usage=seller_process.get_resource_usage(),
-                buyer_resource_usage=buyer_process.get_resource_usage(),
-                seller2buyer_direct_bytes=p2p_forwarder.bytes_1to2,
-                buyer2seller_direct_bytes=p2p_forwarder.bytes_2to1,
-                seller2buyer_direct_objects=p2p_forwarder.objects_1to2,
-                buyer2seller_direct_objects=p2p_forwarder.objects_2to1
+                seller_result=seller_process.get_process_result(),
+                buyer_result=buyer_process.get_process_result(),
+                p2p_result=p2p_forwarder.get_stats()
             ))
 
             seller_p2p_client.close()
