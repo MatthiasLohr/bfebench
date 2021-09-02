@@ -45,6 +45,7 @@ setup(
     python_requires='>=3.7.*, <4',
     packages=find_packages(exclude=['tests', 'tests.*']),
     package_data={
+        '': ['*.sol'],
         'bfebench': ['py.typed']
     },
     entry_points={
