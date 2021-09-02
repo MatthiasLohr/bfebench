@@ -101,6 +101,9 @@ class MerkleTreeNode(object):
             self.digest.hex()
         )
 
+    def __str__(self) -> str:
+        return '\n  '.join(['#:' + self.digest.hex()] + '\n'.join([str(child) for child in self.children]).split('\n'))
+
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MerkleTreeNode):
             return self.digest == other.digest
@@ -120,7 +123,7 @@ class MerkleTreeLeaf(MerkleTreeNode):
 
     @property
     def digest(self) -> bytes:
-        return self._digest_func(b''.join(self.data_as_list()))
+        return self.digest_func(b''.join(self.data_as_list()))
 
     @property
     def data(self) -> bytes:
@@ -155,6 +158,9 @@ class MerkleTreeLeaf(MerkleTreeNode):
             str(self.data)
         )
 
+    def __str__(self) -> str:
+        return 'D:' + self.data.hex()
+
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MerkleTreeLeaf):
             return self.data == other.data
@@ -166,12 +172,6 @@ class MerkleTreeLeaf(MerkleTreeNode):
             return not self.data == other.data
         else:
             return False
-
-
-class MerkleTreeHashLeaf(MerkleTreeLeaf):
-    @property
-    def digest(self) -> bytes:
-        return self.data
 
 
 def from_leaves(leaves: List[MerkleTreeLeaf]) -> MerkleTreeNode:

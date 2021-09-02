@@ -84,11 +84,23 @@ class MerkleTest(TestCase):
         self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)
 
     def test_mt2obj2mt_hex(self) -> None:
-        obj = mt2obj(self.EXAMPLE_TREE1, lambda b: bytes(b).hex())
-        mt2 = obj2mt(obj, keccak, lambda s: bytes.fromhex(str(s)))
+        obj = mt2obj(self.EXAMPLE_TREE1, encode_func=lambda b: bytes(b).hex())
+        mt2 = obj2mt(obj, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s)))
 
         self.assertEqual(self.EXAMPLE_TREE1, mt2)
         self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)
 
     def test_obj2mt_error(self) -> None:
         self.assertRaises(ValueError, obj2mt, 3, keccak)
+
+    def test_from_bytes_encode_decode(self) -> None:
+        data = generate_bytes(32 * 2 * 16)
+        tree_original = from_bytes(data, digest_func=keccak, slice_count=16)
+
+        self.assertEqual(b''.join([leaf.data for leaf in tree_original.leaves]), data)
+
+        tree_encoded = mt2obj(tree_original, encode_func=lambda b: bytes(b).hex())
+        tree_decoded = obj2mt(tree_encoded, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s)))
+
+        self.assertEqual(b''.join([leaf.data for leaf in tree_decoded.leaves]), data)
+        self.assertEqual(tree_original.digest, tree_decoded.digest)

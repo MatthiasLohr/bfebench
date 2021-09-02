@@ -20,7 +20,7 @@ from typing import List, Tuple, Type
 
 from Crypto.Hash import keccak as base_keccak
 
-from bfebench.utils.merkle import MerkleTreeNode, MerkleTreeLeaf, MerkleTreeHashLeaf, from_leaves
+from bfebench.utils.merkle import MerkleTreeNode, MerkleTreeLeaf, from_leaves
 from bfebench.utils.xor import xor_crypt
 
 
@@ -40,8 +40,8 @@ def encode(root: MerkleTreeNode, key: bytes) -> MerkleTreeNode:
     digests_enc = [crypt(digest, 2 * len(leaves_enc) + index, key) for index, digest in
                    enumerate(root.digests_pack)]
     return from_leaves([MerkleTreeLeaf(keccak, x) for x in leaves_enc]
-                       + [MerkleTreeHashLeaf(keccak, x) for x in digests_enc]
-                       + [MerkleTreeHashLeaf(keccak, B032)])
+                       + [MerkleTreeLeaf(keccak, x) for x in digests_enc]
+                       + [MerkleTreeLeaf(keccak, B032)])
 
 
 def encode_forge_first_leaf(root: MerkleTreeNode, key: bytes) -> MerkleTreeNode:
@@ -51,8 +51,8 @@ def encode_forge_first_leaf(root: MerkleTreeNode, key: bytes) -> MerkleTreeNode:
     digests_enc = [crypt(digest, 2 * len(leaf_data_enc) + index, key) for index, digest in
                    enumerate(root.digests_pack)]
     return from_leaves([MerkleTreeLeaf(keccak, x) for x in leaf_data_enc]
-                       + [MerkleTreeHashLeaf(keccak, x) for x in digests_enc]
-                       + [MerkleTreeHashLeaf(keccak, B032)])
+                       + [MerkleTreeLeaf(keccak, x) for x in digests_enc]
+                       + [MerkleTreeLeaf(keccak, B032)])
 
 
 def encode_forge_first_leaf_first_hash(root: MerkleTreeNode, key: bytes) -> MerkleTreeNode:
@@ -70,9 +70,9 @@ def encode_forge_first_leaf_first_hash(root: MerkleTreeNode, key: bytes) -> Merk
         [
             MerkleTreeLeaf(keccak, x) for x in leaf_data_enc
         ] + [
-            MerkleTreeHashLeaf(keccak, x) for x in digests_enc
+            MerkleTreeLeaf(keccak, x) for x in digests_enc
         ] + [
-            MerkleTreeHashLeaf(keccak, B032)
+            MerkleTreeLeaf(keccak, B032)
         ]
     )
 
