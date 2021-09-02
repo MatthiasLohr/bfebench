@@ -23,6 +23,7 @@ from typing import Any, Dict, Generator, Optional, Tuple
 
 import jinja2
 import solcx  # type: ignore
+from eth_typing.evm import ChecksumAddress
 
 
 SOLC_DEFAULT_VERSION = 'v0.6.1'
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class Contract(object):
-    def __init__(self, abi: Dict[str, Any], bytecode: str, address: Optional[str] = None) -> None:
+    def __init__(self, abi: Dict[str, Any], bytecode: str, address: Optional[ChecksumAddress] = None) -> None:
         self._abi = abi
         self._bytecode = bytecode
         self._address = address
@@ -45,11 +46,11 @@ class Contract(object):
         return self._bytecode
 
     @property
-    def address(self) -> Optional[str]:
+    def address(self) -> Optional[ChecksumAddress]:
         return self._address
 
     @address.setter
-    def address(self, address: str) -> None:
+    def address(self, address: ChecksumAddress) -> None:
         self._address = address
 
 

@@ -15,12 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
+from typing import Any, Optional
 
 from eth_typing.evm import ChecksumAddress
 from hexbytes.main import HexBytes
 from web3 import Web3
+from web3.middleware.geth_poa import geth_poa_middleware
+from web3.middleware.signing import construct_sign_and_send_raw_middleware
 from eth_account.account import Account
+from web3.types import TxReceipt
+
+from .contract import Contract
 
 
 class Environment(object):
@@ -45,6 +50,11 @@ class Environment(object):
         self._total_tx_count = 0
         self._total_tx_fees = 0
 
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+        if self.private_key is not None:
+            self.web3.middleware_onion.add(construct_sign_and_send_raw_middleware(self.private_key))
+
     @property
     def web3(self) -> Web3:
         return self._web3
@@ -64,3 +74,47 @@ class Environment(object):
     @property
     def total_tx_fees(self) -> int:
         return self._total_tx_fees
+
+    def deploy_contract(self, contract: Contract, *constructor_args: Any, **constructor_kwargs: Any) -> ChecksumAddress:
+        web3_contract = self.web3.eth.contract(abi=contract.abi, bytecode=contract.bytecode)
+        tx_receipt = self._send_transaction(
+            factory=web3_contract.constructor(*constructor_args, **constructor_kwargs)
+        )
+        contract.address = ChecksumAddress(tx_receipt['contractAddress'])
+        return contract.address
+
+    def send_contract_transaction(self, contract: Contract, method: str, value: int = 0, *args: Any,
+                                  **kwargs: Any) -> None:
+        web3_contract = self._web3.eth.contract(address=contract.address, abi=contract.abi)
+        web3_contract_method = getattr(web3_contract.functions, method)
+        tx_receipt = self._send_transaction(
+            factory=web3_contract_method(*args, **kwargs),
+            value=value
+        )
+        print(tx_receipt)  # TODO remove print, return value
+
+    def send_direct_transaction(self, to: Optional[ChecksumAddress], value: int = 0) -> None:
+        self._send_transaction(to=to, value=value)
+
+    def _send_transaction(self, to: Optional[ChecksumAddress] = None, factory: Optional[Any] = None,
+                          value: int = 0) -> TxReceipt:
+        tx_draft = {
+            'from': self.wallet_address,
+            'nonce': self.web3.eth.get_transaction_count(self.wallet_address, 'pending'),
+            'chainId': self.web3.eth.chain_id,
+            'value': value
+        }
+
+        if to is not None:
+            tx_draft['to'] = to
+
+        if factory is not None:
+            tx_draft = factory.buildTransaction(tx_draft)
+
+        tx_hash = self.web3.eth.send_transaction(tx_draft)
+        tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+
+        self._total_tx_count += 1
+        self._total_tx_fees += tx_receipt['gasUsed']  # type: ignore
+
+        return tx_receipt
