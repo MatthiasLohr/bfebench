@@ -20,6 +20,7 @@ from typing import Any, Optional
 from eth_typing.evm import ChecksumAddress
 from hexbytes.main import HexBytes
 from web3 import Web3
+from web3.contract import Contract as Web3Contract
 from web3.middleware.geth_poa import geth_poa_middleware
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
 from eth_account.account import Account
@@ -83,9 +84,12 @@ class Environment(object):
         contract.address = ChecksumAddress(tx_receipt['contractAddress'])
         return contract.address
 
+    def get_web3_contract(self, contract: Contract) -> Web3Contract:
+        return self._web3.eth.contract(address=contract.address, abi=contract.abi)
+
     def send_contract_transaction(self, contract: Contract, method: str, value: int = 0, *args: Any,
                                   **kwargs: Any) -> None:
-        web3_contract = self._web3.eth.contract(address=contract.address, abi=contract.abi)
+        web3_contract = self.get_web3_contract(contract)
         web3_contract_method = getattr(web3_contract.functions, method)
         tx_receipt = self._send_transaction(
             factory=web3_contract_method(*args, **kwargs),

@@ -58,7 +58,6 @@ class RunCommand(SubCommand):
             return 1
 
         protocol = protocol_specification.protocol(
-            environment=environments_configuration.operator_environment,
             filename=args.filename,
             price=args.price,
             **{str(key).replace('-', '_'): value for key, value in args.protocol_parameters}

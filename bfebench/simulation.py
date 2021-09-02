@@ -59,12 +59,14 @@ class Simulation(object):
         logger.debug('setting up protocol simulation...')
         simulation_result = SimulationResult()
         self.protocol.set_up_simulation(
+            environment=self.environments.operator_environment,
             seller_address=self.environments.seller_environment.wallet_address,
             buyer_address=self.environments.buyer_environment.wallet_address
         )
         for iteration in range(self._iterations):
             logger.debug('setting up protocol iteration...')
             self.protocol.set_up_iteration(
+                environment=self.environments.operator_environment,
                 seller_address=self.environments.seller_environment.wallet_address,
                 buyer_address=self.environments.buyer_environment.wallet_address
             )
@@ -103,6 +105,7 @@ class Simulation(object):
 
             logger.debug('tearing down protocol iteration')
             self.protocol.tear_down_iteration(
+                environment=self.environments.operator_environment,
                 seller_address=self.environments.seller_environment.wallet_address,
                 buyer_address=self.environments.buyer_environment.wallet_address
             )
@@ -129,6 +132,7 @@ class Simulation(object):
 
         logger.debug('tearing down protocol simulation')
         self.protocol.tear_down_simulation(
+            environment=self.environments.operator_environment,
             seller_address=self.environments.seller_environment.wallet_address,
             buyer_address=self.environments.buyer_environment.wallet_address
         )

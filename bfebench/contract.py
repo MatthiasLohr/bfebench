@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 class Contract(object):
-    def __init__(self, abi: Dict[str, Any], bytecode: str, address: Optional[ChecksumAddress] = None) -> None:
+    def __init__(self, abi: Dict[str, Any], bytecode: Optional[str] = None,
+                 address: Optional[ChecksumAddress] = None) -> None:
         self._abi = abi
         self._bytecode = bytecode
         self._address = address
@@ -42,7 +43,7 @@ class Contract(object):
         return self._abi
 
     @property
-    def bytecode(self) -> str:
+    def bytecode(self) -> Optional[str]:
         return self._bytecode
 
     @property

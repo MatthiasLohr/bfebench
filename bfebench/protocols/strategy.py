@@ -15,11 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 from typing import Generic, TypeVar
 
 from eth_typing.evm import ChecksumAddress
 
 from .protocol import Protocol
+from ..environment import Environment
 from ..utils.json_stream import JsonObjectSocketStream
 
 
@@ -29,20 +31,28 @@ T = TypeVar('T', bound=Protocol)
 class Strategy(Generic[T]):
     def __init__(self, protocol: T) -> None:
         self._protocol = protocol
+        self._logger = logging.getLogger('%s.%s' % (self.__class__.__module__, self.__class__.__qualname__))
 
     @property
     def protocol(self) -> T:
         return self._protocol
 
-    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
+    @property
+    def logger(self) -> logging.Logger:
+        return self._logger
+
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
         raise NotImplementedError()
 
 
 class SellerStrategy(Strategy[T]):
-    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
         raise NotImplementedError()
 
 
 class BuyerStrategy(Strategy[T]):
-    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
         raise NotImplementedError()

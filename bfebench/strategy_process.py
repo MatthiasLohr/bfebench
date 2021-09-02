@@ -112,7 +112,11 @@ class StrategyProcess(Process):
     def run(self) -> None:
         time_start = time.time()
         resources_start = getrusage(RUSAGE_SELF)
-        self._strategy.run(self._p2p_stream, self._opposite_address)
+        self._strategy.run(
+            environment=self._environment,
+            p2p_stream=self._p2p_stream,
+            opposite_address=self._opposite_address
+        )
         resources_end = getrusage(RUSAGE_SELF)
         time_end = time.time()
 

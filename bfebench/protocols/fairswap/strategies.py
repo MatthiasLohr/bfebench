@@ -23,14 +23,16 @@ from eth_typing.evm import ChecksumAddress
 from .protocol import Fairswap
 from .util import keccak, encode
 from ..strategy import SellerStrategy, BuyerStrategy
-from ...contract import SolidityContractCollection
+from ...contract import SolidityContractCollection, Contract
+from ...environment import Environment
 from ...utils.bytes import generate_bytes
 from ...utils.json_stream import JsonObjectSocketStream
-from ...utils.merkle import from_bytes, mt2obj
+from ...utils.merkle import from_bytes, mt2obj, obj2mt
 
 
 class FaithfulSeller(SellerStrategy[Fairswap]):
-    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
         # === PHASE 1: transfer file / initialize (deploy contract) ===
         # transmit encrypted data
         with open(self.protocol.filename, 'rb') as fp:
