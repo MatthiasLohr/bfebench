@@ -1,5 +1,26 @@
 # BFEBench - Blockchain-based Fair Exchange Benchmark Tool
 
+## Usage
+
+  * Download and install `bfebench` (e.g., by cloning the git repository and executing `pip install -e .`).
+    We suggest using a virtual environment for that.
+  * Select a Ethereum compatible blockchain platform to run `bfebench` on.
+    We provide a couple of test networks in the [blockchain-networks](./blockchain-networks) directory,
+    which are preconfigured and can be started using [docker-compose](https://docs.docker.com/compose/).
+  * Create an [environments configuration file](./docs/environments_configuration.md) for the blockchain environment
+    you selected.
+    For the test networks in [blockchain-networks](./blockchain-networks), we provide a ready-to-use
+    environments configuration file (named `bfebench-environments.yaml`).
+  * Select a protocol for benchmarking.
+    You can list all available protocols by executing `bfebench list-protocols`.
+  * Select the strategies to be simulated for seller and buyer.
+    You can list all available strategies for the selected protocol by executing `bfebench list-strategies <protocol>`.
+  * Start the simulation by executing
+    `bfebench run <protocol> <seller strategy> <buyer strategy> <file to be exchanged> -e <environments configuration>`.
+
+For a list of all supported commands and options run `bfebench -h`.
+
+
 ## Project Goals
 
 The following features are planned to be supported:

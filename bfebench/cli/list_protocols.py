@@ -15,27 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+from argparse import ArgumentParser, Namespace
 
-from bfebench.errors import BaseError
-from .command import SubCommandManager
-from .list_protocols import ListProtocolsCommand
-from .list_strategies import ListStrategiesCommand
-from .run import RunCommand
+from bfebench.protocols import PROTOCOL_SPECIFICATIONS
+from .command import SubCommand
 
 
-logger = logging.getLogger(__name__)
+class ListProtocolsCommand(SubCommand):
+    def __init__(self, argument_parser: ArgumentParser) -> None:
+        super().__init__(argument_parser)
 
+    def __call__(self, args: Namespace) -> int:
+        for protocol in PROTOCOL_SPECIFICATIONS.keys():
+            print(protocol)
 
-def main() -> int:
-    scm = SubCommandManager()
-
-    scm.add_sub_command('run', RunCommand)
-    scm.add_sub_command('list-protocols', ListProtocolsCommand)
-    scm.add_sub_command('list-strategies', ListStrategiesCommand)
-
-    try:
-        return scm.run()
-    except BaseError as e:
-        logger.error('A general error occurred.', exc_info=e)
-        return 1
+        return 0
