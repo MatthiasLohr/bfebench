@@ -16,7 +16,9 @@
   * Select the strategies to be simulated for seller and buyer.
     You can list all available strategies for the selected protocol by executing `bfebench list-strategies <protocol>`.
   * Start the simulation by executing
-    `bfebench run <protocol> <seller strategy> <buyer strategy> <file to be exchanged> -e <environments configuration>`.
+    ```
+    bfebench run <protocol> <seller strategy> <buyer strategy> <file to be exchanged> -e <environments configuration>
+    ```
 
 For a list of all supported commands and options run `bfebench -h`.
 
