@@ -63,7 +63,7 @@ class JsonObjectSocketStream(object):
             self._buffer += chunk
 
             while True:
-                new_object_end_pos = self._buffer.find(b'}', object_end_pos)
+                new_object_end_pos = self._buffer.find(b'}', object_end_pos + 1)
                 if new_object_end_pos == -1:
                     break
 

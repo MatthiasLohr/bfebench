@@ -59,6 +59,18 @@ class JsonObjectSocketStream(TestCase):
         self.assertEqual(received, {'reply': 42})
         self.assertEqual(bytes_count, 13)
 
+        # send nested message from client to server
+        nested_test_data = {
+            'list': ['a', 'b'],
+            'object': {'foo': 'bar'},
+            'list_with_objects': [{'a': 1}, {'b': 2}],
+            'object_with_lists': {'a': [1, 2], 'b': [3, 4]},
+            'object_with_objects': {'a': {'foo': 'bar'}}
+        }
+        client.send_object(nested_test_data)
+        received, bytes_count = server.receive_object()
+        self.assertEqual(nested_test_data, received)
+
 
 class JsonObjectSocketStreamForwarderTest(TestCase):
     def setUp(self) -> None:
