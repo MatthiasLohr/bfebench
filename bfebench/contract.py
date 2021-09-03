@@ -24,9 +24,9 @@ from typing import Any, Dict, Generator, Optional, Tuple
 import jinja2
 import solcx  # type: ignore
 from eth_typing.evm import ChecksumAddress
+from semantic_version import Version
 
-
-SOLC_DEFAULT_VERSION = 'v0.6.1'
+SOLC_DEFAULT_VERSION = '0.6.1'
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +82,10 @@ class SolidityContract(Contract):
     def compile(contract_name: str, contract_code: str, compiler_kwargs: Optional[Dict[str, Any]] = None,
                 solc_version: str = SOLC_DEFAULT_VERSION) -> Tuple[Dict[str, Any], str]:
         # configure solc
-        logger.debug('Checking for solc version %s' % solc_version)
-        if solc_version not in solcx.get_installed_solc_versions():
-            logger.debug('solc %s not found, installing...' % solc_version)
+        if Version(solc_version) in solcx.get_installed_solc_versions():
+            logger.debug('checking for solc %s: found' % solc_version)
+        else:
+            logger.debug('checking for solc %s: not found, installing' % solc_version)
             solcx.install_solc(solc_version)
         solcx.set_solc_version(solc_version, silent=True)
         compile_result = solcx.compile_source(
