@@ -24,7 +24,7 @@ from typing import Any, Dict, Generator, Optional, Tuple
 import jinja2
 import solcx  # type: ignore
 from eth_typing.evm import ChecksumAddress
-from semantic_version import Version
+from semantic_version import Version  # type: ignore
 
 SOLC_DEFAULT_VERSION = '0.6.1'
 
