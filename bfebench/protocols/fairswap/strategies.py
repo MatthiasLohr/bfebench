@@ -59,10 +59,12 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
             }
         )
         contract = contract_collection.get(Fairswap.CONTRACT_NAME)
+        environment.deploy_contract(contract)
 
         p2p_stream.send_object({
             'contract_address': contract.address,
-            'tree': mt2obj(data_merkle_encrypted, lambda b: bytes(b).hex())
+            'contract_abi': contract.abi,
+            'tree': mt2obj(data_merkle_encrypted, encode_func=lambda b: bytes(b).hex())
         })
 
         # === PHASE 2: wait for buyer accept ===
@@ -76,13 +78,44 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
 
 
 class FaithfulBuyer(BuyerStrategy[Fairswap]):
-    def run(self, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress) -> None:
+    def __init__(self, protocol: Fairswap) -> None:
+        super().__init__(protocol)
+
+        # caching expected file digest here to avoid hashing to be counted during execution
+        with open(self.protocol.filename, 'rb') as fp:
+            data = fp.read()
+        data_merkle = from_bytes(data, keccak, slice_count=self.protocol.slice_count)
+        self._expected_plain_digest = data_merkle.digest
+
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
         # === PHASE 1: wait for seller initialization ===
         init_info, byte_count = p2p_stream.receive_object()
-        print(init_info.get('contract_address'))
+        data_merkle_encrypted = obj2mt(
+            data=init_info.get('tree'),
+            digest_func=keccak,
+            decode_func=lambda s: bytes.fromhex(str(s))
+        )
+        contract = Contract(
+            abi=init_info.get('contract_abi'),
+            address=init_info.get('contract_address')
+        )
+        web3_contract = environment.get_web3_contract(contract)
 
         # === PHASE 2: accept ===
-        pass  # TODO implement
+        if web3_contract.functions.fileRoot().call() == self._expected_plain_digest:
+            self.logger.debug('confirming plain file hash')
+        else:
+            self.logger.debug('wrong plain file hash')
+            return
+
+        if web3_contract.functions.ciphertextRoot().call() == data_merkle_encrypted.digest:
+            self.logger.debug('confirming ciphertext hash')
+        else:
+            self.logger.debug('wrong ciphertext hash')
+            return
+
+        environment.send_contract_transaction(contract, 'accept', value=self.protocol.price)
 
         # === PHASE 3: wait for key revelation ===
         pass  # TODO implement

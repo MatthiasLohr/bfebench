@@ -88,14 +88,14 @@ class Environment(object):
         return self._web3.eth.contract(address=contract.address, abi=contract.abi)
 
     def send_contract_transaction(self, contract: Contract, method: str, value: int = 0, *args: Any,
-                                  **kwargs: Any) -> None:
+                                  **kwargs: Any) -> TxReceipt:
         web3_contract = self.get_web3_contract(contract)
         web3_contract_method = getattr(web3_contract.functions, method)
         tx_receipt = self._send_transaction(
             factory=web3_contract_method(*args, **kwargs),
             value=value
         )
-        print(tx_receipt)  # TODO remove print, return value
+        return tx_receipt
 
     def send_direct_transaction(self, to: Optional[ChecksumAddress], value: int = 0) -> None:
         self._send_transaction(to=to, value=value)
