@@ -128,7 +128,7 @@ class SolidityContractCollection(object):
                                    contract_filename: Optional[str] = None) -> None:
         if contract_filename is None:
             if contract_template_path.endswith('.tpl.sol'):
-                contract_filename = os.path.basename(contract_template_path)[:-7] + '.sol'
+                contract_filename = os.path.basename(contract_template_path)[:-8] + '.sol'
             else:
                 contract_filename = '%.sol' % contract_name
 
