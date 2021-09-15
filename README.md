@@ -1,5 +1,9 @@
 # BFEBench - Blockchain-based Fair Exchange Benchmark Tool
 
+The BFEbench provides a benchmark framework for blockchain based fair exchange protocol.
+For the main project goals see the [base milestone](%"Comparison Fairswap vs. StateChannelFairswap")
+
+
 ## Usage
 
   * Download and install `bfebench` (e.g., by cloning the git repository and executing `pip install -e .`).
@@ -21,27 +25,6 @@
     ```
 
 For a list of all supported commands and options run `bfebench -h`.
-
-
-## Project Goals
-
-The following features are planned to be supported:
-
-  * Protocol Implementations
-    * [ ] FairSwap
-    * [ ] FairSwap with State Channels
-    * [ ] OptiSwap (optional)
-    * [ ] SmartJudge FairSwap (optional)
-  * Seller/Buyer Strategies
-    * [ ] Successful Exchange, Max Benefit (faithful execution)
-    * [ ] Max Benefit
-    * [ ] Max Damage
-  * Aspect Analysis
-    * [ ] Overall performance (exchanges/second)
-    * [ ] Blockchain performance (tx/s, limiting factor?)
-    * [ ] CPU performance of parties
-    * [ ] cost (tx fees, CPU/RAM required)
-    * [ ] Cost Fairness
 
 
 ## Evaluation
