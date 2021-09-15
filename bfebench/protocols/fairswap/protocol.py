@@ -26,6 +26,7 @@ from ...errors import ProtocolInitializationError
 
 DEFAULT_SLICE_COUNT = 4
 DEFAULT_TIMEOUT = 60  # 60 seconds
+DEFAULT_WAIT_POLL_INTERVAL = 0.3  # 300 ms
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,8 @@ class Fairswap(Protocol):
     CONTRACT_NAME = 'FileSale'
     CONTRACT_TEMPLATE_FILE = 'fairswap.tpl.sol'
 
-    def __init__(self, slice_count: int = DEFAULT_SLICE_COUNT, timeout: int = DEFAULT_TIMEOUT, **kwargs: Any) -> None:
+    def __init__(self, slice_count: int = DEFAULT_SLICE_COUNT, timeout: int = DEFAULT_TIMEOUT,
+                 wait_poll_interval: float = DEFAULT_WAIT_POLL_INTERVAL, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
         slice_count = int(slice_count)
@@ -43,13 +45,21 @@ class Fairswap(Protocol):
             raise ProtocolInitializationError('slice_count must be a power of 2')
 
         self._slice_count = slice_count
-        self._timeout = timeout
+        self._timeout = int(timeout)
+        self._wait_poll_interval = float(wait_poll_interval)
 
         file_size = os.path.getsize(self.filename)
         if ((file_size / slice_count) % 32) > 0:
             raise ProtocolInitializationError('file size must be a multiple of 32 bytes * %d slices' % slice_count)
 
         self._slice_length = int(file_size / slice_count)
+
+        logger.debug('initialized Fairswap with slice_count=%d slice_length=%d timeout=%d wait_poll_interval=%d' % (
+            self.slice_count,
+            self.slice_length,
+            self.timeout,
+            self.wait_poll_interval
+        ))
 
     @property
     def slice_count(self) -> int:
@@ -62,3 +72,7 @@ class Fairswap(Protocol):
     @property
     def timeout(self) -> int:
         return self._timeout
+
+    @property
+    def wait_poll_interval(self) -> float:
+        return self._wait_poll_interval

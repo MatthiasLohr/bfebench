@@ -87,7 +87,7 @@ class Environment(object):
     def get_web3_contract(self, contract: Contract) -> Web3Contract:
         return self._web3.eth.contract(address=contract.address, abi=contract.abi)
 
-    def send_contract_transaction(self, contract: Contract, method: str, value: int = 0, *args: Any,
+    def send_contract_transaction(self, contract: Contract, method: str, *args: Any, value: int = 0,
                                   **kwargs: Any) -> TxReceipt:
         web3_contract = self.get_web3_contract(contract)
         web3_contract_method = getattr(web3_contract.functions, method)
