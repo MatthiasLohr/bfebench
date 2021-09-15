@@ -17,7 +17,6 @@
 
 import os
 from math import log2
-from time import time, sleep
 
 from eth_typing.evm import ChecksumAddress
 
@@ -25,7 +24,7 @@ from .protocol import Fairswap
 from .util import keccak, encode, B032, decode, LeafDigestMismatchError, NodeDigestMismatchError
 from ..strategy import SellerStrategy, BuyerStrategy
 from ...contract import SolidityContractCollection, Contract
-from ...environment import Environment
+from ...environment import Environment, EnvironmentWaitResult
 from ...utils.bytes import generate_bytes
 from ...utils.json_stream import JsonObjectSocketStream
 from ...utils.merkle import from_bytes, mt2obj, obj2mt
@@ -71,8 +70,14 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
 
         # === PHASE 2: wait for buyer accept ===
         self.logger.debug('waiting for accept')
-        while web3_contract.functions.phase().call() != 2:
-            sleep(self.protocol.wait_poll_interval)
+        result = environment.wait(
+            timeout=web3_contract.functions.timeout().call() + 1,
+            condition=lambda: web3_contract.functions.phase().call() == 2
+        )
+        if result == EnvironmentWaitResult.TIMEOUT:
+            self.logger.debug('timeout reached, requesting refund')
+            environment.send_contract_transaction(contract, 'refund')
+            return
         self.logger.debug('accepted')
 
         # === PHASE 3: reveal key ===
@@ -80,22 +85,17 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
 
         # === PHASE 5: finalize
         self.logger.debug('waiting for confirmation or timeout...')
-        timeout = web3_contract.functions.timeout().call() + 1
-        while True:
-            if not environment.web3.eth.get_code(contract.address):
-                self.logger.debug('contract has been destroyed. quitting.')
-                return
-            if time() > timeout and environment.web3.eth.get_block('latest').timestamp >= timeout:
-                self.logger.debug('timeout reached, requesting payout')
-                environment.send_contract_transaction(
-                    contract,
-                    'refund'
-                )
-                return
-            sleep(self.protocol.wait_poll_interval)
+        result = environment.wait(
+            timeout=web3_contract.functions.timeout().call() + 1,
+            condition=lambda: not environment.web3.eth.get_code(contract.address)
+        )
+        if result == EnvironmentWaitResult.TIMEOUT:
+            self.logger.debug('timeout reached, requesting refund')
+            environment.send_contract_transaction(contract, 'refund')
+            return
 
 
-class FaithfulBuyer(BuyerStrategy[Fairswap]):
+class FairswapBuyer(BuyerStrategy[Fairswap]):
     def __init__(self, protocol: Fairswap) -> None:
         super().__init__(protocol)
 
@@ -105,6 +105,16 @@ class FaithfulBuyer(BuyerStrategy[Fairswap]):
         data_merkle = from_bytes(data, keccak, slice_count=self.protocol.slice_count)
         self._expected_plain_digest = data_merkle.digest
 
+    @property
+    def expected_plain_digest(self) -> bytes:
+        return self._expected_plain_digest
+
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
+        raise NotImplementedError()
+
+
+class FaithfulBuyer(FairswapBuyer):
     def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
             opposite_address: ChecksumAddress) -> None:
         # === PHASE 1: wait for seller initialization ===
@@ -121,7 +131,7 @@ class FaithfulBuyer(BuyerStrategy[Fairswap]):
         web3_contract = environment.get_web3_contract(contract)
 
         # === PHASE 2: accept ===
-        if web3_contract.functions.fileRoot().call() == self._expected_plain_digest:
+        if web3_contract.functions.fileRoot().call() == self.expected_plain_digest:
             self.logger.debug('confirming plain file hash')
         else:
             self.logger.debug('wrong plain file hash')
@@ -137,8 +147,15 @@ class FaithfulBuyer(BuyerStrategy[Fairswap]):
 
         # === PHASE 3: wait for key revelation ===
         self.logger.debug('waiting for key revelation')
-        while web3_contract.functions.key().call() == B032:
-            sleep(self.protocol.wait_poll_interval)
+        result = environment.wait(
+            timeout=web3_contract.functions.timeout().call() + 1,
+            condition=lambda: web3_contract.functions.key().call() != B032
+        )
+        if result == EnvironmentWaitResult.TIMEOUT:
+            self.logger.debug('timeout reached, requesting refund')
+            environment.send_contract_transaction(contract, 'refund')
+            return
+
         data_key = web3_contract.functions.key().call()
         self.logger.debug('key revealed')
 
@@ -176,3 +193,10 @@ class FaithfulBuyer(BuyerStrategy[Fairswap]):
                 data_merkle_encrypted.get_proof(error.in1)
             )
             return
+
+
+class GrievingBuyer(FairswapBuyer):
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
+        self.logger.debug('do(ing) nothing, successfully.')  # see `man true`
+        return

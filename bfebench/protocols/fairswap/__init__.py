@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from .protocol import Fairswap
-from .strategies import FaithfulSeller, FaithfulBuyer
+from .strategies import FaithfulSeller, FaithfulBuyer, GrievingBuyer
 from ..protocol_spec import ProtocolSpec
 
 
@@ -26,6 +26,7 @@ PROTOCOL_SPEC = ProtocolSpec(
         'Faithful': FaithfulSeller
     },
     buyer_strategies={
-        'Faithful': FaithfulBuyer
+        'Faithful': FaithfulBuyer,
+        'Grieving': GrievingBuyer
     }
 )

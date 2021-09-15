@@ -15,7 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Optional
+from __future__ import annotations
+
+from enum import Enum
+from time import sleep, time
+from typing import Any, Optional, Callable
 
 from eth_typing.evm import ChecksumAddress
 from hexbytes.main import HexBytes
@@ -29,10 +33,19 @@ from web3.types import TxReceipt
 from .contract import Contract
 
 
+DEFAULT_WAIT_POLL_INTERVAL = 0.3  # 300 ms
+
+
+class EnvironmentWaitResult(Enum):
+    TIMEOUT = 1
+    CONDITION = 2
+
+
 class Environment(object):
-    def __init__(self, web3: Web3, wallet_address: Optional[ChecksumAddress] = None,
-                 private_key: Optional[HexBytes] = None) -> None:
+    def __init__(self, web3: Web3, wallet_address: ChecksumAddress | None = None,
+                 private_key: HexBytes | None = None, wait_poll_interval: float = DEFAULT_WAIT_POLL_INTERVAL) -> None:
         self._web3 = web3
+        self._wait_poll_interval = wait_poll_interval
 
         if private_key is None:
             if wallet_address is None:
@@ -75,6 +88,10 @@ class Environment(object):
     @property
     def total_tx_fees(self) -> int:
         return self._total_tx_fees
+
+    @property
+    def wait_poll_interval(self) -> float:
+        return self._wait_poll_interval
 
     def deploy_contract(self, contract: Contract, *constructor_args: Any, **constructor_kwargs: Any) -> ChecksumAddress:
         web3_contract = self.web3.eth.contract(abi=contract.abi, bytecode=contract.bytecode)
@@ -122,3 +139,27 @@ class Environment(object):
         self._total_tx_fees += tx_receipt['gasUsed']  # type: ignore
 
         return tx_receipt
+
+    def wait(self, timeout: float | None = None, condition: Callable[[], Any] | None = None,
+             wait_poll_interval: float | None = None) -> EnvironmentWaitResult:
+        if wait_poll_interval is None:
+            wait_poll_interval = self._wait_poll_interval
+
+        if condition is None:
+            if timeout is None:
+                raise ValueError('timeout and condition cannot be None simultaneously')
+
+            sleep(timeout - time())
+            while self.web3.eth.get_block('latest').get('timestamp') < timeout:
+                sleep(wait_poll_interval)
+            return EnvironmentWaitResult.TIMEOUT
+
+        while True:
+            if condition():
+                return EnvironmentWaitResult.CONDITION
+
+            if timeout is not None:
+                if time() > timeout and self.web3.eth.get_block('latest').get('timestamp') >= timeout:
+                    return EnvironmentWaitResult.TIMEOUT
+
+            sleep(wait_poll_interval)
