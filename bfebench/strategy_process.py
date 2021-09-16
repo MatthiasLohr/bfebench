@@ -110,6 +110,7 @@ class StrategyProcess(Process):
         self._result_queue: Queue[StrategyProcessResult] = Queue()
 
     def run(self) -> None:
+        balance_start = self._environment.get_balance()
         time_start = time.time()
         resources_start = getrusage(RUSAGE_SELF)
         self._strategy.run(
@@ -119,6 +120,7 @@ class StrategyProcess(Process):
         )
         resources_end = getrusage(RUSAGE_SELF)
         time_end = time.time()
+        balance_end = self._environment.get_balance()
 
         self._result_queue.put(StrategyProcessResult(
             realtime=time_end - time_start,
@@ -143,7 +145,7 @@ class StrategyProcess(Process):
             environment_stats=EnvironmentStatistics(
                 tx_count=self._environment.total_tx_count,
                 tx_fees=self._environment.total_tx_fees,
-                funds_diff=0  # TODO
+                funds_diff=balance_end - balance_start
             )
         ))
 

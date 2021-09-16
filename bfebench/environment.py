@@ -163,3 +163,6 @@ class Environment(object):
                     return EnvironmentWaitResult.TIMEOUT
 
             sleep(wait_poll_interval)
+
+    def get_balance(self) -> int:
+        return self.web3.eth.get_balance(self.wallet_address)
