@@ -13,7 +13,7 @@ services:
       - "--miner-coinbase=0x15CB5d50683568A740c0bb8337F742B2395D7D71"
       - "--rpc-http-enabled"
       - "--rpc-http-host=0.0.0.0"
-      - "--rpc-http-api=ETH,NET,WEB3,IBFT"
+      - "--rpc-http-api=ETH,NET,WEB3"
       - "--host-allowlist=*"
       - "--rpc-http-cors-origins=all"
     volumes:
