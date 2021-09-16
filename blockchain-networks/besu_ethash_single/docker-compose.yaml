@@ -8,6 +8,7 @@ services:
       - "--data-path=/data"
       - "--genesis-file=/etc/besu/genesis.json"
       - "--node-private-key-file=/etc/besu/node1.key"
+      - "--p2p-enabled=false"
       - "--miner-enabled"
       - "--miner-coinbase=0x15CB5d50683568A740c0bb8337F742B2395D7D71"
       - "--rpc-http-enabled"

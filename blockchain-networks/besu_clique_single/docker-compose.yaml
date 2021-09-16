@@ -8,6 +8,7 @@ services:
       - "--data-path=/data"
       - "--genesis-file=/etc/besu/genesis.json"
       - "--node-private-key-file=/etc/besu/node1.key"
+      - "--p2p-enabled=false"
       - "--rpc-http-enabled"
       - "--rpc-http-host=0.0.0.0"
       - "--rpc-http-api=ETH,NET,WEB3,IBFT"
