@@ -1,0 +1,20 @@
+operator:
+  endpoint:
+    url: http://localhost:8545
+  wallet:
+    address: "0x15CB5d50683568A740c0bb8337F742B2395D7D71"
+    privateKey: "0x4fde7191483ae6eedbe01e6bbecff3a332048d596d58a73db1cd2cc4b64cf2e0"
+
+seller:
+  endpoint:
+    url: http://localhost:8545
+  wallet:
+    address: "0x598eC01a78be6945e5cB4C0451c5CF185211e96d"
+    privateKey: "0x689aeac4f710e2bce4439d54e52e447bdf7f1e128477d0969c4d38e819f3e31c"
+
+buyer:
+  endpoint:
+    url: http://localhost:8545
+  wallet:
+    address: "0x65a3A53e899601d0C49C668bB1a7Bc06a5B23F35"
+    privateKey: "0x80ecdac657040f31b8362de83dcc8bbdb8fddc417f51055e7e5a148bb50e220d"

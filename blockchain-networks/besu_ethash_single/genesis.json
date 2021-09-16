@@ -1,0 +1,23 @@
+{
+  "config": {
+    "constantinoplefixblock": 0,
+    "ethash": {
+      "fixeddifficulty": 1000
+    },
+    "chainID": 1981
+  },
+  "nonce": "0x42",
+  "gasLimit": "0x1000000",
+  "difficulty": "0x10000",
+  "alloc": {
+    "0x15CB5d50683568A740c0bb8337F742B2395D7D71": {
+      "balance": "1000000000000000000000"
+    },
+    "0x598eC01a78be6945e5cB4C0451c5CF185211e96d": {
+      "balance": "1000000000000000000000"
+    },
+    "0x65a3A53e899601d0C49C668bB1a7Bc06a5B23F35": {
+      "balance": "1000000000000000000000"
+    }
+  }
+}
