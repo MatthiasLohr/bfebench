@@ -15,11 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import logging
 import os
 from shutil import copyfile, rmtree
 from tempfile import mkdtemp
-from typing import Any, Dict, Generator, Optional, Tuple
+from typing import Any, Dict, Generator, Tuple
 
 import jinja2
 import solcx  # type: ignore
@@ -32,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 class Contract(object):
-    def __init__(self, abi: Dict[str, Any], bytecode: Optional[str] = None,
-                 address: Optional[ChecksumAddress] = None) -> None:
+    def __init__(self, abi: Dict[str, Any], bytecode: str | None = None,
+                 address: ChecksumAddress | None = None) -> None:
         self._abi = abi
         self._bytecode = bytecode
         self._address = address
@@ -43,11 +45,11 @@ class Contract(object):
         return self._abi
 
     @property
-    def bytecode(self) -> Optional[str]:
+    def bytecode(self) -> str | None:
         return self._bytecode
 
     @property
-    def address(self) -> Optional[ChecksumAddress]:
+    def address(self) -> ChecksumAddress | None:
         return self._address
 
     @address.setter
@@ -56,8 +58,8 @@ class Contract(object):
 
 
 class SolidityContract(Contract):
-    def __init__(self, contract_name: str, contract_file: Optional[str] = None, contract_code: Optional[str] = None,
-                 solc_version: str = SOLC_DEFAULT_VERSION, compiler_kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, contract_name: str, contract_file: str | None = None, contract_code: str | None = None,
+                 solc_version: str = SOLC_DEFAULT_VERSION, compiler_kwargs: Dict[str, Any] | None = None) -> None:
 
         if compiler_kwargs is None:
             compiler_kwargs = {}
@@ -79,7 +81,7 @@ class SolidityContract(Contract):
         super(SolidityContract, self).__init__(abi, bytecode)
 
     @staticmethod
-    def compile(contract_name: str, contract_code: str, compiler_kwargs: Optional[Dict[str, Any]] = None,
+    def compile(contract_name: str, contract_code: str, compiler_kwargs: Dict[str, Any] | None = None,
                 solc_version: str = SOLC_DEFAULT_VERSION) -> Tuple[Dict[str, Any], str]:
         # configure solc
         if Version(solc_version) in solcx.get_installed_solc_versions():
@@ -96,7 +98,7 @@ class SolidityContract(Contract):
 
 
 class SolidityContractCollection(object):
-    def __init__(self, solc_version: Optional[str] = None):
+    def __init__(self, solc_version: str | None = None):
         if solc_version is not None:
             self._solc_version = solc_version
         else:
@@ -110,14 +112,14 @@ class SolidityContractCollection(object):
         rmtree(self._tmpdir)
 
     def add_contract_file(self, contract_name: str, contract_path: str,
-                          contract_filename: Optional[str] = None) -> None:
+                          contract_filename: str | None = None) -> None:
         if contract_filename is None:
             contract_filename = os.path.basename(contract_path)
         copyfile(contract_path, os.path.join(self._tmpdir, contract_filename))
         self._contract_sources.update({contract_name: contract_filename})
 
     def add_contract_code(self, contract_name: str, contract_code: str,
-                          contract_filename: Optional[str] = None) -> None:
+                          contract_filename: str | None = None) -> None:
         if contract_filename is None:
             contract_filename = '%s.sol' % contract_name
         with open(os.path.join(self._tmpdir, contract_filename), 'w') as f:
@@ -125,7 +127,7 @@ class SolidityContractCollection(object):
         self._contract_sources.update({contract_name: contract_filename})
 
     def add_contract_template_file(self, contract_name: str, contract_template_path: str, context: Dict[str, Any],
-                                   contract_filename: Optional[str] = None) -> None:
+                                   contract_filename: str | None = None) -> None:
         if contract_filename is None:
             if contract_template_path.endswith('.tpl.sol'):
                 contract_filename = os.path.basename(contract_template_path)[:-8] + '.sol'
@@ -138,7 +140,7 @@ class SolidityContractCollection(object):
         self.add_contract_template_code(contract_name, contract_template_code, context, contract_filename)
 
     def add_contract_template_code(self, contract_name: str, contract_template_code: str, context: Dict[str, Any],
-                                   contract_filename: Optional[str] = None) -> None:
+                                   contract_filename: str | None = None) -> None:
         if contract_filename is None:
             contract_filename = '%s.sol' % contract_name
 

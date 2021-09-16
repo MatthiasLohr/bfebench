@@ -15,11 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import json
 import socket
 from pathlib import Path
 from threading import Thread
-from typing import Any, NamedTuple, Optional, Tuple
+from typing import Any, NamedTuple, Tuple
 
 
 class JsonObjectSocketStreamError(IOError):
@@ -86,7 +88,7 @@ class JsonObjectSocketStream(object):
 class JsonObjectUnixDomainSocketServerStream(JsonObjectSocketStream):
     def __init__(self, socket_path: str, chunk_size: int = 4096) -> None:
         super().__init__(socket_path, chunk_size)
-        self._socket_connection: Optional[socket.socket] = None
+        self._socket_connection: socket.socket | None = None
 
         self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._socket.bind(self.socket_path)

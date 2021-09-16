@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from enum import Enum
 from time import sleep, time
-from typing import Any, Optional, Callable
+from typing import Any, Callable
 
 from eth_typing.evm import ChecksumAddress
 from hexbytes.main import HexBytes
@@ -78,7 +78,7 @@ class Environment(object):
         return self._wallet_address
 
     @property
-    def private_key(self) -> Optional[HexBytes]:
+    def private_key(self) -> HexBytes | None:
         return self._private_key
 
     @property
@@ -114,10 +114,10 @@ class Environment(object):
         )
         return tx_receipt
 
-    def send_direct_transaction(self, to: Optional[ChecksumAddress], value: int = 0) -> None:
+    def send_direct_transaction(self, to: ChecksumAddress | None, value: int = 0) -> None:
         self._send_transaction(to=to, value=value)
 
-    def _send_transaction(self, to: Optional[ChecksumAddress] = None, factory: Optional[Any] = None,
+    def _send_transaction(self, to: ChecksumAddress | None = None, factory: Any | None = None,
                           value: int = 0) -> TxReceipt:
         tx_draft = {
             'from': self.wallet_address,

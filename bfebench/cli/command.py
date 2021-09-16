@@ -15,15 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import logging
 from argparse import ArgumentParser, Namespace
-from typing import Dict, Optional, Type
+from typing import Dict, Type
 
 import bfebench
 
 
 class SubCommand(object):
-    help: Optional[str] = None
+    help: str | None = None
 
     def __init__(self, argument_parser: ArgumentParser) -> None:
         pass

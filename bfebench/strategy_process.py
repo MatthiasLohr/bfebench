@@ -15,11 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import logging
 import time
 from multiprocessing import Process, Queue
 from resource import getrusage, RUSAGE_SELF
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from eth_typing.evm import ChecksumAddress
 
@@ -106,7 +108,7 @@ class StrategyProcess(Process):
         self._p2p_stream = p2p_stream
         self._opposite_address = opposite_address
 
-        self._result: Optional[StrategyProcessResult] = None
+        self._result: StrategyProcessResult | None = None
         self._result_queue: Queue[StrategyProcessResult] = Queue()
 
     def run(self) -> None:

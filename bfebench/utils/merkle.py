@@ -15,9 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import itertools
 import math
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
 
 class MerkleTreeNode(object):
@@ -213,7 +215,7 @@ def from_list(items: List[bytes], digest_func: Callable[[bytes], bytes]) -> Merk
 
 
 def mt2obj(node: MerkleTreeNode,
-           encode_func: Optional[Callable[[bytes], Union[bytes, str]]] = None) -> Union[bytes, str, List[Any]]:
+           encode_func: Callable[[bytes], Union[bytes, str]] | None = None) -> Union[bytes, str, List[Any]]:
     if isinstance(node, MerkleTreeLeaf):
         if encode_func is None:
             return node.data
@@ -224,7 +226,7 @@ def mt2obj(node: MerkleTreeNode,
 
 
 def obj2mt(data: Union[bytes, str, List[Any]], digest_func: Callable[[bytes], bytes],
-           decode_func: Optional[Callable[[Union[bytes, str]], bytes]] = None) -> MerkleTreeNode:
+           decode_func: Callable[[Union[bytes, str]], bytes] | None = None) -> MerkleTreeNode:
     if isinstance(data, List):
         return MerkleTreeNode(
             digest_func,
