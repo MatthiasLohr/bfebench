@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  node1:
+    image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
+    user: root:root
+    command:
+      - "--data-path=/data"
+      - "--genesis-file=/etc/besu/genesis.json"
+      - "--node-private-key-file=/etc/besu/node1.key"
+      - "--rpc-http-enabled"
+      - "--rpc-http-host=0.0.0.0"
+      - "--rpc-http-api=ETH,NET,WEB3,IBFT"
+      - "--host-allowlist=*"
+      - "--rpc-http-cors-origins=all"
+    volumes:
+      - "node1:/data"
+      - "./genesis.json:/etc/besu/genesis.json:ro"
+      - "./node1.key:/etc/besu/node1.key:ro"
+    ports:
+      - "8545:8545"
+    network_mode: bridge
+
+volumes:
+  node1:
