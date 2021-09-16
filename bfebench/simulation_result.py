@@ -37,6 +37,7 @@ class SimulationResult(object):
         self._iteration_results.append(iteration_result)
 
     def __str__(self) -> str:
+        # TODO add CSV output
         iterations = len(self._iteration_results)
 
         return tabulate(
@@ -77,6 +78,7 @@ class SimulationResult(object):
                 sum([r.seller_result.environment_stats.funds_diff for r in self._iteration_results]) / iterations,
                 sum([r.buyer_result.environment_stats.funds_diff for r in self._iteration_results]) / iterations,
             ]],
+            # TODO add standard deviation line
             headers=[
                 '#',  # iteration / 'Avg'
                 'S real',  # seller real time
