@@ -27,7 +27,10 @@ contract FileSale {
     enum Stage {created, initialized, accepted, keyRevealed, finished}
 
     struct FileSaleSession {
-        Stage phase;
+        bytes32 keyCommit;
+        bytes32 ciphertextRoot;
+        bytes32 fileRoot;
+        bytes32 key;
         address payable sender;
         address payable receiver;
         uint depth;
@@ -36,13 +39,10 @@ contract FileSale {
         uint timeout;
         uint timeoutInterval;
         uint price;
-        bytes32 keyCommit;
-        bytes32 ciphertextRoot;
-        bytes32 fileRoot;
-        bytes32 key;
+        Stage phase;
     }
 
-    mapping (bytes32 => FileSaleSession) sessions;
+    mapping (bytes32 => FileSaleSession) public sessions;
 
     // function modifier to only allow calling the function in the right phase only from the correct party
     modifier allowed(bytes32 sessionId, address p, Stage s) {
@@ -63,7 +63,10 @@ contract FileSale {
         bytes32 sessionId = keccak256(abi.encodePacked(msg.sender, receiver, fileRoot));
         require(sessions[sessionId].phase == Stage.created || now > (sessions[sessionId].timeout + sessions[sessionId].timeoutInterval));
         sessions[sessionId] = FileSaleSession(
-            Stage.initialized,
+            keyCommit,
+            ciphertextRoot,
+            fileRoot,
+            0,
             msg.sender,
             receiver,
             depth,
@@ -72,10 +75,7 @@ contract FileSale {
             now + timeoutInterval,
             timeoutInterval,
             price,
-            keyCommit,
-            ciphertextRoot,
-            fileRoot,
-            0
+            Stage.initialized
         );
     }
 
@@ -165,7 +165,6 @@ contract FileSale {
     // function to verify Merkle Tree proofs
     function vrfy(bytes32 sessionId, uint _index, bytes32 _value, bytes32[] memory _proof) public view returns (bool) {
         require(_proof.length == sessions[sessionId].depth);
-        return true;
         for (uint i = 0; i < sessions[sessionId].depth; i++) {
             if ((_index & 1 << i) >>i == 1)
                 _value = keccak256(abi.encodePacked(_proof[sessions[sessionId].depth - i - 1], _value));

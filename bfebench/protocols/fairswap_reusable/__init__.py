@@ -15,23 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .fairswap import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP
-from .fairswap_reusable import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP_REUSABLE
-from .protocol import Protocol
-from .protocol_spec import ProtocolSpec
-from .strategy import Strategy, SellerStrategy, BuyerStrategy
+from .protocol import FairswapReusable
+from .strategies import FaithfulSeller, FaithfulBuyer, GrievingBuyer
+from ..protocol_spec import ProtocolSpec
 
 
-PROTOCOL_SPECIFICATIONS = {
-    'Fairswap': PROTOCOL_SPEC_FAIRSWAP,
-    'FairswapReusable': PROTOCOL_SPEC_FAIRSWAP_REUSABLE
-}
-
-__all__ = [
-    'BuyerStrategy',
-    'Protocol',
-    'ProtocolSpec',
-    'PROTOCOL_SPECIFICATIONS',
-    'SellerStrategy',
-    'Strategy'
-]
+PROTOCOL_SPEC = ProtocolSpec(
+    protocol=FairswapReusable,
+    seller_strategies={
+        'Faithful': FaithfulSeller
+    },
+    buyer_strategies={
+        'Faithful': FaithfulBuyer,
+        'Grieving': GrievingBuyer
+    }
+)

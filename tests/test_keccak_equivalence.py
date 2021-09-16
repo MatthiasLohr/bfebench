@@ -55,3 +55,16 @@ class KeccakEquivalenceTest(TestCase):
                 keccak.new(data=bytes(index.to_bytes(length=32, byteorder='big') + key), digest_bytes=32).digest(),
                 Web3.solidityKeccak(['uint256', 'bytes32'], [index, key])
             )
+
+    def test_keccak_address(self) -> None:
+        seller = Web3.toChecksumAddress(generate_bytes(20))
+        buyer = Web3.toChecksumAddress(generate_bytes(20))
+        file_root_hash = generate_bytes(32)
+
+        self.assertEqual(
+            Web3.solidityKeccak(['address', 'address', 'bytes32'], [seller, buyer, file_root_hash]),
+            keccak.new(
+                data=bytes.fromhex(seller[2:]) + bytes.fromhex(buyer[2:]) + file_root_hash,
+                digest_bytes=32
+            ).digest()
+        )
