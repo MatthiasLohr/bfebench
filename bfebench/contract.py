@@ -93,6 +93,13 @@ class SolidityContract(Contract):
             try:
                 solcx.install_solc(solc_version)
             except SolcInstallationError:
+                logger.debug('normal installation failed, trying to compile (requires %s' % ', '.join([
+                    'cmake',
+                    'libboost-dev',
+                    'libboost-filesystem-dev',
+                    'libboost-program-options-dev',
+                    'libboost-test-dev'
+                ]))
                 solcx.compile_solc(Version(solc_version))
         solcx.set_solc_version(solc_version, silent=True)
         compile_result = solcx.compile_source(
