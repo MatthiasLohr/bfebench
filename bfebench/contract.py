@@ -27,6 +27,8 @@ import jinja2
 import solcx  # type: ignore
 from eth_typing.evm import ChecksumAddress
 from semantic_version import Version  # type: ignore
+from solcx.exceptions import SolcInstallationError
+
 
 SOLC_DEFAULT_VERSION = '0.6.1'
 
@@ -88,7 +90,10 @@ class SolidityContract(Contract):
             logger.debug('checking for solc %s: found' % solc_version)
         else:
             logger.debug('checking for solc %s: not found, installing' % solc_version)
-            solcx.install_solc(solc_version)
+            try:
+                solcx.install_solc(solc_version)
+            except SolcInstallationError:
+                solcx.compile_solc(Version(solc_version))
         solcx.set_solc_version(solc_version, silent=True)
         compile_result = solcx.compile_source(
             source=contract_code,
