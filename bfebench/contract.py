@@ -27,7 +27,7 @@ import jinja2
 import solcx  # type: ignore
 from eth_typing.evm import ChecksumAddress
 from semantic_version import Version  # type: ignore
-from solcx.exceptions import SolcInstallationError
+from solcx.exceptions import SolcInstallationError  # type: ignore
 
 
 SOLC_DEFAULT_VERSION = '0.6.1'
