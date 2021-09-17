@@ -24,6 +24,7 @@ services:
     networks:
       int:
         ipv4_address: 172.31.255.11
+    restart: always
 
   node2:
     image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
@@ -46,6 +47,7 @@ services:
     networks:
       int:
         ipv4_address: 172.31.255.12
+    restart: always
 
   node3:
     image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
@@ -68,6 +70,7 @@ services:
     networks:
       int:
         ipv4_address: 172.31.255.13
+    restart: always
 
   node4:
     image: hyperledger/besu:${HYPERLEDGER_BESU_VERSION}
@@ -90,6 +93,7 @@ services:
     networks:
       int:
         ipv4_address: 172.31.255.14
+    restart: always
 
 volumes:
   node1:

@@ -23,6 +23,7 @@ services:
     ports:
       - "8545:8545"
     network_mode: bridge
+    restart: always
 
 volumes:
   node1:
