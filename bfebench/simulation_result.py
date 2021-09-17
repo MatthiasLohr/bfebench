@@ -97,7 +97,6 @@ class SimulationResult(object):
                 stdev([r.seller_result.environment_stats.funds_diff for r in self._iteration_results]),
                 stdev([r.buyer_result.environment_stats.funds_diff for r in self._iteration_results]),
             ]],
-            # TODO add standard deviation line
             headers=[
                 '#',  # iteration / 'Avg'
                 'S real',  # seller real time
