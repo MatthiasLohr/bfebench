@@ -7,5 +7,6 @@
 /.coverage
 __pycache__/
 *.bin
+*.csv
 *.pyc
 .environments.yaml

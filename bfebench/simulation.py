@@ -22,7 +22,8 @@ from tempfile import mkdtemp
 
 from .environments_configuration import EnvironmentsConfiguration
 from .protocols import Protocol, SellerStrategy, BuyerStrategy
-from .simulation_result import IterationResult, SimulationResult
+from .simulation_result import IterationResult
+from .simulation_result_collector import SimulationResultCollector
 from .strategy_process import StrategyProcess
 from .utils.json_stream import (
     JsonObjectUnixDomainSocketClientStream,
@@ -37,12 +38,13 @@ logger = logging.getLogger(__name__)
 class Simulation(object):
     def __init__(self, environments_configuration: EnvironmentsConfiguration, protocol: Protocol,
                  seller_strategy: SellerStrategy[Protocol], buyer_strategy: BuyerStrategy[Protocol],
-                 iterations: int = 1) -> None:
+                 iterations: int, result_collector: SimulationResultCollector) -> None:
         self._environments = environments_configuration
         self._protocol = protocol
         self._seller_strategy = seller_strategy
         self._buyer_strategy = buyer_strategy
         self._iterations = iterations
+        self._result_collector = result_collector
 
         self._tmp_dir = mkdtemp(prefix='bfebench-')
 
@@ -54,10 +56,9 @@ class Simulation(object):
     def protocol(self) -> Protocol:
         return self._protocol
 
-    def run(self) -> SimulationResult:
+    def run(self) -> None:
         logger.debug('starting simulation')
         logger.debug('setting up protocol simulation...')
-        simulation_result = SimulationResult()
         self.protocol.set_up_simulation(
             environment=self.environments.operator_environment,
             seller_address=self.environments.seller_environment.wallet_address,
@@ -110,7 +111,7 @@ class Simulation(object):
                 buyer_address=self.environments.buyer_environment.wallet_address
             )
 
-            simulation_result.add_iteration_result(IterationResult(
+            self._result_collector.add_iteration_result(IterationResult(
                 seller_result=seller_process.get_process_result(),
                 buyer_result=buyer_process.get_process_result(),
                 p2p_result=p2p_forwarder.get_stats()
@@ -138,7 +139,6 @@ class Simulation(object):
         )
         rmtree(self._tmp_dir)
         logger.debug('simulation has finished')
-        return simulation_result
 
     def __del__(self) -> None:
         rmtree(self._tmp_dir, ignore_errors=True)

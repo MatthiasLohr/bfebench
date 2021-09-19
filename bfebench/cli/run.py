@@ -22,7 +22,7 @@ from bfebench.environments_configuration import EnvironmentsConfiguration
 from bfebench.protocols import PROTOCOL_SPECIFICATIONS
 from bfebench.simulation import Simulation
 from .command import SubCommand
-
+from ..simulation_result_collector import SimulationResultCollector
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ class RunCommand(SubCommand):
         argument_parser.add_argument('-n', '--iterations', help='Number of exchanges to be simulated', type=int,
                                      default=1)
         argument_parser.add_argument('-e', '--environments-configuration', default='.environments.yaml')
+        argument_parser.add_argument('--output-csv', help='write CSV file with results', default=None)
 
     def __call__(self, args: Namespace) -> int:
         protocol_specification = PROTOCOL_SPECIFICATIONS.get(args.protocol)
@@ -83,16 +84,20 @@ class RunCommand(SubCommand):
             protocol=protocol
         )
 
+        result_collector = SimulationResultCollector(
+            csv_file=args.output_csv
+        )
+
         simulation = Simulation(
             environments_configuration=environments_configuration,
             protocol=protocol,
             seller_strategy=seller_strategy,
             buyer_strategy=buyer_strategy,
-            iterations=args.iterations
+            iterations=args.iterations,
+            result_collector=result_collector
         )
+        simulation.run()
 
-        simulation_result = simulation.run()
-
-        print(simulation_result)
+        print(result_collector.get_result())
 
         return 0
