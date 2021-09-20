@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import datetime
 
 from bfebench.simulation_result import SimulationResult, IterationResult
 
@@ -28,17 +29,19 @@ class SimulationResultCollector(object):
         self._csv_file = None
         self._csv_writer = None
 
+        self._simulation_start_date = datetime.now().isoformat()
+
         if csv_file is not None:
             self._csv_file = open(csv_file, 'a')
             self._csv_writer = csv.writer(self._csv_file)
             if self._csv_file.tell() == 0:
-                self._csv_writer.writerow(SimulationResult.get_headers())
+                self._csv_writer.writerow(['Start'] + SimulationResult.get_headers())
 
     def add_iteration_result(self, iteration_result: IterationResult) -> None:
         self._simulation_result.add_iteration_result(iteration_result)
 
         if self._csv_file is not None and self._csv_writer is not None:
-            self._csv_writer.writerow(SimulationResult.get_columns(iteration_result))
+            self._csv_writer.writerow([self._simulation_start_date] + SimulationResult.get_columns(iteration_result))
 
     def get_result(self) -> SimulationResult:
         return self._simulation_result
