@@ -1,0 +1,19 @@
+protocols:
+  - name: Fairswap
+    parameters:
+      timeout: 15
+  - name: FairswapReusable
+    parameters:
+      timeout: 15
+sizes:
+  - 1KiB
+  - 2KiB
+  - 4KiB
+  - 8KiB
+  - 16KiB
+  - 32KiB
+  - 64KiB
+  - 128KiB
+  - 256KiB
+  - 512KiB
+  - 1MiB
