@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import logging
 import os
 from math import log2
@@ -24,7 +26,7 @@ from ..protocol import Protocol
 from ...errors import ProtocolInitializationError
 
 
-DEFAULT_SLICE_COUNT = 4
+DEFAULT_SLICE_LENGTH = 32
 DEFAULT_TIMEOUT = 60  # 60 seconds
 
 logger = logging.getLogger(__name__)
@@ -34,22 +36,36 @@ class Fairswap(Protocol):
     CONTRACT_NAME = 'FileSale'
     CONTRACT_TEMPLATE_FILE = 'fairswap.tpl.sol'
 
-    def __init__(self, slice_count: int = DEFAULT_SLICE_COUNT, timeout: int = DEFAULT_TIMEOUT, **kwargs: Any) -> None:
+    def __init__(self, slice_length: int | None = None, slice_count: int | None = None, timeout: int = DEFAULT_TIMEOUT,
+                 **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
-        slice_count = int(slice_count)
+        file_size = os.path.getsize(self.filename)
 
-        if not log2(slice_count).is_integer():
+        if slice_count is None:
+            if slice_length is None:
+                self._slice_length = DEFAULT_SLICE_LENGTH
+
+            if (file_size / self._slice_length).is_integer():
+                self._slice_count = int(file_size / self._slice_length)
+            else:
+                raise ProtocolInitializationError('file_size / slice_length must be int')
+        else:
+            if slice_length is None:
+                if (file_size / slice_count).is_integer():
+                    self._slice_length = int(file_size / slice_count)
+                else:
+                    raise ProtocolInitializationError('file_size / slice_count must be int')
+            else:
+                raise ProtocolInitializationError('you cannot set both slice_length and slice_count')
+
+        if not log2(self._slice_count).is_integer():
             raise ProtocolInitializationError('slice_count must be a power of 2')
 
-        self._slice_count = slice_count
+        if self._slice_length % 32 > 0:
+            raise ProtocolInitializationError('slice_length must be a multiple of 32')
+
         self._timeout = int(timeout)
-
-        file_size = os.path.getsize(self.filename)
-        if ((file_size / slice_count) % 32) > 0:
-            raise ProtocolInitializationError('file size must be a multiple of 32 bytes * %d slices' % slice_count)
-
-        self._slice_length = int(file_size / slice_count)
 
         logger.debug('initialized Fairswap with slice_count=%d slice_length=%d timeout=%d' % (
             self.slice_count,
