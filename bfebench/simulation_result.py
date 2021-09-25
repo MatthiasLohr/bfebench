@@ -104,26 +104,29 @@ class SimulationResult(object):
             sum([r.buyer_result.environment_stats.tx_fees for r in self._iteration_results]) / iterations,
             sum([r.seller_result.environment_stats.funds_diff for r in self._iteration_results]) / iterations,
             sum([r.buyer_result.environment_stats.funds_diff for r in self._iteration_results]) / iterations,
-        ]] + [[
-            'StdDev',
-            stdev([r.seller_result.realtime for r in self._iteration_results]),
-            stdev([r.buyer_result.realtime for r in self._iteration_results]),
-            stdev([r.seller_result.system_resource_stats.utime for r in self._iteration_results]),
-            stdev([r.buyer_result.system_resource_stats.utime for r in self._iteration_results]),
-            stdev([r.seller_result.system_resource_stats.stime for r in self._iteration_results]),
-            stdev([r.buyer_result.system_resource_stats.stime for r in self._iteration_results]),
-            stdev([r.p2p_result.bytes_1to2 for r in self._iteration_results]),
-            stdev([r.p2p_result.bytes_2to1 for r in self._iteration_results]),
-            stdev([r.p2p_result.count_1to2 for r in self._iteration_results]),
-            stdev([r.p2p_result.count_2to1 for r in self._iteration_results]),
-            stdev([r.seller_result.environment_stats.tx_count for r in self._iteration_results]),
-            stdev([r.buyer_result.environment_stats.tx_count for r in self._iteration_results]),
-            stdev([r.seller_result.environment_stats.tx_fees for r in self._iteration_results]),
-            stdev([r.buyer_result.environment_stats.tx_fees for r in self._iteration_results]),
-            stdev([r.seller_result.environment_stats.funds_diff for r in self._iteration_results]),
-            stdev([r.buyer_result.environment_stats.funds_diff for r in self._iteration_results]),
+        ]]
+
+        if iterations > 1:
+            data_footer += [[
+                'StdDev',
+                stdev([r.seller_result.realtime for r in self._iteration_results]),
+                stdev([r.buyer_result.realtime for r in self._iteration_results]),
+                stdev([r.seller_result.system_resource_stats.utime for r in self._iteration_results]),
+                stdev([r.buyer_result.system_resource_stats.utime for r in self._iteration_results]),
+                stdev([r.seller_result.system_resource_stats.stime for r in self._iteration_results]),
+                stdev([r.buyer_result.system_resource_stats.stime for r in self._iteration_results]),
+                stdev([r.p2p_result.bytes_1to2 for r in self._iteration_results]),
+                stdev([r.p2p_result.bytes_2to1 for r in self._iteration_results]),
+                stdev([r.p2p_result.count_1to2 for r in self._iteration_results]),
+                stdev([r.p2p_result.count_2to1 for r in self._iteration_results]),
+                stdev([r.seller_result.environment_stats.tx_count for r in self._iteration_results]),
+                stdev([r.buyer_result.environment_stats.tx_count for r in self._iteration_results]),
+                stdev([r.seller_result.environment_stats.tx_fees for r in self._iteration_results]),
+                stdev([r.buyer_result.environment_stats.tx_fees for r in self._iteration_results]),
+                stdev([r.seller_result.environment_stats.funds_diff for r in self._iteration_results]),
+                stdev([r.buyer_result.environment_stats.funds_diff for r in self._iteration_results]),
+                ]
             ]
-        ]
 
         return tabulate(
             headers=['#'] + self.get_headers(),
