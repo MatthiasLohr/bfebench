@@ -70,7 +70,9 @@ class FairswapReusable(Fairswap):
 
     def set_up_simulation(self, environment: Environment, seller_address: ChecksumAddress,
                           buyer_address: ChecksumAddress) -> None:
-        environment.deploy_contract(self._contract)
+        logger.debug('deploying contract...')
+        address = environment.deploy_contract(self._contract)
+        logger.debug('contract deployed to address %s' % address)
 
     @property
     def contract(self) -> Contract:
