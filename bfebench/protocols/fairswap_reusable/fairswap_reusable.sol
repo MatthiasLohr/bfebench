@@ -24,7 +24,7 @@ pragma solidity ^0.6.1;
 
 contract FileSale {
 
-    enum Stage {created, initialized, accepted, keyRevealed, finished}
+    enum Stage {empty, initialized, accepted, keyRevealed, finished}
 
     struct FileSaleSession {
         bytes32 keyCommit;
@@ -61,7 +61,7 @@ contract FileSale {
     // init transfer for session
     function init(address payable receiver, uint depth, uint length, uint n, uint timeoutInterval, uint price, bytes32 keyCommit, bytes32 ciphertextRoot, bytes32 fileRoot) public {
         bytes32 sessionId = keccak256(abi.encodePacked(msg.sender, receiver, fileRoot));
-        require(sessions[sessionId].phase == Stage.created || now > (sessions[sessionId].timeout + sessions[sessionId].timeoutInterval));
+        require(sessions[sessionId].phase == Stage.empty || now > (sessions[sessionId].timeout + sessions[sessionId].timeoutInterval));
         sessions[sessionId] = FileSaleSession(
             keyCommit,
             ciphertextRoot,
