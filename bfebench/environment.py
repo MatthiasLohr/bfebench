@@ -131,6 +131,8 @@ class Environment(object):
 
         if factory is not None:
             tx_draft = factory.buildTransaction(tx_draft)
+        else:
+            tx_draft['gas'] = 21000
 
         tx_hash = self.web3.eth.send_transaction(tx_draft)
         tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
