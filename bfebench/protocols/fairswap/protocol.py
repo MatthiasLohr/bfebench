@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 class Fairswap(Protocol):
     CONTRACT_NAME = 'FileSale'
     CONTRACT_TEMPLATE_FILE = 'fairswap.tpl.sol'
+    CONTRACT_SOLC_VERSION = '0.6.1'
 
     def __init__(self, slice_length: int | None = None, slice_count: int | None = None, timeout: int = DEFAULT_TIMEOUT,
                  **kwargs: Any) -> None:

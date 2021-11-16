@@ -23,7 +23,7 @@ from eth_typing.evm import ChecksumAddress
 from .protocol import Fairswap
 from .util import keccak, encode, B032, decode, LeafDigestMismatchError, NodeDigestMismatchError
 from ..strategy import SellerStrategy, BuyerStrategy
-from ...contract import SolidityContractCollection, Contract
+from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment, EnvironmentWaitResult
 from ...utils.bytes import generate_bytes
 from ...utils.json_stream import JsonObjectSocketStream
@@ -42,9 +42,8 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
         data_merkle_encrypted = encode(data_merkle, data_key)
 
         # deploy contract
-        contract_collection = SolidityContractCollection()
-        contract_collection.add_contract_template_file(
-            Fairswap.CONTRACT_NAME,
+        scscm = SolidityContractSourceCodeManager()
+        scscm.add_contract_template_file(
             os.path.join(os.path.dirname(__file__), Fairswap.CONTRACT_TEMPLATE_FILE),
             {
                 'merkle_tree_depth': log2(self.protocol.slice_count) + 1,
@@ -58,7 +57,8 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
                 'timeout': self.protocol.timeout
             }
         )
-        contract = contract_collection.get(Fairswap.CONTRACT_NAME)
+        contracts = scscm.compile(Fairswap.CONTRACT_SOLC_VERSION)
+        contract = contracts[Fairswap.CONTRACT_NAME]
         environment.deploy_contract(contract)
         web3_contract = environment.get_web3_contract(contract)
 

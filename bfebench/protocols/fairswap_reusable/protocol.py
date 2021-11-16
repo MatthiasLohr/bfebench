@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import logging
 import os
 from enum import IntEnum
@@ -24,7 +26,7 @@ from eth_typing.evm import ChecksumAddress
 
 from ..fairswap.protocol import Fairswap
 from ..fairswap.util import keccak
-from ...contract import SolidityContractCollection, Contract
+from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
 
 
@@ -61,21 +63,23 @@ class FairswapReusable(Fairswap):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        contract_collection = SolidityContractCollection()
-        contract_collection.add_contract_file(
-            FairswapReusable.CONTRACT_NAME,
-            os.path.join(os.path.dirname(__file__), FairswapReusable.CONTRACT_FILE)
-        )
-        self._contract = contract_collection.get(FairswapReusable.CONTRACT_NAME)
+        self._contract: Contract | None = None
 
     def set_up_simulation(self, environment: Environment, seller_address: ChecksumAddress,
                           buyer_address: ChecksumAddress) -> None:
         logger.debug('deploying contract...')
-        address = environment.deploy_contract(self._contract)
-        logger.debug('contract deployed to address %s' % address)
+        scscm = SolidityContractSourceCodeManager()
+        scscm.add_contract_file(os.path.join(os.path.dirname(__file__), FairswapReusable.CONTRACT_FILE))
+        contracts = scscm.compile(Fairswap.CONTRACT_SOLC_VERSION)
+        contract = contracts[FairswapReusable.CONTRACT_NAME]
+        environment.deploy_contract(contract)
+        self._contract = Contract(abi=contract.abi, address=contract.address)
+        logger.debug('contract deployed to address %s' % self._contract.address)
 
     @property
     def contract(self) -> Contract:
+        if self._contract is None:
+            raise RuntimeError('accessing uninitialized contract')
         return self._contract
 
     @staticmethod

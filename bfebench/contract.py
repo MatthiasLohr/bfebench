@@ -19,9 +19,9 @@ from __future__ import annotations
 
 import logging
 import os
-from shutil import copyfile, rmtree
+from shutil import rmtree
 from tempfile import mkdtemp
-from typing import Any, Dict, Generator, Tuple
+from typing import Any, Dict, List
 
 import jinja2
 import solcx  # type: ignore
@@ -29,8 +29,6 @@ from eth_typing.evm import ChecksumAddress
 from semantic_version import Version  # type: ignore
 from solcx.exceptions import SolcInstallationError  # type: ignore
 
-
-SOLC_DEFAULT_VERSION = '0.6.1'
 
 logger = logging.getLogger(__name__)
 
@@ -60,32 +58,65 @@ class Contract(object):
 
 
 class SolidityContract(Contract):
-    def __init__(self, contract_name: str, contract_file: str | None = None, contract_code: str | None = None,
-                 solc_version: str = SOLC_DEFAULT_VERSION, compiler_kwargs: Dict[str, Any] | None = None) -> None:
+    pass
 
-        if compiler_kwargs is None:
-            compiler_kwargs = {}
 
-        if contract_file is not None and contract_code is not None:
-            raise ValueError('contract_file and contract_code cannot be set at the same time')
+class SolidityContractSourceCodeManager(object):
+    def __init__(self, allowed_paths: List[str] | None = None) -> None:
+        self._source_files: List[str] = []
 
-        if contract_file is not None:
-            logger.debug('Preparing to compile contract "%s" from file %s' % (contract_name, contract_file))
-            with open(contract_file, 'r') as f:
-                contract_code = f.read()
+        if allowed_paths is None:
+            self._allowed_paths = []
         else:
-            logger.debug('Preparing to compile contract "%s" with given code' % contract_name)
+            self._allowed_paths = [self._normalize_path(path) for path in allowed_paths]
 
-        if contract_code is None or len(contract_code) == 0:
-            raise ValueError('No contract code given')
+        self._tmpdir = mkdtemp(prefix='bfebench-solc-')
 
-        abi, bytecode = self.compile(contract_name, contract_code, compiler_kwargs, solc_version)
-        super(SolidityContract, self).__init__(abi, bytecode)
+    def __del__(self) -> None:
+        rmtree(self._tmpdir)
+
+    def add_contract_file(self, contract_file: str) -> None:
+        self._source_files.append(self._normalize_path(contract_file))
+
+    def add_contract_template_file(self, contract_template_file: str, context: dict[str, Any]) -> None:
+        if contract_template_file.endswith('.tpl.sol'):
+            tmp_source_code_file = os.path.basename(contract_template_file)[:-8]
+        else:
+            tmp_source_code_file = os.path.basename(contract_template_file) + '.sol'
+        tmp_source_code_file_abs = os.path.join(self._tmpdir, tmp_source_code_file)
+
+        with open(contract_template_file, 'r') as fp:
+            template_code = fp.read()
+
+        template = jinja2.Template(template_code)
+
+        with open(tmp_source_code_file_abs, 'w') as fp:
+            fp.write(template.render(**context))
+
+        self._source_files.append(tmp_source_code_file_abs)
+
+    def compile(self, solc_version: str) -> dict[str, SolidityContract]:
+        self._ensure_solc(solc_version)
+        solcx.set_solc_version(solc_version)
+
+        compile_result = solcx.compile_files(
+            source_files=self._source_files,
+            allow_paths=self._allowed_paths
+        )
+
+        contracts = {}
+        for contract_identifier, contract_result in compile_result.items():
+            contract_file, contract_name = str(contract_identifier).split(':')
+            contracts.update({
+                contract_name: SolidityContract(
+                    abi=contract_result.get('abi'),
+                    bytecode=contract_result.get('bin')
+                )
+            })
+        return contracts
 
     @staticmethod
-    def compile(contract_name: str, contract_code: str, compiler_kwargs: Dict[str, Any] | None = None,
-                solc_version: str = SOLC_DEFAULT_VERSION) -> Tuple[Dict[str, Any], str]:
-        # configure solc
+    def _ensure_solc(solc_version: str) -> None:
         if Version(solc_version) in solcx.get_installed_solc_versions():
             logger.debug('checking for solc %s: found' % solc_version)
         else:
@@ -101,88 +132,7 @@ class SolidityContract(Contract):
                     'libboost-test-dev'
                 ]))
                 solcx.compile_solc(Version(solc_version))
-        solcx.set_solc_version(solc_version, silent=True)
-        compile_result = solcx.compile_source(
-            source=contract_code,
-            **compiler_kwargs
-        )['<stdin>:' + contract_name]
-        return compile_result.get('abi'), compile_result.get('bin')
 
-
-class SolidityContractCollection(object):
-    def __init__(self, solc_version: str | None = None):
-        if solc_version is not None:
-            self._solc_version = solc_version
-        else:
-            self._solc_version = SOLC_DEFAULT_VERSION
-
-        self._tmpdir = mkdtemp(prefix='bfebench-solc-')
-        self._contract_sources: Dict[str, str] = {}
-        self._contract_instances: Dict[str, SolidityContract] = {}
-
-    def __del__(self) -> None:
-        rmtree(self._tmpdir)
-
-    def add_contract_file(self, contract_name: str, contract_path: str,
-                          contract_filename: str | None = None) -> None:
-        if contract_filename is None:
-            contract_filename = os.path.basename(contract_path)
-        copyfile(contract_path, os.path.join(self._tmpdir, contract_filename))
-        self._contract_sources.update({contract_name: contract_filename})
-
-    def add_contract_code(self, contract_name: str, contract_code: str,
-                          contract_filename: str | None = None) -> None:
-        if contract_filename is None:
-            contract_filename = '%s.sol' % contract_name
-        with open(os.path.join(self._tmpdir, contract_filename), 'w') as f:
-            f.write(contract_code)
-        self._contract_sources.update({contract_name: contract_filename})
-
-    def add_contract_template_file(self, contract_name: str, contract_template_path: str, context: Dict[str, Any],
-                                   contract_filename: str | None = None) -> None:
-        if contract_filename is None:
-            if contract_template_path.endswith('.tpl.sol'):
-                contract_filename = os.path.basename(contract_template_path)[:-8] + '.sol'
-            else:
-                contract_filename = '%.sol' % contract_name
-
-        with open(contract_template_path, 'r') as f:
-            contract_template_code = f.read()
-
-        self.add_contract_template_code(contract_name, contract_template_code, context, contract_filename)
-
-    def add_contract_template_code(self, contract_name: str, contract_template_code: str, context: Dict[str, Any],
-                                   contract_filename: str | None = None) -> None:
-        if contract_filename is None:
-            contract_filename = '%s.sol' % contract_name
-
-        contract_template = jinja2.Template(contract_template_code)
-
-        with open(os.path.join(self._tmpdir, contract_filename), 'w') as f:
-            f.write(contract_template.render(**context))
-
-        self._contract_sources.update({contract_name: contract_filename})
-
-    def get(self, contract_name: str) -> SolidityContract:
-        contract_instance = self._contract_instances.get(contract_name)
-        if contract_instance is None:
-            contract_filename = self._contract_sources.get(contract_name)
-            if contract_filename is None:
-                raise ValueError('Contract is not registered')
-            contract_instance = SolidityContract(
-                contract_name=contract_name,
-                contract_file=os.path.join(self._tmpdir, contract_filename),
-                solc_version=self._solc_version,
-                compiler_kwargs={
-                    'import_remappings': self.get_import_remappings()
-                }
-            )
-            self._contract_instances.update({contract_name: contract_instance})
-            return contract_instance
-        else:
-            return contract_instance
-
-    def get_import_remappings(self) -> Generator[str, None, None]:
-        yield '.=%s' % self._tmpdir
-        for filename in self._contract_sources.values():
-            yield '%s=%s' % (filename, os.path.join(self._tmpdir, filename))
+    @staticmethod
+    def _normalize_path(path: str) -> str:
+        return os.path.realpath(path)
