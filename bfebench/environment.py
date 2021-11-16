@@ -114,8 +114,8 @@ class Environment(object):
         )
         return tx_receipt
 
-    def send_direct_transaction(self, to: ChecksumAddress | None, value: int = 0) -> None:
-        self._send_transaction(to=to, value=value)
+    def send_direct_transaction(self, to: ChecksumAddress | None, value: int = 0) -> TxReceipt:
+        return self._send_transaction(to=to, value=value)
 
     def _send_transaction(self, to: ChecksumAddress | None = None, factory: Any | None = None,
                           value: int = 0) -> TxReceipt:
