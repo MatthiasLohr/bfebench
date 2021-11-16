@@ -1,4 +1,8 @@
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+
 unittests:
   image: python:${python_version}
   before_script:
