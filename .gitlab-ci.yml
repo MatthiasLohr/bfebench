@@ -1,6 +1,7 @@
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  PYTHON_DEFAULT_VERSION: "3.9"
 
 
 unittests:
@@ -46,7 +47,7 @@ mypy:
 
 
 isort:
-  image: python:${python_version}
+  image: python:${PYTHON_DEFAULT_VERSION}
   before_script:
     - pip install isort
   script:
@@ -54,8 +55,8 @@ isort:
 
 
 black:
-  image: python:${python_version}
+  image: python:${PYTHON_DEFAULT_VERSION}
   before_script:
     - pip install black
   script:
-    - isort --check .
+    - black --check .
