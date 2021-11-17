@@ -22,9 +22,8 @@ import os
 from math import log2
 from typing import Any
 
-from ..protocol import Protocol
 from ...errors import ProtocolInitializationError
-
+from ..protocol import Protocol
 
 DEFAULT_SLICE_LENGTH = 32
 DEFAULT_TIMEOUT = 60  # 60 seconds
@@ -33,12 +32,17 @@ logger = logging.getLogger(__name__)
 
 
 class Fairswap(Protocol):
-    CONTRACT_NAME = 'FileSale'
-    CONTRACT_TEMPLATE_FILE = 'fairswap.tpl.sol'
-    CONTRACT_SOLC_VERSION = '0.6.1'
+    CONTRACT_NAME = "FileSale"
+    CONTRACT_TEMPLATE_FILE = "fairswap.tpl.sol"
+    CONTRACT_SOLC_VERSION = "0.6.1"
 
-    def __init__(self, slice_length: int | None = None, slice_count: int | None = None, timeout: int = DEFAULT_TIMEOUT,
-                 **kwargs: Any) -> None:
+    def __init__(
+        self,
+        slice_length: int | None = None,
+        slice_count: int | None = None,
+        timeout: int = DEFAULT_TIMEOUT,
+        **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
 
         file_size = os.path.getsize(self.filename)
@@ -50,29 +54,38 @@ class Fairswap(Protocol):
             if (file_size / self._slice_length).is_integer():
                 self._slice_count = int(file_size / self._slice_length)
             else:
-                raise ProtocolInitializationError('file_size / slice_length must be int')
+                raise ProtocolInitializationError(
+                    "file_size / slice_length must be int"
+                )
         else:
             if slice_length is None:
                 if (file_size / slice_count).is_integer():
                     self._slice_length = int(file_size / slice_count)
                 else:
-                    raise ProtocolInitializationError('file_size / slice_count must be int')
+                    raise ProtocolInitializationError(
+                        "file_size / slice_count must be int"
+                    )
             else:
-                raise ProtocolInitializationError('you cannot set both slice_length and slice_count')
+                raise ProtocolInitializationError(
+                    "you cannot set both slice_length and slice_count"
+                )
 
         if not log2(self._slice_count).is_integer():
-            raise ProtocolInitializationError('slice_count must be a power of 2')
+            raise ProtocolInitializationError("slice_count must be a power of 2")
 
         if self._slice_length % 32 > 0:
-            raise ProtocolInitializationError('slice_length must be a multiple of 32')
+            raise ProtocolInitializationError("slice_length must be a multiple of 32")
 
         self._timeout = int(timeout)
 
-        logger.debug('initialized Fairswap with slice_count=%d slice_length=%d timeout=%d' % (
-            self.slice_count,
-            self.slice_length,
-            self.timeout,
-        ))
+        logger.debug(
+            "initialized Fairswap with slice_count=%d slice_length=%d timeout=%d"
+            % (
+                self.slice_count,
+                self.slice_length,
+                self.timeout,
+            )
+        )
 
     @property
     def slice_count(self) -> int:

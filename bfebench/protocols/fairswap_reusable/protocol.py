@@ -24,11 +24,10 @@ from typing import Any, NamedTuple
 
 from eth_typing.evm import ChecksumAddress
 
-from ..fairswap.protocol import Fairswap
-from ..fairswap.util import keccak
 from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
-
+from ..fairswap.protocol import Fairswap
+from ..fairswap.util import keccak
 
 logger = logging.getLogger(__name__)
 
@@ -58,30 +57,40 @@ class FileSaleSession(NamedTuple):
 
 
 class FairswapReusable(Fairswap):
-    CONTRACT_FILE = 'fairswap_reusable.sol'
+    CONTRACT_FILE = "fairswap_reusable.sol"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self._contract: Contract | None = None
 
-    def set_up_simulation(self, environment: Environment, seller_address: ChecksumAddress,
-                          buyer_address: ChecksumAddress) -> None:
-        logger.debug('deploying contract...')
+    def set_up_simulation(
+        self,
+        environment: Environment,
+        seller_address: ChecksumAddress,
+        buyer_address: ChecksumAddress,
+    ) -> None:
+        logger.debug("deploying contract...")
         scscm = SolidityContractSourceCodeManager()
-        scscm.add_contract_file(os.path.join(os.path.dirname(__file__), FairswapReusable.CONTRACT_FILE))
+        scscm.add_contract_file(
+            os.path.join(os.path.dirname(__file__), FairswapReusable.CONTRACT_FILE)
+        )
         contracts = scscm.compile(Fairswap.CONTRACT_SOLC_VERSION)
         contract = contracts[FairswapReusable.CONTRACT_NAME]
         environment.deploy_contract(contract)
         self._contract = Contract(abi=contract.abi, address=contract.address)
-        logger.debug('contract deployed to address %s' % self._contract.address)
+        logger.debug("contract deployed to address %s" % self._contract.address)
 
     @property
     def contract(self) -> Contract:
         if self._contract is None:
-            raise RuntimeError('accessing uninitialized contract')
+            raise RuntimeError("accessing uninitialized contract")
         return self._contract
 
     @staticmethod
-    def get_session_id(seller: ChecksumAddress, buyer: ChecksumAddress, file_root_hash: bytes) -> bytes:
-        return keccak(bytes.fromhex(seller[2:]) + bytes.fromhex(buyer[2:]) + file_root_hash)
+    def get_session_id(
+        seller: ChecksumAddress, buyer: ChecksumAddress, file_root_hash: bytes
+    ) -> bytes:
+        return keccak(
+            bytes.fromhex(seller[2:]) + bytes.fromhex(buyer[2:]) + file_root_hash
+        )

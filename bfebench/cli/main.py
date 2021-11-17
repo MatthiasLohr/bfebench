@@ -18,12 +18,12 @@
 import logging
 
 from bfebench.errors import BaseError
+
 from .bulk_execute import BulkExecuteCommand
 from .command import SubCommandManager
 from .list_protocols import ListProtocolsCommand
 from .list_strategies import ListStrategiesCommand
 from .run import RunCommand
-
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +31,13 @@ logger = logging.getLogger(__name__)
 def main() -> int:
     scm = SubCommandManager()
 
-    scm.add_sub_command('bulk-execute', BulkExecuteCommand)
-    scm.add_sub_command('run', RunCommand)
-    scm.add_sub_command('list-protocols', ListProtocolsCommand)
-    scm.add_sub_command('list-strategies', ListStrategiesCommand)
+    scm.add_sub_command("bulk-execute", BulkExecuteCommand)
+    scm.add_sub_command("run", RunCommand)
+    scm.add_sub_command("list-protocols", ListProtocolsCommand)
+    scm.add_sub_command("list-strategies", ListStrategiesCommand)
 
     try:
         return scm.run()
     except BaseError as e:
-        logger.error('A general error occurred.', exc_info=e)
+        logger.error("A general error occurred.", exc_info=e)
         return 1

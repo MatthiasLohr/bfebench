@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict,  NamedTuple, Type
+from typing import Any, Dict, NamedTuple, Type
 
 from .protocol import Protocol
-from .strategy import SellerStrategy, BuyerStrategy
+from .strategy import BuyerStrategy, SellerStrategy
 
 
 class ProtocolSpec(NamedTuple):

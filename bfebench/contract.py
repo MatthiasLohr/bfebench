@@ -29,13 +29,16 @@ from eth_typing.evm import ChecksumAddress
 from semantic_version import Version  # type: ignore
 from solcx.exceptions import SolcInstallationError  # type: ignore
 
-
 logger = logging.getLogger(__name__)
 
 
 class Contract(object):
-    def __init__(self, abi: Dict[str, Any], bytecode: str | None = None,
-                 address: ChecksumAddress | None = None) -> None:
+    def __init__(
+        self,
+        abi: Dict[str, Any],
+        bytecode: str | None = None,
+        address: ChecksumAddress | None = None,
+    ) -> None:
         self._abi = abi
         self._bytecode = bytecode
         self._address = address
@@ -70,7 +73,7 @@ class SolidityContractSourceCodeManager(object):
         else:
             self._allowed_paths = [self._normalize_path(path) for path in allowed_paths]
 
-        self._tmpdir = mkdtemp(prefix='bfebench-solc-')
+        self._tmpdir = mkdtemp(prefix="bfebench-solc-")
 
     def __del__(self) -> None:
         rmtree(self._tmpdir)
@@ -78,19 +81,21 @@ class SolidityContractSourceCodeManager(object):
     def add_contract_file(self, contract_file: str) -> None:
         self._source_files.append(self._normalize_path(contract_file))
 
-    def add_contract_template_file(self, contract_template_file: str, context: dict[str, Any]) -> None:
-        if contract_template_file.endswith('.tpl.sol'):
+    def add_contract_template_file(
+        self, contract_template_file: str, context: dict[str, Any]
+    ) -> None:
+        if contract_template_file.endswith(".tpl.sol"):
             tmp_source_code_file = os.path.basename(contract_template_file)[:-8]
         else:
-            tmp_source_code_file = os.path.basename(contract_template_file) + '.sol'
+            tmp_source_code_file = os.path.basename(contract_template_file) + ".sol"
         tmp_source_code_file_abs = os.path.join(self._tmpdir, tmp_source_code_file)
 
-        with open(contract_template_file, 'r') as fp:
+        with open(contract_template_file, "r") as fp:
             template_code = fp.read()
 
         template = jinja2.Template(template_code)
 
-        with open(tmp_source_code_file_abs, 'w') as fp:
+        with open(tmp_source_code_file_abs, "w") as fp:
             fp.write(template.render(**context))
 
         self._source_files.append(tmp_source_code_file_abs)
@@ -100,37 +105,43 @@ class SolidityContractSourceCodeManager(object):
         solcx.set_solc_version(solc_version)
 
         compile_result = solcx.compile_files(
-            source_files=self._source_files,
-            allow_paths=self._allowed_paths
+            source_files=self._source_files, allow_paths=self._allowed_paths
         )
 
         contracts = {}
         for contract_identifier, contract_result in compile_result.items():
-            contract_file, contract_name = str(contract_identifier).split(':')
-            contracts.update({
-                contract_name: SolidityContract(
-                    abi=contract_result.get('abi'),
-                    bytecode=contract_result.get('bin')
-                )
-            })
+            contract_file, contract_name = str(contract_identifier).split(":")
+            contracts.update(
+                {
+                    contract_name: SolidityContract(
+                        abi=contract_result.get("abi"),
+                        bytecode=contract_result.get("bin"),
+                    )
+                }
+            )
         return contracts
 
     @staticmethod
     def _ensure_solc(solc_version: str) -> None:
         if Version(solc_version) in solcx.get_installed_solc_versions():
-            logger.debug('checking for solc %s: found' % solc_version)
+            logger.debug("checking for solc %s: found" % solc_version)
         else:
-            logger.debug('checking for solc %s: not found, installing' % solc_version)
+            logger.debug("checking for solc %s: not found, installing" % solc_version)
             try:
                 solcx.install_solc(solc_version)
             except SolcInstallationError:
-                logger.debug('normal installation failed, trying to compile (requires %s' % ', '.join([
-                    'cmake',
-                    'libboost-dev',
-                    'libboost-filesystem-dev',
-                    'libboost-program-options-dev',
-                    'libboost-test-dev'
-                ]))
+                logger.debug(
+                    "normal installation failed, trying to compile (requires %s"
+                    % ", ".join(
+                        [
+                            "cmake",
+                            "libboost-dev",
+                            "libboost-filesystem-dev",
+                            "libboost-program-options-dev",
+                            "libboost-test-dev",
+                        ]
+                    )
+                )
                 solcx.compile_solc(Version(solc_version))
 
     @staticmethod

@@ -17,19 +17,27 @@
 
 from eth_typing.evm import ChecksumAddress
 
-from .protocol import StateChannelFairswap
-from ..strategy import SellerStrategy, BuyerStrategy
 from ...environment import Environment
 from ...utils.json_stream import JsonObjectSocketStream
+from ..strategy import BuyerStrategy, SellerStrategy
+from .protocol import StateChannelFairswap
 
 
 class FaithfulSeller(SellerStrategy[StateChannelFairswap]):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
-            opposite_address: ChecksumAddress) -> None:
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
         pass  # TODO implement
 
 
 class FaithfulBuyer(BuyerStrategy[StateChannelFairswap]):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
-            opposite_address: ChecksumAddress) -> None:
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
         pass  # TODO implement

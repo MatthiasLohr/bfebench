@@ -37,14 +37,21 @@ class SubCommand(object):
 class SubCommandManager(object):
     def __init__(self) -> None:
         self._argument_parser = ArgumentParser()
-        self._argument_parser.add_argument('-l', '--log-level', default='WARNING',
-                                           choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
-        self._sub_command_sub_parser = self._argument_parser.add_subparsers(title='command', dest='command',
-                                                                            required=True)
+        self._argument_parser.add_argument(
+            "-l",
+            "--log-level",
+            default="WARNING",
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        )
+        self._sub_command_sub_parser = self._argument_parser.add_subparsers(
+            title="command", dest="command", required=True
+        )
         self._sub_commands: Dict[str, SubCommand] = {}
 
     def add_sub_command(self, command_name: str, command_cls: Type[SubCommand]) -> None:
-        self._sub_commands[command_name] = command_cls(self._sub_command_sub_parser.add_parser(command_name))
+        self._sub_commands[command_name] = command_cls(
+            self._sub_command_sub_parser.add_parser(command_name)
+        )
 
     def run(self) -> int:
         args = self._argument_parser.parse_args()
@@ -54,5 +61,5 @@ class SubCommandManager(object):
 
         sub_command = self._sub_commands.get(args.command)
         if sub_command is None:
-            raise RuntimeError('sub_command should not be None here')
+            raise RuntimeError("sub_command should not be None here")
         return sub_command(args)

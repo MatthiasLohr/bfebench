@@ -19,21 +19,22 @@ from .fairswap import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP
 from .fairswap_reusable import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP_REUSABLE
 from .protocol import Protocol
 from .protocol_spec import ProtocolSpec
-from .state_channel_fairswap import PROTOCOL_SPEC as PROTOCOL_SPEC_STATE_CHANNEL_FAIRSWAP
-from .strategy import Strategy, SellerStrategy, BuyerStrategy
-
+from .state_channel_fairswap import (
+    PROTOCOL_SPEC as PROTOCOL_SPEC_STATE_CHANNEL_FAIRSWAP,
+)
+from .strategy import BuyerStrategy, SellerStrategy, Strategy
 
 PROTOCOL_SPECIFICATIONS = {
-    'Fairswap': PROTOCOL_SPEC_FAIRSWAP,
-    'FairswapReusable': PROTOCOL_SPEC_FAIRSWAP_REUSABLE,
-    'StateChannelFairswap': PROTOCOL_SPEC_STATE_CHANNEL_FAIRSWAP
+    "Fairswap": PROTOCOL_SPEC_FAIRSWAP,
+    "FairswapReusable": PROTOCOL_SPEC_FAIRSWAP_REUSABLE,
+    "StateChannelFairswap": PROTOCOL_SPEC_STATE_CHANNEL_FAIRSWAP,
 }
 
 __all__ = [
-    'BuyerStrategy',
-    'Protocol',
-    'ProtocolSpec',
-    'PROTOCOL_SPECIFICATIONS',
-    'SellerStrategy',
-    'Strategy'
+    "BuyerStrategy",
+    "Protocol",
+    "ProtocolSpec",
+    "PROTOCOL_SPECIFICATIONS",
+    "SellerStrategy",
+    "Strategy",
 ]

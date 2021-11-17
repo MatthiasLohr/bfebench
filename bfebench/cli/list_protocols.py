@@ -18,6 +18,7 @@
 from argparse import ArgumentParser, Namespace
 
 from bfebench.protocols import PROTOCOL_SPECIFICATIONS
+
 from .command import SubCommand
 
 

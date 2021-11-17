@@ -28,9 +28,13 @@ class KeccakEquivalenceTest(TestCase):
     def test_keccak_equivalence(self) -> None:
         for i in range(10):
             data = generate_bytes(32)
-            self.assertEqual(eth_keccak(data), keccak.new(data=data, digest_bytes=32).digest())
-            self.assertEqual(eth_keccak(data), Web3.solidityKeccak(['bytes32'], [data]))
-            self.assertEqual(eth_keccak(data), Web3.solidityKeccak(['bytes32[1]'], [[data]]))
+            self.assertEqual(
+                eth_keccak(data), keccak.new(data=data, digest_bytes=32).digest()
+            )
+            self.assertEqual(eth_keccak(data), Web3.solidityKeccak(["bytes32"], [data]))
+            self.assertEqual(
+                eth_keccak(data), Web3.solidityKeccak(["bytes32[1]"], [[data]])
+            )
             self.assertEqual(eth_keccak(data), Web3.keccak(data))
 
     def test_keccak_compound_equivalence(self) -> None:
@@ -40,20 +44,25 @@ class KeccakEquivalenceTest(TestCase):
             data3 = generate_bytes(32)
 
             self.assertEqual(
-                keccak.new(data=data1+data2, digest_bytes=32).digest(),
-                Web3.solidityKeccak(['bytes32', 'bytes32'], [data1, data2])
+                keccak.new(data=data1 + data2, digest_bytes=32).digest(),
+                Web3.solidityKeccak(["bytes32", "bytes32"], [data1, data2]),
             )
 
             self.assertEqual(
                 keccak.new(data=data1 + data2 + data3, digest_bytes=32).digest(),
-                Web3.solidityKeccak(['bytes32', 'bytes32', 'bytes32'], [data1, data2, data3])
+                Web3.solidityKeccak(
+                    ["bytes32", "bytes32", "bytes32"], [data1, data2, data3]
+                ),
             )
 
     def test_keccak_heterogenous_compound_equivalence(self) -> None:
         for index, key in [(1, generate_bytes(32))]:
             self.assertEqual(
-                keccak.new(data=bytes(index.to_bytes(length=32, byteorder='big') + key), digest_bytes=32).digest(),
-                Web3.solidityKeccak(['uint256', 'bytes32'], [index, key])
+                keccak.new(
+                    data=bytes(index.to_bytes(length=32, byteorder="big") + key),
+                    digest_bytes=32,
+                ).digest(),
+                Web3.solidityKeccak(["uint256", "bytes32"], [index, key]),
             )
 
     def test_keccak_address(self) -> None:
@@ -62,9 +71,13 @@ class KeccakEquivalenceTest(TestCase):
         file_root_hash = generate_bytes(32)
 
         self.assertEqual(
-            Web3.solidityKeccak(['address', 'address', 'bytes32'], [seller, buyer, file_root_hash]),
+            Web3.solidityKeccak(
+                ["address", "address", "bytes32"], [seller, buyer, file_root_hash]
+            ),
             keccak.new(
-                data=bytes.fromhex(seller[2:]) + bytes.fromhex(buyer[2:]) + file_root_hash,
-                digest_bytes=32
-            ).digest()
+                data=bytes.fromhex(seller[2:])
+                + bytes.fromhex(buyer[2:])
+                + file_root_hash,
+                digest_bytes=32,
+            ).digest(),
         )

@@ -36,7 +36,7 @@ class JsonObjectSocketStream(object):
     def __init__(self, socket_path: str, chunk_size: int = 4096) -> None:
         self._socket_path = socket_path
         self._chunk_size = chunk_size
-        self._buffer = b''
+        self._buffer = b""
 
     @property
     def socket_path(self) -> str:
@@ -56,8 +56,8 @@ class JsonObjectSocketStream(object):
         while True:
             chunk = self.socket_connection.recv(self.chunk_size)
 
-            if chunk == b'':
-                if self._buffer == b'':
+            if chunk == b"":
+                if self._buffer == b"":
                     return None, 0
                 else:
                     raise JsonObjectSocketStreamClosedUnexpectedly
@@ -65,7 +65,7 @@ class JsonObjectSocketStream(object):
             self._buffer += chunk
 
             while True:
-                new_object_end_pos = self._buffer.find(b'}', object_end_pos + 1)
+                new_object_end_pos = self._buffer.find(b"}", object_end_pos + 1)
                 if new_object_end_pos == -1:
                     break
 
@@ -73,13 +73,13 @@ class JsonObjectSocketStream(object):
                 try:
                     bytes_count = new_object_end_pos + 1
                     json_object = json.loads(self._buffer[0:bytes_count])
-                    self._buffer = self._buffer[new_object_end_pos + 1:]
+                    self._buffer = self._buffer[new_object_end_pos + 1 :]
                     return json_object, bytes_count
                 except json.JSONDecodeError:
                     pass
 
     def send_object(self, obj: Any) -> int:
-        return self.socket_connection.send(json.dumps(obj).encode('utf-8'))
+        return self.socket_connection.send(json.dumps(obj).encode("utf-8"))
 
     def close(self) -> None:
         self.socket_connection.close()
@@ -104,7 +104,7 @@ class JsonObjectUnixDomainSocketServerStream(JsonObjectSocketStream):
     def socket_connection(self) -> socket.socket:
         self._accepting_thread.join()
         if self._socket_connection is None:
-            raise IOError('no active connection')
+            raise IOError("no active connection")
         return self._socket_connection
 
     def close(self) -> None:
@@ -149,7 +149,9 @@ class JsonObjectSocketStreamForwarder(object):
             self.count = 0
             self.bytes = 0
 
-    def __init__(self, stream1: JsonObjectSocketStream, stream2: JsonObjectSocketStream) -> None:
+    def __init__(
+        self, stream1: JsonObjectSocketStream, stream2: JsonObjectSocketStream
+    ) -> None:
         self._stream1 = stream1
         self._stream2 = stream2
 
@@ -159,12 +161,12 @@ class JsonObjectSocketStreamForwarder(object):
         self._thread_1to2 = Thread(
             target=self._forward,
             args=(self._stream1, self._stream2, self._counter_1to2),
-            daemon=True
+            daemon=True,
         )
         self._thread_2to1 = Thread(
             target=self._forward,
             args=(self._stream2, self._stream1, self._counter_2to1),
-            daemon=True
+            daemon=True,
         )
 
     def get_stats(self) -> JsonObjectSocketStreamForwarderStats:
@@ -172,7 +174,7 @@ class JsonObjectSocketStreamForwarder(object):
             count_1to2=self._counter_1to2.count,
             count_2to1=self._counter_2to1.count,
             bytes_1to2=self._counter_1to2.bytes,
-            bytes_2to1=self._counter_2to1.bytes
+            bytes_2to1=self._counter_2to1.bytes,
         )
 
     def start(self) -> None:
@@ -180,8 +182,11 @@ class JsonObjectSocketStreamForwarder(object):
         self._thread_2to1.start()
 
     @staticmethod
-    def _forward(source: JsonObjectSocketStream, target: JsonObjectSocketStream,
-                 counter: 'JsonObjectSocketStreamForwarder.Counter') -> None:
+    def _forward(
+        source: JsonObjectSocketStream,
+        target: JsonObjectSocketStream,
+        counter: "JsonObjectSocketStreamForwarder.Counter",
+    ) -> None:
         while True:
             received, bytes_count = source.receive_object()
             if received is None:  # socket has been closed cleanly

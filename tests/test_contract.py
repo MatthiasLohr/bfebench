@@ -25,29 +25,28 @@ from bfebench.protocols.fairswap.util import B032
 class ContractCollectionTest(TestCase):
     def test_compile_fairswap(self) -> None:
         contracts_path = os.path.join(
-            os.path.dirname(__file__),
-            '../bfebench/protocols/fairswap'
+            os.path.dirname(__file__), "../bfebench/protocols/fairswap"
         )
 
         scscm = SolidityContractSourceCodeManager()
         scscm.add_contract_template_file(
-            contract_template_file=os.path.join(contracts_path, 'fairswap.tpl.sol'),
+            contract_template_file=os.path.join(contracts_path, "fairswap.tpl.sol"),
             context={
-                'merkle_tree_depth': 3,
-                'slice_length': 32,
-                'slice_count': 4,
-                'receiver': '0x0000000000000000000000000000000000000000',
-                'price': 1000000000,
-                'key_commitment': '0x' + B032.hex(),
-                'ciphertext_root_hash': '0x' + B032.hex(),
-                'file_root_hash': '0x' + B032.hex(),
-                'timeout': 10
-            }
+                "merkle_tree_depth": 3,
+                "slice_length": 32,
+                "slice_count": 4,
+                "receiver": "0x0000000000000000000000000000000000000000",
+                "price": 1000000000,
+                "key_commitment": "0x" + B032.hex(),
+                "ciphertext_root_hash": "0x" + B032.hex(),
+                "file_root_hash": "0x" + B032.hex(),
+                "timeout": 10,
+            },
         )
 
-        contracts = scscm.compile('0.6.1')
+        contracts = scscm.compile("0.6.1")
 
-        self.assertIn('FileSale', contracts)
+        self.assertIn("FileSale", contracts)
 
     def test_compile_fairswap_reusable(self) -> None:
         pass  # TODO implement
@@ -55,16 +54,18 @@ class ContractCollectionTest(TestCase):
     def test_compile_state_channel_fairswap(self) -> None:
         contracts_path = os.path.join(
             os.path.dirname(__file__),
-            '../bfebench/protocols/state_channel_fairswap/perun-eth-contracts'
+            "../bfebench/protocols/state_channel_fairswap/perun-eth-contracts",
         )
 
-        scscm = SolidityContractSourceCodeManager(
-            allowed_paths=[contracts_path]
+        scscm = SolidityContractSourceCodeManager(allowed_paths=[contracts_path])
+        scscm.add_contract_file(
+            os.path.join(contracts_path, "contracts/Adjudicator.sol")
         )
-        scscm.add_contract_file(os.path.join(contracts_path, 'contracts/Adjudicator.sol'))
-        scscm.add_contract_file(os.path.join(contracts_path, 'contracts/AssetHolderETH.sol'))
+        scscm.add_contract_file(
+            os.path.join(contracts_path, "contracts/AssetHolderETH.sol")
+        )
 
-        contracts = scscm.compile('0.7.0')
+        contracts = scscm.compile("0.7.0")
 
-        self.assertIn('Adjudicator', contracts)
-        self.assertIn('AssetHolderETH', contracts)
+        self.assertIn("Adjudicator", contracts)
+        self.assertIn("AssetHolderETH", contracts)

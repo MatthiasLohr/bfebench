@@ -19,13 +19,13 @@ from unittest import TestCase
 
 from bfebench.protocols.fairswap.util import (
     B032,
-    keccak,
+    LeafDigestMismatchError,
+    NodeDigestMismatchError,
+    decode,
     encode,
     encode_forge_first_leaf,
     encode_forge_first_leaf_first_hash,
-    decode,
-    LeafDigestMismatchError,
-    NodeDigestMismatchError
+    keccak,
 )
 from bfebench.utils.bytes import generate_bytes
 from bfebench.utils.merkle import from_bytes, mt2obj, obj2mt
@@ -40,7 +40,11 @@ class EncodingTest(TestCase):
             tree_enc = encode(tree, key)
 
             tree_enc_obj = mt2obj(tree_enc, encode_func=lambda b: bytes(b).hex())
-            tree_enc_obj2mt = obj2mt(tree_enc_obj, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s)))
+            tree_enc_obj2mt = obj2mt(
+                tree_enc_obj,
+                digest_func=keccak,
+                decode_func=lambda s: bytes.fromhex(str(s)),
+            )
 
             self.assertEqual(tree_enc.leaves, tree_enc_obj2mt.leaves)
             self.assertEqual(tree_enc.digest, tree_enc_obj2mt.digest)

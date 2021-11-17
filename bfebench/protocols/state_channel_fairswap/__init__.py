@@ -15,17 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .protocol import StateChannelFairswap
-from .strategies import FaithfulSeller, FaithfulBuyer
 from ..protocol_spec import ProtocolSpec
-
+from .protocol import StateChannelFairswap
+from .strategies import FaithfulBuyer, FaithfulSeller
 
 PROTOCOL_SPEC = ProtocolSpec(
     protocol=StateChannelFairswap,
-    seller_strategies={
-        'Faithful': FaithfulSeller
-    },
-    buyer_strategies={
-        'Faithful': FaithfulBuyer
-    }
+    seller_strategies={"Faithful": FaithfulSeller},
+    buyer_strategies={"Faithful": FaithfulBuyer},
 )

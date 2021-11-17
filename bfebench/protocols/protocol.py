@@ -26,7 +26,9 @@ from ..errors import BaseError
 class Protocol(object):
     def __init__(self, filename: str, price: int, **kwargs: Any) -> None:
         if len(kwargs) > 0:
-            raise BaseError('unhandled protocol keyword parameters: %s' % ', '.join(kwargs.keys()))
+            raise BaseError(
+                "unhandled protocol keyword parameters: %s" % ", ".join(kwargs.keys())
+            )
 
         self._filename = filename
         self._price = price
@@ -39,18 +41,34 @@ class Protocol(object):
     def price(self) -> int:
         return self._price
 
-    def set_up_simulation(self, environment: Environment, seller_address: ChecksumAddress,
-                          buyer_address: ChecksumAddress) -> None:
+    def set_up_simulation(
+        self,
+        environment: Environment,
+        seller_address: ChecksumAddress,
+        buyer_address: ChecksumAddress,
+    ) -> None:
         pass
 
-    def set_up_iteration(self, environment: Environment, seller_address: ChecksumAddress,
-                         buyer_address: ChecksumAddress) -> None:
+    def set_up_iteration(
+        self,
+        environment: Environment,
+        seller_address: ChecksumAddress,
+        buyer_address: ChecksumAddress,
+    ) -> None:
         pass
 
-    def tear_down_iteration(self, environment: Environment, seller_address: ChecksumAddress,
-                            buyer_address: ChecksumAddress) -> None:
+    def tear_down_iteration(
+        self,
+        environment: Environment,
+        seller_address: ChecksumAddress,
+        buyer_address: ChecksumAddress,
+    ) -> None:
         pass
 
-    def tear_down_simulation(self, environment: Environment, seller_address: ChecksumAddress,
-                             buyer_address: ChecksumAddress) -> None:
+    def tear_down_simulation(
+        self,
+        environment: Environment,
+        seller_address: ChecksumAddress,
+        buyer_address: ChecksumAddress,
+    ) -> None:
         pass

@@ -27,30 +27,34 @@ from .errors import EnvironmentsConfigurationError
 
 class EnvironmentsConfiguration(object):
     def __init__(self, filename: str) -> None:
-        with open(filename, 'r') as fp:
+        with open(filename, "r") as fp:
             data = yaml.safe_load(fp)
 
         if data is None:
-            raise EnvironmentsConfigurationError('%s does not seem to contain valid YAML' % filename)
+            raise EnvironmentsConfigurationError(
+                "%s does not seem to contain valid YAML" % filename
+            )
 
-        self._operator_environment = self._yaml2environment(data.get('operator'))
-        self._seller_environment = self._yaml2environment(data.get('seller'))
-        self._buyer_environment = self._yaml2environment(data.get('buyer'))
+        self._operator_environment = self._yaml2environment(data.get("operator"))
+        self._seller_environment = self._yaml2environment(data.get("seller"))
+        self._buyer_environment = self._yaml2environment(data.get("buyer"))
 
     @staticmethod
     def _yaml2environment(data: Dict[str, Any]) -> Environment:
-        endpoint_config = data.get('endpoint')
+        endpoint_config = data.get("endpoint")
         if endpoint_config is None:
-            raise ValueError('no endpoint configuration provided')
+            raise ValueError("no endpoint configuration provided")
 
-        wallet_config = data.get('wallet')
+        wallet_config = data.get("wallet")
         if wallet_config is None:
-            raise ValueError('no wallet configuration provided')
+            raise ValueError("no wallet configuration provided")
 
         return Environment(
-            web3=Web3(HTTPProvider(endpoint_config.get('url', 'http://localhost:8545/'))),
-            wallet_address=wallet_config.get('address'),
-            private_key=wallet_config.get('privateKey')
+            web3=Web3(
+                HTTPProvider(endpoint_config.get("url", "http://localhost:8545/"))
+            ),
+            wallet_address=wallet_config.get("address"),
+            private_key=wallet_config.get("privateKey"),
         )
 
     @property

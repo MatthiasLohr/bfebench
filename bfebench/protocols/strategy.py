@@ -20,18 +20,19 @@ from typing import Generic, TypeVar
 
 from eth_typing.evm import ChecksumAddress
 
-from .protocol import Protocol
 from ..environment import Environment
 from ..utils.json_stream import JsonObjectSocketStream
+from .protocol import Protocol
 
-
-T = TypeVar('T', bound=Protocol)
+T = TypeVar("T", bound=Protocol)
 
 
 class Strategy(Generic[T]):
     def __init__(self, protocol: T) -> None:
         self._protocol = protocol
-        self._logger = logging.getLogger('%s.%s' % (self.__class__.__module__, self.__class__.__qualname__))
+        self._logger = logging.getLogger(
+            "%s.%s" % (self.__class__.__module__, self.__class__.__qualname__)
+        )
 
     @property
     def protocol(self) -> T:
@@ -41,18 +42,30 @@ class Strategy(Generic[T]):
     def logger(self) -> logging.Logger:
         return self._logger
 
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
-            opposite_address: ChecksumAddress) -> None:
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
         raise NotImplementedError()
 
 
 class SellerStrategy(Strategy[T]):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
-            opposite_address: ChecksumAddress) -> None:
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
         raise NotImplementedError()
 
 
 class BuyerStrategy(Strategy[T]):
-    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
-            opposite_address: ChecksumAddress) -> None:
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
         raise NotImplementedError()

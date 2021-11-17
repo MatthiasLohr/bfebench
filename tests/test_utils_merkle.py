@@ -15,13 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from base64 import b64encode, b64decode
+from base64 import b64decode, b64encode
 from math import log2
 from unittest import TestCase
 
 from bfebench.protocols.fairswap.util import B032, keccak
 from bfebench.utils.bytes import generate_bytes
-from bfebench.utils.merkle import MerkleTreeNode, MerkleTreeLeaf, from_bytes, mt2obj, obj2mt
+from bfebench.utils.merkle import (
+    MerkleTreeLeaf,
+    MerkleTreeNode,
+    from_bytes,
+    mt2obj,
+    obj2mt,
+)
 
 
 class MerkleTest(TestCase):
@@ -29,26 +35,14 @@ class MerkleTest(TestCase):
         keccak,
         MerkleTreeNode(
             keccak,
-            MerkleTreeLeaf(
-                keccak,
-                generate_bytes(32)
-            ),
-            MerkleTreeLeaf(
-                keccak,
-                generate_bytes(32)
-            )
+            MerkleTreeLeaf(keccak, generate_bytes(32)),
+            MerkleTreeLeaf(keccak, generate_bytes(32)),
         ),
         MerkleTreeNode(
             keccak,
-            MerkleTreeLeaf(
-                keccak,
-                generate_bytes(32)
-            ),
-            MerkleTreeLeaf(
-                keccak,
-                generate_bytes(32)
-            )
-        )
+            MerkleTreeLeaf(keccak, generate_bytes(32)),
+            MerkleTreeLeaf(keccak, generate_bytes(32)),
+        ),
     )
 
     def test_init(self) -> None:
@@ -58,7 +52,7 @@ class MerkleTest(TestCase):
             keccak,
             MerkleTreeLeaf(keccak, B032),
             MerkleTreeLeaf(keccak, B032),
-            MerkleTreeLeaf(keccak, B032)
+            MerkleTreeLeaf(keccak, B032),
         )
 
     def test_get_proof_and_validate(self) -> None:
@@ -67,7 +61,11 @@ class MerkleTest(TestCase):
             for index, leaf in enumerate(tree.leaves):
                 proof = tree.get_proof(leaf)
                 self.assertEqual(len(proof), int(log2(slice_count)))
-                self.assertTrue(MerkleTreeNode.validate_proof(tree.digest, leaf, index, proof, keccak))
+                self.assertTrue(
+                    MerkleTreeNode.validate_proof(
+                        tree.digest, leaf, index, proof, keccak
+                    )
+                )
 
     def test_mt2obj2mt_plain(self) -> None:
         obj = mt2obj(self.EXAMPLE_TREE1)
@@ -85,7 +83,9 @@ class MerkleTest(TestCase):
 
     def test_mt2obj2mt_hex(self) -> None:
         obj = mt2obj(self.EXAMPLE_TREE1, encode_func=lambda b: bytes(b).hex())
-        mt2 = obj2mt(obj, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s)))
+        mt2 = obj2mt(
+            obj, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s))
+        )
 
         self.assertEqual(self.EXAMPLE_TREE1, mt2)
         self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)
@@ -97,10 +97,14 @@ class MerkleTest(TestCase):
         data = generate_bytes(32 * 2 * 16)
         tree_original = from_bytes(data, digest_func=keccak, slice_count=16)
 
-        self.assertEqual(b''.join([leaf.data for leaf in tree_original.leaves]), data)
+        self.assertEqual(b"".join([leaf.data for leaf in tree_original.leaves]), data)
 
         tree_encoded = mt2obj(tree_original, encode_func=lambda b: bytes(b).hex())
-        tree_decoded = obj2mt(tree_encoded, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s)))
+        tree_decoded = obj2mt(
+            tree_encoded,
+            digest_func=keccak,
+            decode_func=lambda s: bytes.fromhex(str(s)),
+        )
 
-        self.assertEqual(b''.join([leaf.data for leaf in tree_decoded.leaves]), data)
+        self.assertEqual(b"".join([leaf.data for leaf in tree_decoded.leaves]), data)
         self.assertEqual(tree_original.digest, tree_decoded.digest)
