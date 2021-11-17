@@ -15,13 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from eth_typing.evm import ChecksumAddress
+
 from .protocol import StateChannelFairswap
 from ..strategy import SellerStrategy, BuyerStrategy
+from ...environment import Environment
+from ...utils.json_stream import JsonObjectSocketStream
 
 
 class FaithfulSeller(SellerStrategy[StateChannelFairswap]):
-    pass
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
+        pass  # TODO implement
 
 
 class FaithfulBuyer(BuyerStrategy[StateChannelFairswap]):
-    pass
+    def run(self, environment: Environment, p2p_stream: JsonObjectSocketStream,
+            opposite_address: ChecksumAddress) -> None:
+        pass  # TODO implement

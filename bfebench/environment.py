@@ -93,13 +93,13 @@ class Environment(object):
     def wait_poll_interval(self) -> float:
         return self._wait_poll_interval
 
-    def deploy_contract(self, contract: Contract, *constructor_args: Any, **constructor_kwargs: Any) -> ChecksumAddress:
+    def deploy_contract(self, contract: Contract, *constructor_args: Any, **constructor_kwargs: Any) -> TxReceipt:
         web3_contract = self.web3.eth.contract(abi=contract.abi, bytecode=contract.bytecode)
         tx_receipt = self._send_transaction(
             factory=web3_contract.constructor(*constructor_args, **constructor_kwargs)
         )
         contract.address = ChecksumAddress(tx_receipt['contractAddress'])
-        return contract.address
+        return tx_receipt
 
     def get_web3_contract(self, contract: Contract) -> Web3Contract:
         return self._web3.eth.contract(address=contract.address, abi=contract.abi)

@@ -50,7 +50,7 @@ class ContractCollectionTest(TestCase):
         self.assertIn('FileSale', contracts)
 
     def test_compile_fairswap_reusable(self) -> None:
-        pass
+        pass  # TODO implement
 
     def test_compile_state_channel_fairswap(self) -> None:
         contracts_path = os.path.join(
