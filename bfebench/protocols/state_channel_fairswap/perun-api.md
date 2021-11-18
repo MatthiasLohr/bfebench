@@ -1,5 +1,12 @@
 # Perun API Documentation
 
+  * https://perun.network/ -- official website
+  * https://labs.hyperledger.org/perun-doc/ -- documentation at Hyperledger labs
+  * https://github.com/hyperledger-labs/go-perun -- Go API source code
+  * https://github.com/hyperledger-labs/perun-eth-contracts -- Solidity Contracts for Ethereum
+  * https://github.com/hyperledger-labs/perun-node -- Perun Node project
+
+
 ## Contracts
 
 ### Adjudicator
