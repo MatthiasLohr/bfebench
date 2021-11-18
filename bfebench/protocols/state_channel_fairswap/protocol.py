@@ -34,16 +34,22 @@ class StateChannelFairswap(Protocol):
     SOLC_VERSION = "0.7.0"
 
     PERUN_ADJUDICATOR_CONTRACT_NAME = "Adjudicator"
-    PERUN_ADJUDICATOR_CONTRACT_FILE = "contracts/Adjudicator.sol"
+    PERUN_ADJUDICATOR_CONTRACT_FILE = "perun-eth-contracts/contracts/Adjudicator.sol"
 
     PERUN_ASSET_HOLDER_CONTRACT_NAME = "AssetHolderETH"
-    PERUN_ASSET_HOLDER_CONTRACT_FILE = "contracts/AssetHolderETH.sol"
+    PERUN_ASSET_HOLDER_CONTRACT_FILE = (
+        "perun-eth-contracts/contracts/AssetHolderETH.sol"
+    )
+
+    PERUN_APP_CONTRACT_NAME = "FileSale"
+    PERUN_APP_CONTRACT_FILE = "./FileSaleApp.sol"
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
         self._adjudicator_contract: Contract | None = None
         self._asset_holder_contract: Contract | None = None
+        self._app_contract: Contract | None = None
 
     def set_up_simulation(
         self,
@@ -52,9 +58,7 @@ class StateChannelFairswap(Protocol):
         buyer_address: ChecksumAddress,
     ) -> None:
         logger.debug("deploying contracts...")
-        contracts_root_path = os.path.join(
-            os.path.dirname(__file__), "perun-eth-contracts"
-        )
+        contracts_root_path = os.path.dirname(__file__)
         scscm = SolidityContractSourceCodeManager(allowed_paths=[contracts_root_path])
         scscm.add_contract_file(
             os.path.join(contracts_root_path, self.PERUN_ADJUDICATOR_CONTRACT_FILE)
@@ -62,21 +66,32 @@ class StateChannelFairswap(Protocol):
         scscm.add_contract_file(
             os.path.join(contracts_root_path, self.PERUN_ASSET_HOLDER_CONTRACT_FILE)
         )
+        scscm.add_contract_file(
+            os.path.join(contracts_root_path, self.PERUN_APP_CONTRACT_FILE)
+        )
         contracts = scscm.compile(self.SOLC_VERSION)
         self._adjudicator_contract = contracts[self.PERUN_ADJUDICATOR_CONTRACT_NAME]
         self._asset_holder_contract = contracts[self.PERUN_ASSET_HOLDER_CONTRACT_NAME]
+        self._app_contract = contracts[self.PERUN_APP_CONTRACT_NAME]
 
         tx_receipt = environment.deploy_contract(self._adjudicator_contract)
         logger.debug(
             "deployed adjudicator contract at %s (%s gas used)"
             % (self._adjudicator_contract.address, tx_receipt["gasUsed"])
         )
+
         tx_receipt = environment.deploy_contract(
             self._asset_holder_contract, self._adjudicator_contract.address
         )
         logger.debug(
             "deployed asset holder contract at %s (%s gas used)"
             % (self._asset_holder_contract.address, tx_receipt["gasUsed"])
+        )
+
+        tx_receipt = environment.deploy_contract(self._app_contract)
+        logger.debug(
+            "deployed app contract at %s (%s gas used)"
+            % (self._app_contract.address, tx_receipt["gasUsed"])
         )
 
     @property

@@ -10,7 +10,7 @@ services:
       - "--account=0x689aeac4f710e2bce4439d54e52e447bdf7f1e128477d0969c4d38e819f3e31c,100000000000000000000"
       - "--account=0x80ecdac657040f31b8362de83dcc8bbdb8fddc417f51055e7e5a148bb50e220d,100000000000000000000"
       - "--gasPrice=20000000000"
-      - "--gasLimit=90000"
+      - "--gasLimit=29000000"
     ports:
       - "8545:8545"
     network_mode: bridge
