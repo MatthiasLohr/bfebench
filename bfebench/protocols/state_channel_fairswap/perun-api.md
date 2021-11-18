@@ -5,6 +5,7 @@
   * https://github.com/hyperledger-labs/go-perun -- Go API source code
   * https://github.com/hyperledger-labs/perun-eth-contracts -- Solidity Contracts for Ethereum
   * https://github.com/hyperledger-labs/perun-node -- Perun Node project
+  * https://github.com/perun-network/perun-examples -- repository containing examples
 
 
 ## Contracts
