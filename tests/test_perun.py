@@ -29,14 +29,17 @@ from bfebench.contract import Contract, SolidityContractSourceCodeManager
 from bfebench.environment import Environment
 from bfebench.protocols.state_channel_fairswap import StateChannelFairswap
 from bfebench.protocols.state_channel_fairswap.perun import (
+    Allocation,
     ChannelParams,
+    ChannelState,
+    SubAllocation,
     get_funding_id,
 )
 from bfebench.utils.bytes import generate_bytes
 
 
 class PerunChannelTest(TestCase):
-    CHANNEL_PARAMS_INPUT = [
+    CHANNEL_PARAMS_INPUTS = [
         ChannelParams(
             challenge_duration=60,
             nonce=1,
@@ -47,6 +50,24 @@ class PerunChannelTest(TestCase):
             app=Web3.toChecksumAddress("0x0000000000000000000000000000000000000000"),
             ledger_channel=True,
             virtual_channel=False,
+        )
+    ]
+
+    CHANNEL_STATE_INPUTS = [
+        ChannelState(
+            channel_id=generate_bytes(32),
+            version=999,
+            outcome=Allocation(
+                assets=[
+                    Web3.toChecksumAddress("0x0000000000000000000000000000000000000000")
+                ],
+                balances=[[0]],
+                locked=[
+                    SubAllocation(id=generate_bytes(32), balances=[3], index_map=[5])
+                ],
+            ),
+            app_data=b"abcdefg",
+            is_final=False,
         )
     ]
 
@@ -113,7 +134,7 @@ class PerunChannelTest(TestCase):
     def test_encode_params(self) -> None:
         web3_contract = self.environment.get_web3_contract(self.contract)
 
-        for channel_params in self.CHANNEL_PARAMS_INPUT:
+        for channel_params in self.CHANNEL_PARAMS_INPUTS:
             self.assertEqual(
                 bytes(
                     web3_contract.functions.encodeParams(tuple(channel_params)).call()
@@ -122,12 +143,20 @@ class PerunChannelTest(TestCase):
             )
 
     def test_encode_state(self) -> None:
-        pass  # TODO implement
+        web3_contract = self.environment.get_web3_contract(self.contract)
+
+        for channel_state in self.CHANNEL_STATE_INPUTS:
+            self.assertEqual(
+                bytes(
+                    web3_contract.functions.encodeState(tuple(channel_state)).call()
+                ).hex(),
+                channel_state.abi_encode().hex(),
+            )
 
     def test_channel_id(self) -> None:
         web3_contract = self.environment.get_web3_contract(self.contract)
 
-        for channel_params in self.CHANNEL_PARAMS_INPUT:
+        for channel_params in self.CHANNEL_PARAMS_INPUTS:
             self.assertEqual(
                 bytes(
                     web3_contract.functions.channelID(tuple(channel_params)).call()
@@ -136,7 +165,15 @@ class PerunChannelTest(TestCase):
             )
 
     def test_hash_state(self) -> None:
-        pass  # TODO implement
+        web3_contract = self.environment.get_web3_contract(self.contract)
+
+        for channel_state in self.CHANNEL_STATE_INPUTS:
+            self.assertEqual(
+                bytes(
+                    web3_contract.functions.hashState(tuple(channel_state)).call()
+                ).hex(),
+                channel_state.get_keccak().hex(),
+            )
 
     def test_calc_funding_id(self) -> None:
         channel_id = generate_bytes(32)

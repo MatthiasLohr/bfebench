@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, NamedTuple
+from typing import Any, Generator, List, NamedTuple
 
 from eth_abi.abi import encode_abi
 from eth_typing.evm import ChecksumAddress
@@ -35,8 +35,11 @@ class ChannelParams(NamedTuple):
             ["(uint256,uint256,address[],address,bool,bool)"], [tuple(self)]
         )
 
-    def get_channel_id(self) -> bytes:
+    def get_keccak(self) -> bytes:
         return bytes(Web3.solidityKeccak(["bytes"], [self.abi_encode()]))
+
+    def get_channel_id(self) -> bytes:
+        return self.get_keccak()
 
 
 class SubAllocation(NamedTuple):
@@ -50,6 +53,11 @@ class Allocation(NamedTuple):
     balances: List[List[int]]
     locked: List[SubAllocation]
 
+    def __iter__(self) -> Generator[Any, None, None]:
+        yield self.assets
+        yield self.balances
+        yield [tuple(sub_alloc) for sub_alloc in self.locked]
+
 
 class ChannelState(NamedTuple):
     channel_id: bytes
@@ -57,3 +65,21 @@ class ChannelState(NamedTuple):
     outcome: Allocation
     app_data: bytes
     is_final: bool
+
+    def abi_encode(self) -> bytes:
+        return encode_abi(
+            [
+                "(bytes32,uint64,(address[],uint256[][],(bytes32,uint256[],uint16[])[]),bytes,bool)"
+            ],
+            [tuple(self)],
+        )
+
+    def get_keccak(self) -> bytes:
+        return bytes(Web3.solidityKeccak(["bytes"], [self.abi_encode()]))
+
+    def __iter__(self) -> Generator[Any, None, None]:
+        yield self.channel_id
+        yield self.version
+        yield tuple(self.outcome)
+        yield self.app_data
+        yield self.is_final
