@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from eth_abi import encode_abi
+from eth_abi.abi import encode_abi
 from eth_typing.evm import ChecksumAddress
 from web3 import Web3
 
