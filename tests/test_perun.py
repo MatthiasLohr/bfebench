@@ -110,8 +110,30 @@ class PerunChannelTest(TestCase):
         web3_contract = self.environment.get_web3_contract(self.contract)
         self.assertEqual(web3_contract.functions.getRandomNumber().call(), 4)
 
-    def test_channel_id(self) -> None:
+    def test_encode_params(self) -> None:
+        web3_contract = self.environment.get_web3_contract(self.contract)
+
+        for channel_params in self.CHANNEL_PARAMS_INPUT:
+            self.assertEqual(
+                bytes(
+                    web3_contract.functions.encodeParams(tuple(channel_params)).call()
+                ).hex(),
+                channel_params.abi_encode().hex(),
+            )
+
+    def test_encode_state(self) -> None:
         pass  # TODO implement
+
+    def test_channel_id(self) -> None:
+        web3_contract = self.environment.get_web3_contract(self.contract)
+
+        for channel_params in self.CHANNEL_PARAMS_INPUT:
+            self.assertEqual(
+                bytes(
+                    web3_contract.functions.channelID(tuple(channel_params)).call()
+                ).hex(),
+                channel_params.get_channel_id().hex(),
+            )
 
     def test_hash_state(self) -> None:
         pass  # TODO implement

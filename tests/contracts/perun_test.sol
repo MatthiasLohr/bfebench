@@ -57,4 +57,13 @@ contract PerunTest {
     function calcFundingID(bytes32 channelID, address participant) public pure returns (bytes32) {
         return keccak256(abi.encode(channelID, participant));
     }
+
+    // functions taken from perun-eth-contracts/contracts/Channel.sol for testing
+    function encodeParams(Channel.Params memory params) public pure returns (bytes memory)  {
+        return abi.encode(params);
+    }
+
+    function encodeState(Channel.State memory state) public pure returns (bytes memory)  {
+        return abi.encode(state);
+    }
 }

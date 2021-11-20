@@ -17,6 +17,7 @@
 
 from typing import List, NamedTuple
 
+from eth_abi.abi import encode_abi
 from eth_typing.evm import ChecksumAddress
 
 
@@ -28,8 +29,13 @@ class ChannelParams(NamedTuple):
     ledger_channel: bool
     virtual_channel: bool
 
+    def abi_encode(self) -> bytes:
+        return encode_abi(
+            ["(uint256,uint256,address[],address,bool,bool)"], [tuple(self)]
+        )
+
     def get_channel_id(self) -> bytes:
-        pass
+        pass  # TODO
 
 
 class SubAllocation(NamedTuple):
