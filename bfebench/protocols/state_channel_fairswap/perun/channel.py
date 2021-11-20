@@ -19,6 +19,7 @@ from typing import List, NamedTuple
 
 from eth_abi.abi import encode_abi
 from eth_typing.evm import ChecksumAddress
+from web3 import Web3
 
 
 class ChannelParams(NamedTuple):
@@ -35,7 +36,7 @@ class ChannelParams(NamedTuple):
         )
 
     def get_channel_id(self) -> bytes:
-        pass  # TODO
+        return bytes(Web3.solidityKeccak(["bytes"], [self.abi_encode()]))
 
 
 class SubAllocation(NamedTuple):
