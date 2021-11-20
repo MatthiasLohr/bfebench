@@ -24,3 +24,7 @@ PROTOCOL_SPEC = ProtocolSpec(
     seller_strategies={"Faithful": FaithfulSeller},
     buyer_strategies={"Faithful": FaithfulBuyer},
 )
+
+__all__ = [
+    'StateChannelFairswap'
+]
