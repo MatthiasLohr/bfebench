@@ -25,6 +25,4 @@ PROTOCOL_SPEC = ProtocolSpec(
     buyer_strategies={"Faithful": FaithfulBuyer},
 )
 
-__all__ = [
-    'StateChannelFairswap'
-]
+__all__ = ["StateChannelFairswap"]

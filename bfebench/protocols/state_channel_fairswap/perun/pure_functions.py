@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from eth_abi import encode_abi
 from eth_typing.evm import ChecksumAddress
 from web3 import Web3
 
@@ -22,7 +23,8 @@ from .channel import ChannelState
 
 
 def get_funding_id(channel_id: bytes, participant: ChecksumAddress) -> bytes:
-    return Web3.solidityKeccak()
+    encoded = "0x" + encode_abi(["bytes32", "address"], [channel_id, participant]).hex()
+    return bytes(Web3.solidityKeccak(["bytes"], [encoded]))
 
 
 def hash_state(channel_state: ChannelState) -> bytes:
