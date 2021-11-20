@@ -21,17 +21,35 @@ import os
 from typing import Any
 from unittest import TestCase
 
-from eth_tester import PyEVMBackend
+from eth_tester import PyEVMBackend  # type: ignore
 from hexbytes import HexBytes
 from web3 import Web3
 
 from bfebench.contract import Contract, SolidityContractSourceCodeManager
 from bfebench.environment import Environment
 from bfebench.protocols.state_channel_fairswap import StateChannelFairswap
-from bfebench.protocols.state_channel_fairswap.perun import ChannelParams
+from bfebench.protocols.state_channel_fairswap.perun import (
+    ChannelParams,
+    get_funding_id,
+)
+from bfebench.utils.bytes import generate_bytes
 
 
 class PerunChannelTest(TestCase):
+    CHANNEL_PARAMS_INPUT = [
+        ChannelParams(
+            challenge_duration=60,
+            nonce=1,
+            participants=[
+                Web3.toChecksumAddress("0x598eC01a78be6945e5cB4C0451c5CF185211e96d"),
+                Web3.toChecksumAddress("0x65a3A53e899601d0C49C668bB1a7Bc06a5B23F35"),
+            ],
+            app=Web3.toChecksumAddress("0x0000000000000000000000000000000000000000"),
+            ledger_channel=True,
+            virtual_channel=False,
+        )
+    ]
+
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
 
@@ -75,45 +93,37 @@ class PerunChannelTest(TestCase):
     @property
     def contract(self) -> Contract:
         if self._contract is None:
-            contracts_root_path = os.path.dirname(__file__)
+            contracts_root_path = os.path.join(os.path.dirname(__file__), "contracts")
             scscm = SolidityContractSourceCodeManager(
-                allowed_paths=[contracts_root_path]
+                allowed_paths=[
+                    os.path.realpath(os.path.join(contracts_root_path, "../../.."))
+                ]
             )
-            scscm.add_contract_file(
-                os.path.join(contracts_root_path, "contracts/perun_test.sol")
-            )
+            scscm.add_contract_file(os.path.join(contracts_root_path, "perun_test.sol"))
             contracts = scscm.compile(StateChannelFairswap.SOLC_VERSION)
             self._contract = contracts["PerunTest"]
             self.environment.deploy_contract(self._contract)
 
         return self._contract
 
-    def test_channel_id(self) -> None:
-        channel_params_list = [
-            ChannelParams(
-                challenge_duration=60,
-                nonce=1,
-                participants=[
-                    Web3.toChecksumAddress(
-                        "0x598eC01a78be6945e5cB4C0451c5CF185211e96d"
-                    ),
-                    Web3.toChecksumAddress(
-                        "0x65a3A53e899601d0C49C668bB1a7Bc06a5B23F35"
-                    ),
-                ],
-                app=self.contract.address,
-                ledger_channel=True,
-                virtual_channel=False,
-            )
-        ]
-
+    def test_testcase(self) -> None:
         web3_contract = self.environment.get_web3_contract(self.contract)
-
-        # check if test deployment worked
         self.assertEqual(web3_contract.functions.getRandomNumber().call(), 4)
 
-        # check actual smart contract methods
-        for channel_params in channel_params_list:
-            self.assertEqual(
-                channel_params.get_channel_id(), 0  # TODO replace with contract calls
-            )
+    def test_channel_id(self) -> None:
+        pass  # TODO implement
+
+    def test_hash_state(self) -> None:
+        pass  # TODO implement
+
+    def test_calc_funding_id(self) -> None:
+        channel_id = generate_bytes(32)
+        participant = self.environment.wallet_address
+        web3_contract = self.environment.get_web3_contract(self.contract)
+
+        self.assertEqual(
+            bytes(
+                web3_contract.functions.calcFundingID(channel_id, participant).call()
+            ).hex(),
+            get_funding_id(channel_id, participant).hex(),
+        )

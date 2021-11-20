@@ -20,8 +20,41 @@
 pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "../../bfebench/protocols/state_channel_fairswap/perun-eth-contracts/contracts/Channel.sol";
+
 contract PerunTest {
+    // custom test function for testing the test case
     function getRandomNumber() public returns (int) {
         return 4;
+    }
+
+    // functions taken from perun-eth-contracts/contracts/Adjudicator.sol for testing
+    /**
+     * @notice Calculates the channel's ID from the given parameters.
+     * @param params The parameters of the channel.
+     * @return The ID of the channel.
+     */
+    function channelID(Channel.Params memory params) public pure returns (bytes32) {
+        return keccak256(Channel.encodeParams(params));
+    }
+
+    /**
+     * @notice Calculates the hash of a state.
+     * @param state The state to hash.
+     * @return The hash of the state.
+     */
+    function hashState(Channel.State memory state) public pure returns (bytes32) {
+        return keccak256(Channel.encodeState(state));
+    }
+
+    // functions taken from perun-eth-contracts/contracts/AssetHolder.sol for testing
+    /**
+     * @notice Internal helper function that calculates the fundingID.
+     * @param channelID ID of the channel.
+     * @param participant Address of a participant in the channel.
+     * @return The funding ID, an identifier used for indexing.
+     */
+    function calcFundingID(bytes32 channelID, address participant) public pure returns (bytes32) {
+        return keccak256(abi.encode(channelID, participant));
     }
 }
