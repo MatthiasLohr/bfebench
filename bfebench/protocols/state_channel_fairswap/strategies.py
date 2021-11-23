@@ -40,4 +40,5 @@ class FaithfulBuyer(BuyerStrategy[StateChannelFairswap]):
         p2p_stream: JsonObjectSocketStream,
         opposite_address: ChecksumAddress,
     ) -> None:
-        pass  # TODO implement
+        for swap_iteration in range(1, self.protocol.swap_iterations + 1):
+            self.logger.debug("iteration %s" % swap_iteration)

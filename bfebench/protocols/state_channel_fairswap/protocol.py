@@ -25,6 +25,7 @@ from eth_typing.evm import ChecksumAddress
 
 from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
+from ..fairswap.protocol import DEFAULT_TIMEOUT
 from ..protocol import Protocol
 
 logger = logging.getLogger(__name__)
@@ -44,8 +45,22 @@ class StateChannelFairswap(Protocol):
     PERUN_APP_CONTRACT_NAME = "FileSale"
     PERUN_APP_CONTRACT_FILE = "./FileSaleApp.sol"
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        slice_length: int | None = None,
+        slice_count: int | None = None,
+        timeout: int = DEFAULT_TIMEOUT,
+        swap_iterations: int = 1,
+        **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
+
+        # TODO check slice_length, slice_count, timeout
+
+        self._swap_iterations = int(swap_iterations)
+
+        if not self._swap_iterations >= 1:
+            raise ValueError("swap_iterations must be an int >= 1")
 
         self._adjudicator_contract: Contract | None = None
         self._asset_holder_contract: Contract | None = None
@@ -105,3 +120,13 @@ class StateChannelFairswap(Protocol):
         if self._asset_holder_contract is None:
             raise RuntimeError("accessing uninitialized contract")
         return self._asset_holder_contract
+
+    @property
+    def app_contract(self) -> Contract:
+        if self._app_contract is None:
+            raise RuntimeError("accessing uninitialized contract")
+        return self._app_contract
+
+    @property
+    def swap_iterations(self) -> int:
+        return self._swap_iterations
