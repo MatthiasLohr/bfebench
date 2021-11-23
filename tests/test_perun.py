@@ -60,6 +60,19 @@ class PerunChannelTest(TestCase):
             channel_id=generate_bytes(32),
             version=999,
             outcome=Allocation(
+                assets=[],
+                balances=[[]],
+                locked=[
+                    SubAllocation(id=generate_bytes(32), balances=[], index_map=[])
+                ],
+            ),
+            app_data=b"abcdefg",
+            is_final=False,
+        ),
+        ChannelState(
+            channel_id=generate_bytes(32),
+            version=999,
+            outcome=Allocation(
                 assets=[
                     Web3.toChecksumAddress("0x0000000000000000000000000000000000000000")
                 ],
@@ -70,7 +83,7 @@ class PerunChannelTest(TestCase):
             ),
             app_data=b"abcdefg",
             is_final=False,
-        )
+        ),
     ]
 
     def __init__(self, *args: Any, **kwargs: Any):

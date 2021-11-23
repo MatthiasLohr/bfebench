@@ -44,14 +44,14 @@ class ChannelParams(NamedTuple):
 
 class SubAllocation(NamedTuple):
     id: bytes
-    balances: List[int]
-    index_map: List[int]
+    balances: List[int] = []
+    index_map: List[int] = []
 
 
 class Allocation(NamedTuple):
-    assets: List[ChecksumAddress]
-    balances: List[List[int]]
-    locked: List[SubAllocation]
+    assets: List[ChecksumAddress] = []
+    balances: List[List[int]] = [[]]
+    locked: List[SubAllocation] = []
 
     def __iter__(self) -> Generator[Any, None, None]:
         yield self.assets
