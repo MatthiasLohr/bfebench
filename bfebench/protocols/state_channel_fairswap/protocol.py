@@ -55,7 +55,9 @@ class StateChannelFairswap(Protocol):
     ) -> None:
         super().__init__(**kwargs)
 
-        # TODO check slice_length, slice_count, timeout
+        # TODO check slice_length, slice_count
+
+        self._timeout = int(timeout)
 
         self._swap_iterations = int(swap_iterations)
 
@@ -126,6 +128,10 @@ class StateChannelFairswap(Protocol):
         if self._app_contract is None:
             raise RuntimeError("accessing uninitialized contract")
         return self._app_contract
+
+    @property
+    def timeout(self) -> int:
+        return self._timeout
 
     @property
     def swap_iterations(self) -> int:
