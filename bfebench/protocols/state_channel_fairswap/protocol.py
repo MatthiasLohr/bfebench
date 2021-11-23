@@ -141,7 +141,7 @@ class StateChannelFairswap(Protocol):
 
 
 class FileSalePhase(IntEnum):
-    FINISHED = 0
+    INACTIVE = 0
     ACCEPTED = 1
     KEY_REVEALED = 2
 
@@ -151,7 +151,7 @@ class FileSaleState(NamedTuple):
     ciphertext_root_hash: bytes = B032
     key_hash: bytes = B032
     key: bytes = B032
-    phase: FileSalePhase = FileSalePhase.FINISHED
+    phase: FileSalePhase = FileSalePhase.INACTIVE
 
     def __bytes__(self) -> bytes:
         return (

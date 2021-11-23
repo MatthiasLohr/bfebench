@@ -64,6 +64,7 @@ class FaithfulBuyer(BuyerStrategy[StateChannelFairswap]):
             if self.protocol.swap_iterations > 1:
                 self.logger.debug("starting swap iteration %s" % swap_iteration)
 
+            # ensure funding
             funding_current = asset_holder_web3_contract.functions.holdings(
                 funding_id
             ).call()
@@ -88,3 +89,5 @@ class FaithfulBuyer(BuyerStrategy[StateChannelFairswap]):
                     funding_missing,
                     value=funding_missing,
                 )
+
+            # start request

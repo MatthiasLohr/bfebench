@@ -27,6 +27,7 @@ from web3 import Web3
 
 from bfebench.contract import Contract, SolidityContractSourceCodeManager
 from bfebench.environment import Environment
+from bfebench.protocols.fairswap.util import B032
 from bfebench.protocols.state_channel_fairswap import StateChannelFairswap
 from bfebench.protocols.state_channel_fairswap.perun import (
     Allocation,
@@ -35,6 +36,7 @@ from bfebench.protocols.state_channel_fairswap.perun import (
     SubAllocation,
     get_funding_id,
 )
+from bfebench.protocols.state_channel_fairswap.protocol import FileSaleState
 from bfebench.utils.bytes import generate_bytes
 
 
@@ -75,7 +77,8 @@ class PerunChannelTest(TestCase):
         super().__init__(*args, **kwargs)
 
         self._environment: Environment | None = None
-        self._contract: Contract | None = None
+        self._test_contract: Contract | None = None
+        self._live_contract: Contract | None = None
 
     @property
     def environment(self) -> Environment:
@@ -112,8 +115,8 @@ class PerunChannelTest(TestCase):
         return self._environment
 
     @property
-    def contract(self) -> Contract:
-        if self._contract is None:
+    def test_contract(self) -> Contract:
+        if self._test_contract is None:
             contracts_root_path = os.path.join(os.path.dirname(__file__), "contracts")
             scscm = SolidityContractSourceCodeManager(
                 allowed_paths=[
@@ -122,55 +125,78 @@ class PerunChannelTest(TestCase):
             )
             scscm.add_contract_file(os.path.join(contracts_root_path, "perun_test.sol"))
             contracts = scscm.compile(StateChannelFairswap.SOLC_VERSION)
-            self._contract = contracts["PerunTest"]
-            self.environment.deploy_contract(self._contract)
+            self._test_contract = contracts["PerunTest"]
+            self.environment.deploy_contract(self._test_contract)
 
-        return self._contract
+        return self._test_contract
+
+    @property
+    def live_contract(self) -> Contract:
+        if self._live_contract is None:
+            contracts_root_path = os.path.join(
+                os.path.dirname(__file__),
+                "../bfebench/protocols/state_channel_fairswap",
+            )
+            scscm = SolidityContractSourceCodeManager(
+                allowed_paths=[os.path.realpath(contracts_root_path)]
+            )
+            scscm.add_contract_file(
+                os.path.join(contracts_root_path, "FileSaleApp.sol")
+            )
+            contracts = scscm.compile(StateChannelFairswap.SOLC_VERSION)
+            self._live_contract = contracts["FileSale"]
+            self.environment.deploy_contract(self._live_contract)
+
+        return self._live_contract
 
     def test_testcase(self) -> None:
-        web3_contract = self.environment.get_web3_contract(self.contract)
-        self.assertEqual(web3_contract.functions.getRandomNumber().call(), 4)
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
+        self.assertEqual(test_web3_contract.functions.getRandomNumber().call(), 4)
 
     def test_encode_params(self) -> None:
-        web3_contract = self.environment.get_web3_contract(self.contract)
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
 
         for channel_params in self.CHANNEL_PARAMS_INPUTS:
             self.assertEqual(
                 bytes(
-                    web3_contract.functions.encodeParams(tuple(channel_params)).call()
+                    test_web3_contract.functions.encodeParams(
+                        tuple(channel_params)
+                    ).call()
                 ).hex(),
                 channel_params.abi_encode().hex(),
             )
 
     def test_encode_state(self) -> None:
-        web3_contract = self.environment.get_web3_contract(self.contract)
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
 
         for channel_state in self.CHANNEL_STATE_INPUTS:
             self.assertEqual(
                 bytes(
-                    web3_contract.functions.encodeState(tuple(channel_state)).call()
+                    test_web3_contract.functions.encodeState(
+                        tuple(channel_state)
+                    ).call()
                 ).hex(),
                 channel_state.abi_encode().hex(),
             )
 
     def test_channel_id(self) -> None:
-        web3_contract = self.environment.get_web3_contract(self.contract)
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
 
         for channel_params in self.CHANNEL_PARAMS_INPUTS:
             self.assertEqual(
                 bytes(
-                    web3_contract.functions.channelID(tuple(channel_params)).call()
+                    test_web3_contract.functions.channelID(tuple(channel_params)).call()
                 ).hex(),
                 channel_params.get_channel_id().hex(),
             )
 
     def test_hash_state(self) -> None:
-        web3_contract = self.environment.get_web3_contract(self.contract)
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
 
         for channel_state in self.CHANNEL_STATE_INPUTS:
             self.assertEqual(
                 bytes(
-                    web3_contract.functions.hashState(tuple(channel_state)).call()
+                    test_web3_contract.functions.hashState(tuple(channel_state)).call()
                 ).hex(),
                 channel_state.get_keccak().hex(),
             )
@@ -178,11 +204,80 @@ class PerunChannelTest(TestCase):
     def test_calc_funding_id(self) -> None:
         channel_id = generate_bytes(32)
         participant = self.environment.wallet_address
-        web3_contract = self.environment.get_web3_contract(self.contract)
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
 
         self.assertEqual(
             bytes(
-                web3_contract.functions.calcFundingID(channel_id, participant).call()
+                test_web3_contract.functions.calcFundingID(
+                    channel_id, participant
+                ).call()
             ).hex(),
             get_funding_id(channel_id, participant).hex(),
         )
+
+    def test_valid_transition(self) -> None:
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
+        live_web3_contract = self.environment.get_web3_contract(self.live_contract)
+
+        for state1, state2, valid_transition in [
+            (
+                ChannelState(
+                    channel_id=self.CHANNEL_PARAMS_INPUTS[0].get_channel_id(),
+                    version=1,
+                    outcome=Allocation(
+                        assets=[
+                            Web3.toChecksumAddress(
+                                "0x0000000000000000000000000000000000000000"
+                            )
+                        ],
+                        balances=[[0]],
+                        locked=[SubAllocation(B032, [0], [0])],
+                    ),
+                    app_data=bytes(FileSaleState()),
+                    is_final=False,
+                ),
+                ChannelState(
+                    channel_id=self.CHANNEL_PARAMS_INPUTS[0].get_channel_id(),
+                    version=1,
+                    outcome=Allocation(
+                        assets=[
+                            Web3.toChecksumAddress(
+                                "0x0000000000000000000000000000000000000000"
+                            )
+                        ],
+                        balances=[[0]],
+                        locked=[SubAllocation(B032, [0], [0])],
+                    ),
+                    app_data=bytes(FileSaleState()),
+                    is_final=False,
+                ),
+                True,
+            )
+        ]:
+            # check if parameter encoding works
+            self.assertEqual(
+                bytes(
+                    test_web3_contract.functions.encodeParams(
+                        tuple(self.CHANNEL_PARAMS_INPUTS[0])
+                    ).call()
+                ).hex(),
+                self.CHANNEL_PARAMS_INPUTS[0].abi_encode().hex(),
+            )
+
+            # check if state encoding works
+            for state in (state1, state2):
+                self.assertEqual(
+                    bytes(
+                        test_web3_contract.functions.encodeState(tuple(state)).call()
+                    ).hex(),
+                    state.abi_encode().hex(),
+                )
+
+            # check if it a valid transition
+            valid_transition_method = live_web3_contract.functions.validTransition(
+                tuple(self.CHANNEL_PARAMS_INPUTS[0]), tuple(state1), tuple(state2), 0
+            )
+            if valid_transition:
+                valid_transition_method.call()
+            else:
+                self.assertRaises(BaseException, valid_transition_method.call)

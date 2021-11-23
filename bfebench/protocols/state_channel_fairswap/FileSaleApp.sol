@@ -23,6 +23,12 @@ pragma experimental ABIEncoderV2;
 import "./perun-eth-contracts/contracts/App.sol";
 
 contract FileSale is App {
+    enum Stage {INACTIVE, ACCEPTED, KEY_REVEALED}
+
+    struct State {
+        Stage stage;
+    }
+
     /**
      * @notice ValidTransition checks if there was a valid transition between two states.
      * @param params The parameters of the channel.
@@ -37,6 +43,7 @@ contract FileSale is App {
         uint256 signerIdx)
     external pure override
     {
+        require(from.version == 1 && to.version == 1, "only version==1 is supported");
         // TODO implement
     }
 }
