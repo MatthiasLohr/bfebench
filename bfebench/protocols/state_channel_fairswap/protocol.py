@@ -19,13 +19,15 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
+from enum import IntEnum
+from typing import Any, NamedTuple
 
 from eth_typing.evm import ChecksumAddress
 
 from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
 from ..fairswap.protocol import DEFAULT_TIMEOUT
+from ..fairswap.util import B032
 from ..protocol import Protocol
 
 logger = logging.getLogger(__name__)
@@ -136,3 +138,36 @@ class StateChannelFairswap(Protocol):
     @property
     def swap_iterations(self) -> int:
         return self._swap_iterations
+
+
+class FileSalePhase(IntEnum):
+    FINISHED = 0
+    ACCEPTED = 1
+    KEY_REVEALED = 2
+
+
+class FileSaleState(NamedTuple):
+    file_root_hash: bytes = B032
+    ciphertext_root_hash: bytes = B032
+    key_hash: bytes = B032
+    key: bytes = B032
+    phase: FileSalePhase = FileSalePhase.FINISHED
+
+    def __bytes__(self) -> bytes:
+        return (
+            self.file_root_hash
+            + self.ciphertext_root_hash
+            + self.key_hash
+            + self.key
+            + self.phase.to_bytes(1, byteorder="big")
+        )
+
+    @staticmethod
+    def from_bytes(data: bytes) -> "FileSaleState":
+        return FileSaleState(
+            file_root_hash=data[0:32],
+            ciphertext_root_hash=data[32:64],
+            key_hash=data[64:96],
+            key=data[96:128],
+            phase=FileSalePhase(data[128]),
+        )
