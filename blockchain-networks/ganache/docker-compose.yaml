@@ -1,11 +1,14 @@
 version: '3'
 
 services:
-  # https://hub.docker.com/r/trufflesuite/ganache-cli
-  ganache-cli:
-    image: trufflesuite/ganache-cli
-    container_name: ganache-cli
+  # https://hub.docker.com/r/trufflesuite/ganache-cli (old)
+  # https://hub.docker.com/r/trufflesuite/ganache (beta)
+  ganache:
+    image: trufflesuite/ganache:v7.0.0-beta.0
+    container_name: ganache
     command:
+      - "--chain.hardfork=london"
+      - "--chain.vmErrorsOnRPCResponse"
       - "--account=0x4fde7191483ae6eedbe01e6bbecff3a332048d596d58a73db1cd2cc4b64cf2e0,100000000000000000000"
       - "--account=0x689aeac4f710e2bce4439d54e52e447bdf7f1e128477d0969c4d38e819f3e31c,100000000000000000000"
       - "--account=0x80ecdac657040f31b8362de83dcc8bbdb8fddc417f51055e7e5a148bb50e220d,100000000000000000000"
