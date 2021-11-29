@@ -37,7 +37,7 @@ class CliRunTest(TestCase):
         # },
         "StateChannelFairswap": {
             "strategy_pairs": [("Faithful", "Faithful")],
-            "protocol_parameters": [("timeout", 5)],
+            "protocol_parameters": [("timeout", 5), ("swap_iterations", 2)],
         },
     }
 
