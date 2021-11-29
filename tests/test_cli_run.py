@@ -1,0 +1,74 @@
+# This file is part of the Blockchain-based Fair Exchange Benchmark Tool
+#    https://gitlab.com/MatthiasLohr/bfebench
+#
+# Copyright 2021 Matthias Lohr <mail@mlohr.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import argparse
+from unittest import TestCase
+
+from bfebench.cli.run import RunCommand
+
+
+class CliRunTest(TestCase):
+    TEST_PROTOCOLS = {
+        "Fairswap": {
+            "strategy_pairs": [
+                ("Faithful", "Faithful")
+            ],
+            "protocol_parameters": [
+                ("timeout", 5)
+            ]
+        },
+        # "FairswapReusable": {
+        #     "strategy_pairs": [
+        #         ("Faithful", "Faithful")
+        #     ],
+        #     "protocol_parameters": [
+        #         ("timeout", 5)
+        #     ]
+        # },
+        "StateChannelFairswap": {
+            "strategy_pairs": [
+                ("Faithful", "Faithful")
+            ],
+            "protocol_parameters": [
+                ("timeout", 5)
+            ]
+        }
+    }
+
+    TEST_FILE_NAME = "testdata/bfebench-test-32KiB.bin"
+
+    def test_cli_run(self) -> None:
+        argument_parser = argparse.ArgumentParser()
+        run_command = RunCommand(argument_parser)
+
+        for protocol_name, configuration in self.TEST_PROTOCOLS.items():
+
+            for seller_strategy_name, buyer_strategy_name in configuration["strategy_pairs"]:
+
+                result_code = run_command(argparse.Namespace(
+                    protocol=protocol_name,
+                    protocol_parameters=[("timeout", 5)],
+                    seller_strategy=seller_strategy_name,
+                    buyer_strategy=buyer_strategy_name,
+                    filename=self.TEST_FILE_NAME,
+                    price=1000000000,
+                    iterations=2,
+                    environments_configuration=".environments.yaml",
+                    output_csv=None
+                ))
+
+                self.assertEqual(result_code, 0)

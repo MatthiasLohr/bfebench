@@ -6,10 +6,21 @@ variables:
 
 unittests:
   image: python:${python_version}
+  services:
+    - name: trufflesuite/ganache:v7.0.0-beta.1
+      alias: ganache
+      command:
+        - "--chain.hardfork=london"
+        - "--chain.vmErrorsOnRPCResponse"
+        - "--account=0x4fde7191483ae6eedbe01e6bbecff3a332048d596d58a73db1cd2cc4b64cf2e0,1000000000000000000000000"
+        - "--account=0x689aeac4f710e2bce4439d54e52e447bdf7f1e128477d0969c4d38e819f3e31c,1000000000000000000000000"
+        - "--account=0x80ecdac657040f31b8362de83dcc8bbdb8fddc417f51055e7e5a148bb50e220d,1000000000000000000000000"
+        - "--miner.blockTime=1"
   before_script:
     - pip install --upgrade pip
     - pip install . coverage
     - mkdir -p testdata && ./tools/generate-test-data.py --lower-boundary-power 15 --upper-boundary-power 15 testdata
+    - ln -s tests/environments.ganache.yaml .environments.yaml
   script:
     - coverage run -m unittest discover tests
     - coverage xml
