@@ -66,4 +66,8 @@ contract PerunTest {
     function encodeState(Channel.State memory state) public pure returns (bytes memory)  {
         return abi.encode(state);
     }
+
+    function verifySignature(bytes memory data, bytes memory signature, address signer) public pure returns (bool) {
+        return Sig.verify(data, signature, signer);
+    }
 }

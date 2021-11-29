@@ -294,3 +294,31 @@ class PerunChannelTest(TestCase):
                 valid_transition_method.call()
             else:
                 self.assertRaises(BaseException, valid_transition_method.call)
+
+    def test_channel_signature(self) -> None:
+        channel_state = ChannelState(
+            channel_id=generate_bytes(32),
+            version=1,
+            outcome=Allocation(),
+            app_data=b"",
+            is_final=True,
+        )
+
+        private_key = self.environment.private_key
+        assert private_key is not None
+
+        test_web3_contract = self.environment.get_web3_contract(self.test_contract)
+
+        result = test_web3_contract.functions.verifySignature(
+            channel_state.abi_encode(),
+            channel_state.sign(private_key),
+            self.environment.wallet_address,
+        ).call()
+        self.assertTrue(result)
+
+        result = test_web3_contract.functions.verifySignature(
+            generate_bytes(32),
+            channel_state.sign(private_key),
+            self.environment.wallet_address,
+        ).call()
+        self.assertFalse(result)

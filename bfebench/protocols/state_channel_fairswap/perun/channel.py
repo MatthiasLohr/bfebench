@@ -15,10 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 from typing import Any, Generator, List, NamedTuple
 
 from eth_abi.abi import encode_abi
+from eth_account import Account
+from eth_account.messages import encode_defunct
 from eth_typing.evm import ChecksumAddress
+from hexbytes import HexBytes
 from web3 import Web3
 
 
@@ -76,6 +81,12 @@ class ChannelState(NamedTuple):
 
     def get_keccak(self) -> bytes:
         return bytes(Web3.solidityKeccak(["bytes"], [self.abi_encode()]))
+
+    def sign(self, private_key: HexBytes | bytes) -> bytes:
+        signed_message = Account.sign_message(
+            encode_defunct(self.get_keccak()), bytes(private_key)
+        )
+        return bytes(signed_message.signature)
 
     def __iter__(self) -> Generator[Any, None, None]:
         yield self.channel_id
