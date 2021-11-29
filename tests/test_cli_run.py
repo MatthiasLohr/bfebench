@@ -24,10 +24,10 @@ from bfebench.cli.run import RunCommand
 class CliRunTest(TestCase):
     TEST_PROTOCOLS = {
         "Fairswap": {
-            "strategy_pairs": [("Faithful", "Faithful")],
+            "strategy_pairs": [("Faithful", "Faithful"), ("Faithful", "Grieving")],
             "protocol_parameters": [("timeout", 5)],
         },
-        # "FairswapReusable": {
+        # "FairswapReusable": {  # TODO enable FairswapReusable test
         #     "strategy_pairs": [
         #         ("Faithful", "Faithful")
         #     ],
