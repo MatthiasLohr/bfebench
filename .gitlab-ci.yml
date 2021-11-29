@@ -9,7 +9,7 @@ unittests:
   before_script:
     - pip install --upgrade pip
     - pip install . coverage
-    - ./tools/generate-test-data.py --lower-boundary-power 15 --upper-boundary-power 15 testdata
+    - mkdir -p testdata && ./tools/generate-test-data.py --lower-boundary-power 15 --upper-boundary-power 15 testdata
   script:
     - coverage run -m unittest discover tests
     - coverage xml
