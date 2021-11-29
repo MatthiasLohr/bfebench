@@ -24,12 +24,8 @@ from bfebench.cli.run import RunCommand
 class CliRunTest(TestCase):
     TEST_PROTOCOLS = {
         "Fairswap": {
-            "strategy_pairs": [
-                ("Faithful", "Faithful")
-            ],
-            "protocol_parameters": [
-                ("timeout", 5)
-            ]
+            "strategy_pairs": [("Faithful", "Faithful")],
+            "protocol_parameters": [("timeout", 5)],
         },
         # "FairswapReusable": {
         #     "strategy_pairs": [
@@ -40,13 +36,9 @@ class CliRunTest(TestCase):
         #     ]
         # },
         "StateChannelFairswap": {
-            "strategy_pairs": [
-                ("Faithful", "Faithful")
-            ],
-            "protocol_parameters": [
-                ("timeout", 5)
-            ]
-        }
+            "strategy_pairs": [("Faithful", "Faithful")],
+            "protocol_parameters": [("timeout", 5)],
+        },
     }
 
     TEST_FILE_NAME = "testdata/bfebench-test-32KiB.bin"
@@ -56,19 +48,22 @@ class CliRunTest(TestCase):
         run_command = RunCommand(argument_parser)
 
         for protocol_name, configuration in self.TEST_PROTOCOLS.items():
+            strategy_pairs = configuration["strategy_pairs"]
 
-            for seller_strategy_name, buyer_strategy_name in configuration["strategy_pairs"]:
+            for seller_strategy_name, buyer_strategy_name in strategy_pairs:  # type: ignore
 
-                result_code = run_command(argparse.Namespace(
-                    protocol=protocol_name,
-                    protocol_parameters=[("timeout", 5)],
-                    seller_strategy=seller_strategy_name,
-                    buyer_strategy=buyer_strategy_name,
-                    filename=self.TEST_FILE_NAME,
-                    price=1000000000,
-                    iterations=2,
-                    environments_configuration=".environments.yaml",
-                    output_csv=None
-                ))
+                result_code = run_command(
+                    argparse.Namespace(
+                        protocol=protocol_name,
+                        protocol_parameters=[("timeout", 5)],
+                        seller_strategy=seller_strategy_name,
+                        buyer_strategy=buyer_strategy_name,
+                        filename=self.TEST_FILE_NAME,
+                        price=1000000000,
+                        iterations=2,
+                        environments_configuration=".environments.yaml",
+                        output_csv=None,
+                    )
+                )
 
                 self.assertEqual(result_code, 0)
