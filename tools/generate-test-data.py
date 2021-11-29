@@ -50,7 +50,7 @@ def random_bytes(n: int) -> bytes:
 def sizeof_fmt(num: float, suffix: str = "B") -> str:
     for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
         if abs(num) < 1024.0:
-            if num.is_integer():
+            if float(num).is_integer():
                 return "%d%s%s" % (num, unit, suffix)
             else:
                 return "%3.1f%s%s" % (num, unit, suffix)
