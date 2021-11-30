@@ -84,7 +84,7 @@ class ChannelState(NamedTuple):
 
     def sign(self, private_key: HexBytes | bytes) -> bytes:
         signed_message = Account.sign_message(
-            encode_defunct(self.get_keccak()), bytes(private_key)
+            encode_defunct(self.get_keccak()), private_key
         )
         return bytes(signed_message.signature)
 
