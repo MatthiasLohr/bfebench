@@ -20,15 +20,19 @@ from __future__ import annotations
 import logging
 import os
 from enum import IntEnum
+from math import log2
+from random import randint
 from typing import Any, NamedTuple
 
 from eth_typing.evm import ChecksumAddress
 
 from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
-from ..fairswap.protocol import DEFAULT_TIMEOUT
+from ...errors import ProtocolInitializationError
+from ..fairswap.protocol import DEFAULT_SLICE_LENGTH, DEFAULT_TIMEOUT
 from ..fairswap.util import B032
 from ..protocol import Protocol
+from .perun import ChannelParams
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +61,36 @@ class StateChannelFairswap(Protocol):
     ) -> None:
         super().__init__(**kwargs)
 
-        # TODO check slice_length, slice_count
+        file_size = os.path.getsize(self.filename)
+
+        if slice_count is None:
+            if slice_length is None:
+                self._slice_length = DEFAULT_SLICE_LENGTH
+
+            if (file_size / self._slice_length).is_integer():
+                self._slice_count = int(file_size / self._slice_length)
+            else:
+                raise ProtocolInitializationError(
+                    "file_size / slice_length must be int"
+                )
+        else:
+            if slice_length is None:
+                if (file_size / slice_count).is_integer():
+                    self._slice_length = int(file_size / slice_count)
+                else:
+                    raise ProtocolInitializationError(
+                        "file_size / slice_count must be int"
+                    )
+            else:
+                raise ProtocolInitializationError(
+                    "you cannot set both slice_length and slice_count"
+                )
+
+        if not log2(self._slice_count).is_integer():
+            raise ProtocolInitializationError("slice_count must be a power of 2")
+
+        if self._slice_length % 32 > 0:
+            raise ProtocolInitializationError("slice_length must be a multiple of 32")
 
         self._timeout = int(timeout)
 
@@ -69,6 +102,7 @@ class StateChannelFairswap(Protocol):
         self._adjudicator_contract: Contract | None = None
         self._asset_holder_contract: Contract | None = None
         self._app_contract: Contract | None = None
+        self._channel_params: ChannelParams | None = None
 
     def set_up_simulation(
         self,
@@ -113,6 +147,21 @@ class StateChannelFairswap(Protocol):
             % (self._app_contract.address, tx_receipt["gasUsed"])
         )
 
+    def set_up_iteration(
+        self,
+        environment: Environment,
+        seller_address: ChecksumAddress,
+        buyer_address: ChecksumAddress,
+    ) -> None:
+        self._channel_params = ChannelParams(
+            challenge_duration=self.timeout,
+            nonce=randint(0, 2 ** 256),
+            participants=[seller_address, buyer_address],
+            app=self.app_contract.address,
+            ledger_channel=True,
+            virtual_channel=False,
+        )
+
     @property
     def adjudicator_contract(self) -> Contract:
         if self._adjudicator_contract is None:
@@ -132,12 +181,26 @@ class StateChannelFairswap(Protocol):
         return self._app_contract
 
     @property
+    def slice_count(self) -> int:
+        return self._slice_count
+
+    @property
+    def slice_length(self) -> int:
+        return self._slice_length
+
+    @property
     def timeout(self) -> int:
         return self._timeout
 
     @property
     def swap_iterations(self) -> int:
         return self._swap_iterations
+
+    @property
+    def channel_params(self) -> ChannelParams:
+        if self._channel_params is None:
+            raise RuntimeError("accessing uninitialized channel params")
+        return self._channel_params
 
 
 class FileSalePhase(IntEnum):
