@@ -15,17 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from eth_abi.abi import encode_abi
 from eth_typing.evm import ChecksumAddress
-from web3 import Web3
 
-from .channel import ChannelState
+from bfebench.utils.json_stream import JsonObjectSocketStream
 
-
-def get_funding_id(channel_id: bytes, participant: ChecksumAddress) -> bytes:
-    encoded = "0x" + encode_abi(["bytes32", "address"], [channel_id, participant]).hex()
-    return bytes(Web3.solidityKeccak(["bytes"], [encoded]))
+from ....environment import Environment
+from .seller import StateChannelFileSaleSeller
 
 
-def hash_state(channel_state: ChannelState) -> bytes:
-    pass  # TODO implement
+class FaithfulSeller(StateChannelFileSaleSeller):
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
+        pass

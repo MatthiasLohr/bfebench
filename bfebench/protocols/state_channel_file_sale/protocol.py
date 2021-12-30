@@ -19,25 +19,23 @@ from __future__ import annotations
 
 import logging
 import os
-from enum import IntEnum
 from math import log2
 from random import randint
-from typing import Any, NamedTuple
+from typing import Any
 
 from eth_typing.evm import ChecksumAddress
 
 from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
 from ...errors import ProtocolInitializationError
+from ...protocols import Protocol
 from ..fairswap.protocol import DEFAULT_SLICE_LENGTH, DEFAULT_TIMEOUT
-from ..fairswap.util import B032
-from ..protocol import Protocol
-from .perun import ChannelParams
+from .perun import Channel
 
 logger = logging.getLogger(__name__)
 
 
-class StateChannelFairswap(Protocol):
+class StateChannelFileSale(Protocol):
     SOLC_VERSION = "0.7.0"
 
     PERUN_ADJUDICATOR_CONTRACT_NAME = "Adjudicator"
@@ -48,8 +46,11 @@ class StateChannelFairswap(Protocol):
         "perun-eth-contracts/contracts/AssetHolderETH.sol"
     )
 
-    PERUN_APP_CONTRACT_NAME = "FileSale"
-    PERUN_APP_CONTRACT_FILE = "./FileSaleApp.sol"
+    FILE_SALE_APP_CONTRACT_NAME = "FileSaleApp"
+    FILE_SALE_APP_CONTRACT_FILE = "./FileSaleApp.sol"
+
+    FILE_SALE_HELPER_CONTRACT_NAME = "FileSaleHelper"
+    FILE_SALE_HELPER_CONTRACT_FILE = "./FileSaleHelper.sol"
 
     def __init__(
         self,
@@ -102,7 +103,8 @@ class StateChannelFairswap(Protocol):
         self._adjudicator_contract: Contract | None = None
         self._asset_holder_contract: Contract | None = None
         self._app_contract: Contract | None = None
-        self._channel_params: ChannelParams | None = None
+        self._helper_contract: Contract | None = None
+        self._channel_params: Channel.Params | None = None
 
     def set_up_simulation(
         self,
@@ -120,12 +122,16 @@ class StateChannelFairswap(Protocol):
             os.path.join(contracts_root_path, self.PERUN_ASSET_HOLDER_CONTRACT_FILE)
         )
         scscm.add_contract_file(
-            os.path.join(contracts_root_path, self.PERUN_APP_CONTRACT_FILE)
+            os.path.join(contracts_root_path, self.FILE_SALE_APP_CONTRACT_FILE)
+        )
+        scscm.add_contract_file(
+            os.path.join(contracts_root_path, self.FILE_SALE_HELPER_CONTRACT_FILE)
         )
         contracts = scscm.compile(self.SOLC_VERSION)
         self._adjudicator_contract = contracts[self.PERUN_ADJUDICATOR_CONTRACT_NAME]
         self._asset_holder_contract = contracts[self.PERUN_ASSET_HOLDER_CONTRACT_NAME]
-        self._app_contract = contracts[self.PERUN_APP_CONTRACT_NAME]
+        self._app_contract = contracts[self.FILE_SALE_APP_CONTRACT_NAME]
+        self._helper_contract = contracts[self.FILE_SALE_HELPER_CONTRACT_NAME]
 
         tx_receipt = environment.deploy_contract(self._adjudicator_contract)
         logger.debug(
@@ -147,17 +153,27 @@ class StateChannelFairswap(Protocol):
             % (self._app_contract.address, tx_receipt["gasUsed"])
         )
 
+        tx_receipt = environment.deploy_contract(self._helper_contract)
+        logger.debug(
+            "deployed helper contract at %s (%s gas used)"
+            % (self._helper_contract.address, tx_receipt["gasUsed"])
+        )
+
     def set_up_iteration(
         self,
         environment: Environment,
         seller_address: ChecksumAddress,
         buyer_address: ChecksumAddress,
     ) -> None:
-        self._channel_params = ChannelParams(
+        app_contract_address = self.app_contract.address
+        if app_contract_address is None:
+            raise RuntimeError("accessing uninitialized contract")
+
+        self._channel_params = Channel.Params(
             challenge_duration=self.timeout,
             nonce=randint(0, 2 ** 256),
             participants=[seller_address, buyer_address],
-            app=self.app_contract.address,
+            app=app_contract_address,
             ledger_channel=True,
             virtual_channel=False,
         )
@@ -181,6 +197,12 @@ class StateChannelFairswap(Protocol):
         return self._app_contract
 
     @property
+    def helper_contract(self) -> Contract:
+        if self._helper_contract is None:
+            raise RuntimeError("accessing uninitialized contract")
+        return self._helper_contract
+
+    @property
     def slice_count(self) -> int:
         return self._slice_count
 
@@ -197,40 +219,7 @@ class StateChannelFairswap(Protocol):
         return self._swap_iterations
 
     @property
-    def channel_params(self) -> ChannelParams:
+    def channel_params(self) -> Channel.Params:
         if self._channel_params is None:
             raise RuntimeError("accessing uninitialized channel params")
         return self._channel_params
-
-
-class FileSalePhase(IntEnum):
-    INACTIVE = 0
-    ACCEPTED = 1
-    KEY_REVEALED = 2
-
-
-class FileSaleState(NamedTuple):
-    file_root_hash: bytes = B032
-    ciphertext_root_hash: bytes = B032
-    key_hash: bytes = B032
-    key: bytes = B032
-    phase: FileSalePhase = FileSalePhase.INACTIVE
-
-    def __bytes__(self) -> bytes:
-        return (
-            self.file_root_hash
-            + self.ciphertext_root_hash
-            + self.key_hash
-            + self.key
-            + self.phase.to_bytes(1, byteorder="big")
-        )
-
-    @staticmethod
-    def from_bytes(data: bytes) -> "FileSaleState":
-        return FileSaleState(
-            file_root_hash=data[0:32],
-            ciphertext_root_hash=data[32:64],
-            key_hash=data[64:96],
-            key=data[96:128],
-            phase=FileSalePhase(data[128]),
-        )

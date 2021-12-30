@@ -1,4 +1,6 @@
-# Perun API Documentation
+# Perun State Channel Framework
+
+## Documentation
 
   * https://perun.network/ -- official website
   * https://labs.hyperledger.org/perun-doc/ -- documentation at Hyperledger labs
@@ -13,7 +15,7 @@
 ### Adjudicator
 
 Full contract:
-[Adjudicator.sol](https://github.com/hyperledger-labs/perun-eth-contracts/blob/abd762dc7d3271f797e304d8bb641f71f8c5c206/contracts/Adjudicator.sol)
+[Adjucator.sol](https://github.com/hyperledger-labs/perun-eth-contracts/blob/abd762dc7d3271f797e304d8bb641f71f8c5c206/contracts/Adjudicator.sol)
 
   * [register](https://github.com/hyperledger-labs/perun-eth-contracts/blob/abd762dc7d3271f797e304d8bb641f71f8c5c206/contracts/Adjudicator.sol#L74-L87):
     `register` disputes the state of a ledger channel and its sub-channels.

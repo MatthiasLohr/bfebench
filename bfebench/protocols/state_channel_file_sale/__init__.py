@@ -15,26 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .fairswap import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP
-from .fairswap_reusable import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP_REUSABLE
-from .protocol import Protocol
-from .protocol_spec import ProtocolSpec
-from .state_channel_file_sale import (
-    PROTOCOL_SPEC as PROTOCOL_SPEC_STATE_CHANNEL_FILE_SALE,
+from bfebench.protocols import ProtocolSpec
+
+from .protocol import StateChannelFileSale
+from .strategies import FaithfulBuyer, FaithfulSeller
+
+PROTOCOL_SPEC = ProtocolSpec(
+    protocol=StateChannelFileSale,
+    seller_strategies={"Faithful": FaithfulSeller},
+    buyer_strategies={"Faithful": FaithfulBuyer},
 )
-from .strategy import BuyerStrategy, SellerStrategy, Strategy
-
-PROTOCOL_SPECIFICATIONS = {
-    "Fairswap": PROTOCOL_SPEC_FAIRSWAP,
-    "FairswapReusable": PROTOCOL_SPEC_FAIRSWAP_REUSABLE,
-    "StateChannelFileSale": PROTOCOL_SPEC_STATE_CHANNEL_FILE_SALE,
-}
-
-__all__ = [
-    "BuyerStrategy",
-    "Protocol",
-    "ProtocolSpec",
-    "PROTOCOL_SPECIFICATIONS",
-    "SellerStrategy",
-    "Strategy",
-]

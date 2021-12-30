@@ -1,3 +1,6 @@
 [submodule "bfebench/protocols/state_channel_fairswap/perun-eth-contracts"]
 	path = bfebench/protocols/state_channel_fairswap/perun-eth-contracts
 	url = https://github.com/hyperledger-labs/perun-eth-contracts.git
+[submodule "bfebench/protocols/state_channel_file_sale/perun-eth-contracts"]
+	path = bfebench/protocols/state_channel_file_sale/perun-eth-contracts
+	url = https://github.com/hyperledger-labs/perun-eth-contracts.git

@@ -15,26 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .fairswap import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP
-from .fairswap_reusable import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP_REUSABLE
-from .protocol import Protocol
-from .protocol_spec import ProtocolSpec
-from .state_channel_file_sale import (
-    PROTOCOL_SPEC as PROTOCOL_SPEC_STATE_CHANNEL_FILE_SALE,
-)
-from .strategy import BuyerStrategy, SellerStrategy, Strategy
+from eth_typing.evm import ChecksumAddress
 
-PROTOCOL_SPECIFICATIONS = {
-    "Fairswap": PROTOCOL_SPEC_FAIRSWAP,
-    "FairswapReusable": PROTOCOL_SPEC_FAIRSWAP_REUSABLE,
-    "StateChannelFileSale": PROTOCOL_SPEC_STATE_CHANNEL_FILE_SALE,
-}
+from bfebench.utils.json_stream import JsonObjectSocketStream
 
-__all__ = [
-    "BuyerStrategy",
-    "Protocol",
-    "ProtocolSpec",
-    "PROTOCOL_SPECIFICATIONS",
-    "SellerStrategy",
-    "Strategy",
-]
+from ....environment import Environment
+from ...strategy import BuyerStrategy
+from ..protocol import StateChannelFileSale
+
+
+class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
+        raise NotImplementedError()

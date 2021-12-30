@@ -54,7 +54,7 @@ class ContractCollectionTest(TestCase):
     def test_compile_state_channel_fairswap(self) -> None:
         contracts_path = os.path.join(
             os.path.dirname(__file__),
-            "../bfebench/protocols/state_channel_fairswap/perun-eth-contracts",
+            "../bfebench/protocols/state_channel_file_sale/perun-eth-contracts",
         )
 
         scscm = SolidityContractSourceCodeManager(allowed_paths=[contracts_path])

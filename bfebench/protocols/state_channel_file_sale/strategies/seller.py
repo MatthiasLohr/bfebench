@@ -15,14 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .channel import Allocation, ChannelParams, ChannelState, SubAllocation
-from .pure_functions import get_funding_id, hash_state
+from eth_typing.evm import ChecksumAddress
 
-__all__ = [
-    "ChannelParams",
-    "ChannelState",
-    "Allocation",
-    "SubAllocation",
-    "get_funding_id",
-    "hash_state",
-]
+from bfebench.utils.json_stream import JsonObjectSocketStream
+
+from ....environment import Environment
+from ...strategy import SellerStrategy
+from ..protocol import StateChannelFileSale
+
+
+class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
+    def run(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
+    ) -> None:
+        raise NotImplementedError()
