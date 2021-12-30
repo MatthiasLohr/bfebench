@@ -27,18 +27,6 @@ class CliRunTest(TestCase):
             "strategy_pairs": [("Faithful", "Faithful"), ("Faithful", "Grieving")],
             "protocol_parameters": [("timeout", 5)],
         },
-        # "FairswapReusable": {  # TODO enable FairswapReusable test
-        #     "strategy_pairs": [
-        #         ("Faithful", "Faithful")
-        #     ],
-        #     "protocol_parameters": [
-        #         ("timeout", 5)
-        #     ]
-        # },
-        "StateChannelFairswap": {
-            "strategy_pairs": [("Faithful", "Faithful")],
-            "protocol_parameters": [("timeout", 5), ("swap_iterations", 2)],
-        },
     }
 
     TEST_FILE_NAME = "testdata/bfebench-test-32KiB.bin"
