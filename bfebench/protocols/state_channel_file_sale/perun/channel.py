@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, NamedTuple
+from typing import Any, List, NamedTuple
 
 from eth_typing.evm import ChecksumAddress
 
@@ -28,6 +28,14 @@ class Channel(object):
         app: ChecksumAddress
         ledger_channel: bool
         virtual_channel: bool
+
+        def __iter__(self) -> Any:
+            yield self.challenge_duration
+            yield self.nonce
+            yield self.participants
+            yield self.app
+            yield self.ledger_channel
+            yield self.virtual_channel
 
     class SubAlloc(NamedTuple):
         id: bytes
