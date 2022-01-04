@@ -17,6 +17,8 @@
 
 from typing import cast
 
+from eth_typing.evm import ChecksumAddress
+
 from ....environment import Environment
 from ..perun import Channel
 from ..protocol import StateChannelFileSale
@@ -29,14 +31,28 @@ class FileSaleHelper(object):
         self._adjudicator_web3_contract = environment.get_web3_contract(
             protocol.adjudicator_contract
         )
+        self._asset_holder_web3_contract = environment.get_web3_contract(
+            protocol.asset_holder_contract
+        )
         self._helper_web3_contract = environment.get_web3_contract(
             protocol.helper_contract
         )
 
     def get_channel_id(self, channel_params: Channel.Params) -> bytes:
+        # TODO replace with Python-only version
+        # currently blocked by https://github.com/ethereum/web3.py/issues/1065
         return cast(
             bytes,
             self._adjudicator_web3_contract.functions.channelID(
                 tuple(channel_params)
+            ).call(),
+        )
+
+    def get_funding_id(self, channel_id: bytes, participant: ChecksumAddress) -> bytes:
+        # TODO replace with Python-only version
+        return cast(
+            bytes,
+            self._helper_web3_contract.functions.getFundingID(
+                channel_id, participant
             ).call(),
         )

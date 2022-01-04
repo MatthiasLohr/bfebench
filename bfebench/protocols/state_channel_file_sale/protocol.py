@@ -57,7 +57,7 @@ class StateChannelFileSale(Protocol):
         slice_length: int | None = None,
         slice_count: int | None = None,
         timeout: int = DEFAULT_TIMEOUT,
-        swap_iterations: int = 1,
+        file_sale_iterations: int = 1,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
@@ -95,10 +95,10 @@ class StateChannelFileSale(Protocol):
 
         self._timeout = int(timeout)
 
-        self._swap_iterations = int(swap_iterations)
+        self._file_sale_iterations = int(file_sale_iterations)
 
-        if not self._swap_iterations >= 1:
-            raise ValueError("swap_iterations must be an int >= 1")
+        if not self._file_sale_iterations >= 1:
+            raise ValueError("_file_sale_iterations must be an int >= 1")
 
         self._adjudicator_contract: Contract | None = None
         self._asset_holder_contract: Contract | None = None
@@ -215,8 +215,8 @@ class StateChannelFileSale(Protocol):
         return self._timeout
 
     @property
-    def swap_iterations(self) -> int:
-        return self._swap_iterations
+    def file_sale_iterations(self) -> int:
+        return self._file_sale_iterations
 
     @property
     def channel_params(self) -> Channel.Params:
