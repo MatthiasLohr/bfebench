@@ -30,4 +30,20 @@ class FaithfulSeller(StateChannelFileSaleSeller):
         p2p_stream: JsonObjectSocketStream,
         opposite_address: ChecksumAddress,
     ) -> None:
-        pass
+        # ======== WAIT FOR INCOMING EXCHANGE REQUEST ========
+        pass  # TODO
+
+        # ======== CHECK FOR SUFFICIENT FUNDING ========
+        pass  # TODO
+
+        # ======== SEND ENCRYPTED FILE / INITIALIZE ========
+        pass  # TODO
+
+        # ======== WAIT FOR ACCEPT ========
+        pass  # TODO
+
+        # ======== REVEAL KEY ========
+        pass  # TODO
+
+        # ======== WAIT FOR FINAL STATE / REDEEM ========
+        pass  # TODO

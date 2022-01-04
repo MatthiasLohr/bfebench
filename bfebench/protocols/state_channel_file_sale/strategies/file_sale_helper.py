@@ -56,3 +56,8 @@ class FileSaleHelper(object):
                 channel_id, participant
             ).call(),
         )
+
+    def get_funding_holdings(self, funding_id: bytes) -> int:
+        return cast(
+            int, self._asset_holder_web3_contract.functions.holdings(funding_id).call()
+        )
