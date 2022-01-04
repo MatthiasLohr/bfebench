@@ -42,10 +42,20 @@ class Channel(object):
         balances: List[int] = []
         index_map: List[int] = []
 
+        def __iter__(self) -> Any:
+            yield self.id
+            yield self.balances
+            yield self.index_map
+
     class Allocation(NamedTuple):
         assets: List[ChecksumAddress] = []
         balances: List[List[int]] = [[]]
         locked: List["Channel.SubAlloc"] = []
+
+        def __iter__(self) -> Any:
+            yield self.assets
+            yield self.balances
+            yield [tuple(entry) for entry in self.locked]
 
     class State(NamedTuple):
         channel_id: bytes
@@ -53,3 +63,10 @@ class Channel(object):
         outcome: "Channel.Allocation"
         app_data: bytes
         is_final: bool
+
+        def __iter__(self) -> Any:
+            yield self.channel_id
+            yield self.version
+            yield tuple(self.outcome)
+            yield self.app_data
+            yield self.is_final
