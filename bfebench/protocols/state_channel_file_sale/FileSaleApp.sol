@@ -26,9 +26,14 @@ pragma experimental ABIEncoderV2;
 import "./perun-eth-contracts/contracts/App.sol";
 
 contract FileSaleApp is App {
-    enum Phase {IDLE, INITIALIZED, ACCEPTED, REVEALED}
+    enum Phase {IDLE, INITIALIZED, ACCEPTED, KEY_REVEALED}
 
     struct AppState {
+        bytes32 fileRoot;
+        bytes32 ciphertextRoot;
+        bytes32 keyCommit;
+        bytes32 key;
+        uint price;
         Phase phase;
     }
 
@@ -46,7 +51,40 @@ contract FileSaleApp is App {
         uint256 signerIdx)
     external pure override
     {
-        require(from.version == 1 && to.version == 1, "only version==1 is supported");
-        // TODO implement
+        (AppState memory appFrom) = abi.decode(from.appData, (AppState));
+        (AppState memory appTo) = abi.decode(to.appData, (AppState));
+        if (appTo.phase == Phase.INITIALIZED) {
+            // ======== seller initializes new transfer ========
+            require(signerIdx == 0, "only seller can initialize");
+            require(appFrom.phase == Phase.IDLE, "IDLE -> INITIALIZED violation");
+            // TODO check outcome Allocation
+        }
+        else if (appTo.phase == Phase.ACCEPTED) {
+            // ======== buyer accepts transfer ========
+            require(signerIdx == 1, "only buyer can accept");
+            require(appFrom.phase == Phase.INITIALIZED, "INITIALIZED -> ACCEPTED violation");
+            require(appFrom.fileRoot == appTo.fileRoot, "fileRoot mismatch");
+            require(appFrom.ciphertextRoot == appTo.ciphertextRoot, "ciphertextRoot mismatch");
+            require(appFrom.keyCommit == appTo.keyCommit, "keyCommit mismatch");
+            require(appFrom.price == appTo.price, "price mismatch");
+            // TODO check outcome Allocation
+        }
+        else if (appTo.phase == Phase.KEY_REVEALED) {
+            // ======== seller reveals key ========
+            require(signerIdx == 0, "only seller can reveal key");
+            require(appFrom.phase == Phase.ACCEPTED, "ACCEPTED -> KEY_REVEALED violation");
+            require(appFrom.fileRoot == appTo.fileRoot, "fileRoot mismatch");
+            require(appFrom.ciphertextRoot == appTo.ciphertextRoot, "ciphertextRoot mismatch");
+            require(appFrom.keyCommit == appTo.keyCommit, "keyCommit mismatch");
+            require(appTo.keyCommit == keccak256(abi.encode(appTo.key)), "key mismatch");
+            require(appFrom.price == appTo.price, "price mismatch");
+            // TODO check outcome Allocation
+        }
+        else if (appTo.phase == Phase.IDLE) {
+            // ======== buyer confirms ========
+            require(signerIdx == 1, "only buyer can confirm");
+            require(appFrom.phase == Phase.KEY_REVEALED, "KEY_REVEALED -> IDLE violation");
+            // TODO check outcome Allocation
+        }
     }
 }
