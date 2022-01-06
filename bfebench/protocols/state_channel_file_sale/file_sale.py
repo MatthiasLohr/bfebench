@@ -16,15 +16,31 @@
 # limitations under the License.
 
 from enum import IntEnum
-from typing import NamedTuple
+from typing import Any
+
+from ..fairswap.util import B032
 
 
 class FileSale(object):
-    class AppState(NamedTuple):
-        phase: "FileSale.Phase"
+    class AppState(object):
+        def __init__(self) -> None:
+            self.file_root = B032
+            self.ciphertext_root = B032
+            self.key_commit = B032
+            self.key = B032
+            self.price = 0
+            self.phase = FileSale.Phase.IDLE
+
+        def __iter__(self) -> Any:
+            yield self.file_root
+            yield self.ciphertext_root
+            yield self.key_commit
+            yield self.key
+            yield self.price
+            yield self.phase.value
 
     class Phase(IntEnum):
         IDLE = 0
         INITIALIZED = 1
         ACCEPTED = 2
-        REVEALED = 3
+        KEY_REVEALED = 3

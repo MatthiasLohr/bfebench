@@ -57,12 +57,13 @@ class Channel(object):
             yield self.balances
             yield [tuple(entry) for entry in self.locked]
 
-    class State(NamedTuple):
-        channel_id: bytes
-        version: int
-        outcome: "Channel.Allocation"
-        app_data: bytes
-        is_final: bool
+    class State(object):
+        def __init__(self, channel_id: bytes, allocation: "Channel.Allocation") -> None:
+            self.channel_id = channel_id
+            self.version = 1
+            self.outcome = allocation
+            self.app_data = b""
+            self.is_final = False
 
         def __iter__(self) -> Any:
             yield self.channel_id
