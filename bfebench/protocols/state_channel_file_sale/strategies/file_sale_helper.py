@@ -15,9 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 from typing import cast
 
+from eth_account import Account
+from eth_account.messages import encode_defunct
 from eth_typing.evm import ChecksumAddress
+from hexbytes import HexBytes
+from web3 import Web3
 
 from ....environment import Environment
 from ..file_sale import FileSale
@@ -76,8 +82,32 @@ class FileSaleHelper(object):
         pass  # TODO check outcome for error
         return False
 
-    def sign_channel_state(self) -> bytes:
-        pass  # TODO implement
+    def encode_channel_params(self, params: Channel.Params) -> bytes:
+        return cast(
+            bytes,
+            self._helper_web3_contract.functions.encodeChannelParams(
+                tuple(params)
+            ).call(),
+        )
+
+    def encode_channel_state(self, state: Channel.State) -> bytes:
+        return cast(
+            bytes,
+            self._helper_web3_contract.functions.encodeChannelState(
+                tuple(state)
+            ).call(),
+        )
+
+    def hash_channel_state(self, state: Channel.State) -> bytes:
+        return bytes(Web3.solidityKeccak(["bytes"], [self.encode_channel_state(state)]))
+
+    def sign_channel_state(
+        self, state: Channel.State, private_key: HexBytes | bytes
+    ) -> bytes:
+        signed_message = Account.sign_message(
+            encode_defunct(self.hash_channel_state(state)), private_key
+        )
+        return bytes(signed_message.signature)
 
     def encode_app_data(self, app_state: FileSale.AppState) -> bytes:
         return cast(

@@ -20,7 +20,6 @@ from eth_typing.evm import ChecksumAddress
 from bfebench.utils.json_stream import JsonObjectSocketStream
 
 from ....environment import Environment
-from ...fairswap.util import B032
 from ..file_sale import FileSale
 from ..perun import Channel
 from .file_sale_helper import FileSaleHelper
@@ -73,11 +72,21 @@ class FaithfulSeller(StateChannelFileSaleSeller):
                 channel_state.app_data = file_sale_helper.encode_app_data(app_state)
                 channel_state.is_final = True
 
+                # conclude channel
+                private_key = environment.private_key
+                assert private_key is not None
+
                 environment.send_contract_transaction(
                     self.protocol.adjudicator_contract,
                     "concludeFinal",
                     tuple(self.protocol.channel_params),
                     tuple(channel_state),
-                    [B032, B032],  # TODO sign
+                    [
+                        file_sale_helper.sign_channel_state(channel_state, private_key),
+                        bytes.fromhex(message["signature"]),
+                    ],
                 )
+
+                # request payout
+                # TODO payout the money
                 return

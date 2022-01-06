@@ -21,11 +21,20 @@ pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "./FileSaleApp.sol";
+import "./perun-eth-contracts/contracts/Channel.sol";
 
 contract FileSaleHelper {
     // https://github.com/hyperledger-labs/perun-eth-contracts/blob/abd762dc7d3271f797e304d8bb641f71f8c5c206/contracts/AssetHolder.sol#L208-L216
     function getFundingID(bytes32 channelID, address participant) public pure returns (bytes32) {
         return keccak256(abi.encode(channelID, participant));
+    }
+
+    function encodeChannelParams(Channel.Params memory params) public pure returns (bytes memory) {
+        return abi.encode(params);
+    }
+
+    function encodeChannelState(Channel.State memory state) public pure returns (bytes memory) {
+        return abi.encode(state);
     }
 
     function encodeAppState(FileSaleApp.AppState memory state) public pure returns (bytes memory){

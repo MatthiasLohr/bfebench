@@ -101,6 +101,14 @@ class FaithfulBuyer(StateChannelFileSaleBuyer):
                 channel_state.app_data = file_sale_helper.encode_app_data(app_state)
                 channel_state.is_final = True
 
+                private_key = environment.private_key
+                assert private_key is not None
+
                 p2p_stream.send_object(
-                    {"action": "conclude", "signature": None}  # TODO sign final state
+                    {
+                        "action": "conclude",
+                        "signature": file_sale_helper.sign_channel_state(
+                            channel_state, private_key
+                        ).hex(),
+                    }
                 )
