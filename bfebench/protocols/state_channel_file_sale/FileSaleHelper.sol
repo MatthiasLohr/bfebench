@@ -20,9 +20,15 @@
 pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "./FileSaleApp.sol";
+
 contract FileSaleHelper {
     // https://github.com/hyperledger-labs/perun-eth-contracts/blob/abd762dc7d3271f797e304d8bb641f71f8c5c206/contracts/AssetHolder.sol#L208-L216
     function getFundingID(bytes32 channelID, address participant) public pure returns (bytes32) {
         return keccak256(abi.encode(channelID, participant));
+    }
+
+    function encodeAppState(FileSaleApp.AppState memory state) public pure returns (bytes memory){
+        return abi.encode(state);
     }
 }

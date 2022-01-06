@@ -20,6 +20,8 @@ from eth_typing.evm import ChecksumAddress
 from bfebench.utils.json_stream import JsonObjectSocketStream
 
 from ....environment import Environment
+from ..file_sale import FileSale
+from ..perun import Channel
 from .buyer import StateChannelFileSaleBuyer
 from .file_sale_helper import FileSaleHelper
 
@@ -32,11 +34,22 @@ class FaithfulBuyer(StateChannelFileSaleBuyer):
         opposite_address: ChecksumAddress,
     ) -> None:
         # ======== PREPARE STATE CHANNEL ========
+        asset_holder_contract_address = self.protocol.asset_holder_contract.address
+        assert asset_holder_contract_address is not None
         file_sale_helper = FileSaleHelper(environment, self.protocol)
         channel_id = file_sale_helper.get_channel_id(self.protocol.channel_params)
         funding_id = file_sale_helper.get_funding_id(
             channel_id, environment.wallet_address
         )
+        channel_state = Channel.State(
+            channel_id=channel_id,
+            allocation=Channel.Allocation(
+                assets=[asset_holder_contract_address],
+                balances=[[0, 0]],
+                locked=[],
+            ),
+        )
+        app_state = FileSale.AppState()
 
         for file_sale_iteration in range(1, self.protocol.file_sale_iterations + 1):
             if self.protocol.file_sale_iterations > 1:
@@ -82,3 +95,12 @@ class FaithfulBuyer(StateChannelFileSaleBuyer):
 
             # ======== VALIDATE KEY / CONFIRM / SIGN FINAL STATE / COMPLAIN ========
             pass  # TODO implement
+
+            if file_sale_iteration == self.protocol.file_sale_iterations:
+                # last iteration, create and sign final state
+                channel_state.app_data = file_sale_helper.encode_app_data(app_state)
+                channel_state.is_final = True
+
+                p2p_stream.send_object(
+                    {"action": "conclude", "signature": None}  # TODO sign final state
+                )

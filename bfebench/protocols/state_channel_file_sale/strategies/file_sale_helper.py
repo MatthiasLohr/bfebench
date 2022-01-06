@@ -20,6 +20,7 @@ from typing import cast
 from eth_typing.evm import ChecksumAddress
 
 from ....environment import Environment
+from ..file_sale import FileSale
 from ..perun import Channel
 from ..protocol import StateChannelFileSale
 
@@ -31,6 +32,7 @@ class FileSaleHelper(object):
         self._adjudicator_web3_contract = environment.get_web3_contract(
             protocol.adjudicator_contract
         )
+        self._app_web3_contract = environment.get_web3_contract(protocol.app_contract)
         self._asset_holder_web3_contract = environment.get_web3_contract(
             protocol.asset_holder_contract
         )
@@ -60,4 +62,27 @@ class FileSaleHelper(object):
     def get_funding_holdings(self, funding_id: bytes) -> int:
         return cast(
             int, self._asset_holder_web3_contract.functions.holdings(funding_id).call()
+        )
+
+    def is_valid_transition(
+        self,
+        channel_params: Channel.Params,
+        state_from: Channel.State,
+        state_to: Channel.State,
+    ) -> bool:
+        self._app_web3_contract.functions.validTransition(
+            channel_params, state_from, state_to
+        ).call()
+        pass  # TODO check outcome for error
+        return False
+
+    def sign_channel_state(self) -> bytes:
+        pass  # TODO implement
+
+    def encode_app_data(self, app_state: FileSale.AppState) -> bytes:
+        return cast(
+            bytes,
+            self._helper_web3_contract.functions.encodeAppState(
+                tuple(app_state)
+            ).call(),
         )

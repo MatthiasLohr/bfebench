@@ -20,6 +20,10 @@ from eth_typing.evm import ChecksumAddress
 from bfebench.utils.json_stream import JsonObjectSocketStream
 
 from ....environment import Environment
+from ...fairswap.util import B032
+from ..file_sale import FileSale
+from ..perun import Channel
+from .file_sale_helper import FileSaleHelper
 from .seller import StateChannelFileSaleSeller
 
 
@@ -30,20 +34,50 @@ class FaithfulSeller(StateChannelFileSaleSeller):
         p2p_stream: JsonObjectSocketStream,
         opposite_address: ChecksumAddress,
     ) -> None:
-        # ======== WAIT FOR INCOMING EXCHANGE REQUEST ========
-        pass  # TODO
+        # ======== PREPARE STATE CHANNEL ========
+        asset_holder_contract_address = self.protocol.asset_holder_contract.address
+        assert asset_holder_contract_address is not None
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+        channel_id = file_sale_helper.get_channel_id(self.protocol.channel_params)
+        channel_state = Channel.State(
+            channel_id=channel_id,
+            allocation=Channel.Allocation(
+                assets=[asset_holder_contract_address],
+                balances=[[0, 0]],
+                locked=[],
+            ),
+        )
+        app_state = FileSale.AppState()
 
-        # ======== CHECK FOR SUFFICIENT FUNDING ========
-        pass  # TODO
+        while True:
+            message, _ = p2p_stream.receive_object()
+            if message["action"] == "request":
+                self.logger.debug("Received 'request' message from buyer")
+                # ======== WAIT FOR INCOMING EXCHANGE REQUEST ========
+                pass  # TODO
 
-        # ======== SEND ENCRYPTED FILE / INITIALIZE ========
-        pass  # TODO
+                # ======== CHECK FOR SUFFICIENT FUNDING ========
+                pass  # TODO
 
-        # ======== WAIT FOR ACCEPT ========
-        pass  # TODO
+                # ======== SEND ENCRYPTED FILE / INITIALIZE ========
+                pass  # TODO
 
-        # ======== REVEAL KEY ========
-        pass  # TODO
+                # ======== WAIT FOR ACCEPT ========
+                pass  # TODO
 
-        # ======== WAIT FOR FINAL STATE / REDEEM ========
-        pass  # TODO
+                # ======== REVEAL KEY ========
+                pass  # TODO
+
+            elif message["action"] == "conclude":
+                self.logger.debug("Received 'conclude' message from buyer")
+                channel_state.app_data = file_sale_helper.encode_app_data(app_state)
+                channel_state.is_final = True
+
+                environment.send_contract_transaction(
+                    self.protocol.adjudicator_contract,
+                    "concludeFinal",
+                    tuple(self.protocol.channel_params),
+                    tuple(channel_state),
+                    [B032, B032],  # TODO sign
+                )
+                return
