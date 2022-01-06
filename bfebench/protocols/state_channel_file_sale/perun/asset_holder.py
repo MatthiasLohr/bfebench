@@ -15,7 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .asset_holder import AssetHolder
-from .channel import Channel
+from typing import Any, NamedTuple
 
-__all__ = ["AssetHolder", "Channel"]
+from eth_typing.evm import ChecksumAddress
+
+
+class AssetHolder(object):
+    class WithdrawalAuth(NamedTuple):
+        channel_id: bytes
+        participant: ChecksumAddress
+        receiver: ChecksumAddress
+        amount: int
+
+        def __iter__(self) -> Any:
+            yield self.channel_id
+            yield self.participant
+            yield self.receiver
+            yield self.amount

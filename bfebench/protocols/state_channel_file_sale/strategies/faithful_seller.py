@@ -21,7 +21,7 @@ from bfebench.utils.json_stream import JsonObjectSocketStream
 
 from ....environment import Environment
 from ..file_sale import FileSale
-from ..perun import Channel
+from ..perun import AssetHolder, Channel
 from .file_sale_helper import FileSaleHelper
 from .seller import StateChannelFileSaleSeller
 
@@ -88,5 +88,16 @@ class FaithfulSeller(StateChannelFileSaleSeller):
                 )
 
                 # request payout
-                # TODO payout the money
+                authorization = AssetHolder.WithdrawalAuth(
+                    channel_id=channel_id,
+                    participant=environment.wallet_address,
+                    receiver=environment.wallet_address,
+                    amount=0,  # TODO change amount
+                )
+                environment.send_contract_transaction(
+                    self.protocol.asset_holder_contract,
+                    "withdraw",
+                    tuple(authorization),
+                    file_sale_helper.sign_withdrawal_auth(authorization, private_key),
+                )
                 return

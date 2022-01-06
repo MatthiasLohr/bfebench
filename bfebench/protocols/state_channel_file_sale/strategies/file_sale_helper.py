@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import cast
 
+from eth_abi.abi import encode_abi
 from eth_account import Account
 from eth_account.messages import encode_defunct
 from eth_typing.evm import ChecksumAddress
@@ -27,7 +28,7 @@ from web3 import Web3
 
 from ....environment import Environment
 from ..file_sale import FileSale
-from ..perun import Channel
+from ..perun import AssetHolder, Channel
 from ..protocol import StateChannelFileSale
 
 
@@ -116,3 +117,21 @@ class FileSaleHelper(object):
                 tuple(app_state)
             ).call(),
         )
+
+    def encode_withdrawal_auth(
+        self, authorization: AssetHolder.WithdrawalAuth
+    ) -> bytes:
+        return encode_abi(["(bytes32,address,address,uint256)"], [tuple(authorization)])
+
+    def hash_withdrawal_auth(self, authorization: AssetHolder.WithdrawalAuth) -> bytes:
+        return bytes(
+            Web3.solidityKeccak(["bytes"], [self.encode_withdrawal_auth(authorization)])
+        )
+
+    def sign_withdrawal_auth(
+        self, authorization: AssetHolder.WithdrawalAuth, private_key: HexBytes | bytes
+    ) -> bytes:
+        signed_message = Account.sign_message(
+            encode_defunct(self.hash_withdrawal_auth(authorization)), private_key
+        )
+        return bytes(signed_message.signature)
