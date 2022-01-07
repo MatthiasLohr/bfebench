@@ -171,7 +171,9 @@ class FaithfulBuyer(FairswapBuyer):
         tx_receipt = environment.send_contract_transaction(
             contract, "accept", value=self.protocol.price
         )
-        self.logger.debug("Sent 'accept' transaction (%s Gas used)" % tx_receipt["gasUsed"])
+        self.logger.debug(
+            "Sent 'accept' transaction (%s Gas used)" % tx_receipt["gasUsed"]
+        )
 
         # === PHASE 3: wait for key revelation ===
         self.logger.debug("waiting for key revelation")
