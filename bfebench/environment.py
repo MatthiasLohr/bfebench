@@ -151,6 +151,7 @@ class Environment(object):
 
         if factory is not None:
             tx_draft = factory.buildTransaction(tx_draft)
+            tx_draft["gas"] = 4000000
         else:
             tx_draft["gas"] = 21000
 
