@@ -22,6 +22,7 @@ from bfebench.environments_configuration import EnvironmentsConfiguration
 from bfebench.protocols import PROTOCOL_SPECIFICATIONS
 from bfebench.simulation import Simulation
 
+from ..const import DEFAULT_PRICE
 from ..simulation_result_collector import SimulationResultCollector
 from .command import SubCommand
 
@@ -49,7 +50,7 @@ class RunCommand(SubCommand):
         argument_parser.add_argument(
             "--price",
             type=int,
-            default=1000000000,
+            default=DEFAULT_PRICE,
             help="price to be paid for the file",
         )
         argument_parser.add_argument(
