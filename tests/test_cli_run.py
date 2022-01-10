@@ -42,7 +42,7 @@ class CliRunTest(TestCase):
         },
     }
 
-    TEST_FILE_NAME = "testdata/bfebench-test-32KiB.bin"
+    TEST_FILE_NAME = "testdata/bfebench-test-8KiB.bin"
 
     def test_cli_run(self) -> None:
         argument_parser = argparse.ArgumentParser()
