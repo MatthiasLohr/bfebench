@@ -17,15 +17,16 @@
 
 import os
 from math import log2
-from typing import Tuple, Type
+from typing import Tuple
 from unittest import TestCase
 
 from eth_tester import EthereumTester, PyEVMBackend  # type: ignore
 from web3 import Web3
-from web3.providers.eth_tester import EthereumTesterProvider
+from web3.contract import Contract
+from web3.providers.eth_tester.main import EthereumTesterProvider
 
 from bfebench.const import DEFAULT_PRICE, DEFAULT_TIMEOUT
-from bfebench.contract import Contract, SolidityContractSourceCodeManager
+from bfebench.contract import SolidityContractSourceCodeManager
 from bfebench.protocols.fairswap import Fairswap
 from bfebench.protocols.fairswap.util import (
     B032,
@@ -87,7 +88,7 @@ class ContractTest(TestCase):
         ciphertext_root_hash: bytes,
         key_hash: bytes,
         slice_count: int = 4,
-    ) -> Tuple[Web3, Type[Contract]]:
+    ) -> Tuple[Web3, Contract]:
         web3 = Web3(EthereumTesterProvider(EthereumTester(PyEVMBackend())))
 
         scscm = SolidityContractSourceCodeManager()
