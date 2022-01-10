@@ -21,7 +21,6 @@ from unittest import TestCase
 
 from bfebench.cli.run import RunCommand
 
-
 logger = logging.getLogger(__name__)
 
 
