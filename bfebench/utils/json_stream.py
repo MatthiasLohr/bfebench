@@ -18,10 +18,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import socket
 from pathlib import Path
 from threading import Thread
 from typing import Any, NamedTuple, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 class JsonObjectSocketStreamError(IOError):
@@ -54,7 +57,11 @@ class JsonObjectSocketStream(object):
         object_end_pos = 0
 
         while True:
-            chunk = self.socket_connection.recv(self.chunk_size)
+            try:
+                chunk = self.socket_connection.recv(self.chunk_size)
+            except ConnectionResetError:
+                logger.warning("ConnectionResetError during receiving")
+                return None, 0
 
             if chunk == b"":
                 if self._buffer == b"":
