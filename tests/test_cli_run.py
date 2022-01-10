@@ -1,7 +1,7 @@
 # This file is part of the Blockchain-based Fair Exchange Benchmark Tool
 #    https://gitlab.com/MatthiasLohr/bfebench
 #
-# Copyright 2021 Matthias Lohr <mail@mlohr.com>
+# Copyright 2021-2022 Matthias Lohr <mail@mlohr.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 # limitations under the License.
 
 import argparse
+import logging
 from unittest import TestCase
 
 from bfebench.cli.run import RunCommand
+
+
+logger = logging.getLogger(__name__)
 
 
 class CliRunTest(TestCase):
@@ -28,7 +32,13 @@ class CliRunTest(TestCase):
             "protocol_parameters": [("timeout", 10)],
         },
         "StateChannelFileSale": {
-            "strategy_pairs": [("Faithful", "Faithful")],
+            "strategy_pairs": [
+                ("Faithful", "Faithful"),
+                ("Faithful", "Grieving"),
+                ("RootForging", "Faithful"),
+                ("NodeForging", "Faithful"),
+                ("LeafForging", "Faithful"),
+            ],
             "protocol_parameters": [("timeout", 10)],
         },
     }
@@ -43,6 +53,11 @@ class CliRunTest(TestCase):
             strategy_pairs = configuration["strategy_pairs"]
 
             for seller_strategy_name, buyer_strategy_name in strategy_pairs:  # type: ignore
+
+                logger.debug(
+                    "Starting simulation of protocol %s with %s seller and %s buyer"
+                    % (protocol_name, seller_strategy_name, buyer_strategy_name)
+                )
 
                 result_code = run_command(
                     argparse.Namespace(
