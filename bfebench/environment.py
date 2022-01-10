@@ -47,6 +47,7 @@ class Environment(object):
         wallet_address: ChecksumAddress | None = None,
         private_key: HexBytes | None = None,
         wait_poll_interval: float = DEFAULT_WAIT_POLL_INTERVAL,
+        gas_limit: int | None = None,
     ) -> None:
         self._web3 = web3
         self._wait_poll_interval = wait_poll_interval
@@ -76,6 +77,11 @@ class Environment(object):
             self.web3.middleware_onion.add(
                 construct_sign_and_send_raw_middleware(self.private_key)
             )
+
+        if gas_limit is not None:
+            self._gas_limit = gas_limit
+        else:
+            self._gas_limit = self.web3.eth.get_block("latest")["gasLimit"]
 
     @property
     def web3(self) -> Web3:
@@ -151,7 +157,7 @@ class Environment(object):
 
         if factory is not None:
             tx_draft = factory.buildTransaction(tx_draft)
-            tx_draft["gas"] = 4000000
+            tx_draft["gas"] = self._gas_limit
         else:
             tx_draft["gas"] = 21000
 
