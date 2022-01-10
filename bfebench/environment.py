@@ -175,7 +175,6 @@ class Environment(object):
         condition: Callable[[], Any] | None = None,
         wait_poll_interval: float | None = None,
     ) -> EnvironmentWaitResult:
-        # TODO wait at least for 1 consecutive block
         if wait_poll_interval is None:
             wait_poll_interval = self._wait_poll_interval
 
