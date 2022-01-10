@@ -33,7 +33,7 @@ class CliRunTest(TestCase):
         "StateChannelFileSale": {
             "strategy_pairs": [
                 ("Faithful", "Faithful"),
-                ("Faithful", "Grieving"),
+                ("Grieving", "Faithful"),
                 ("RootForging", "Faithful"),
                 ("NodeForging", "Faithful"),
                 ("LeafForging", "Faithful"),

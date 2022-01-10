@@ -21,7 +21,7 @@ from .protocol import StateChannelFileSale
 from .strategies import (
     FaithfulBuyer,
     FaithfulSeller,
-    GrievingBuyer,
+    GrievingSeller,
     LeafForgingSeller,
     NodeForgingSeller,
     RootForgingSeller,
@@ -31,9 +31,10 @@ PROTOCOL_SPEC = ProtocolSpec(
     protocol=StateChannelFileSale,
     seller_strategies={
         "Faithful": FaithfulSeller,
+        "Grieving": GrievingSeller,
         "LeafForging": LeafForgingSeller,
         "NodeForging": NodeForgingSeller,
         "RootForging": RootForgingSeller,
     },
-    buyer_strategies={"Faithful": FaithfulBuyer, "Grieving": GrievingBuyer},
+    buyer_strategies={"Faithful": FaithfulBuyer},
 )

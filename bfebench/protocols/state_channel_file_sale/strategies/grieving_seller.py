@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .faithful_buyer import FaithfulBuyer
+from .faithful_seller import FaithfulSeller
 
 
-class GrievingBuyer(FaithfulBuyer):
+class GrievingSeller(FaithfulSeller):
     pass  # TODO implement
