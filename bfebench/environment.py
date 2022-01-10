@@ -79,7 +79,6 @@ class Environment(object):
                 construct_sign_and_send_raw_middleware(self.private_key)
             )
 
-
     @property
     def web3(self) -> Web3:
         return self._web3
