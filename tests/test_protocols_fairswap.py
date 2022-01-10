@@ -145,4 +145,4 @@ class ContractTest(TestCase):
             for i in range(8):
                 data = generate_bytes(32)
                 call_result = contract.functions.cryptSmall(i, data).call()
-                self.assertEqual(call_result, crypt(data, n + i, B032))
+                self.assertEqual(call_result, crypt(data, i, B032))

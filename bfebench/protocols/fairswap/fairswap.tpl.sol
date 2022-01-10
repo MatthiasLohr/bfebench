@@ -129,7 +129,7 @@ contract FileSale {
 
     // function to decrypt hashes of the merkle tree
     function cryptSmall(uint _index, bytes32 _ciphertext) public view returns (bytes32) {
-        return keccak256(abi.encode(n + _index, key)) ^ _ciphertext;
+        return keccak256(abi.encode(_index, key)) ^ _ciphertext;
     }
 
     // function to verify Merkle Tree proofs
