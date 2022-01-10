@@ -27,7 +27,7 @@ unittests:
     - coverage report --precision=2
   parallel:
     matrix:
-      - python_version: ["3.7", "3.8", "3.9"]
+      - python_version: ["3.7", "3.8", "3.9", "3.10"]
   artifacts:
     reports:
       cobertura: coverage.xml
@@ -42,7 +42,7 @@ flake8:
     - python -m flake8
   parallel:
     matrix:
-      - python_version: ["3.7", "3.8", "3.9"]
+      - python_version: ["3.7", "3.8", "3.9", "3.10"]
 
 
 mypy:
@@ -55,7 +55,7 @@ mypy:
     - python -m mypy
   parallel:
     matrix:
-      - python_version: ["3.7", "3.8", "3.9"]
+      - python_version: ["3.7", "3.8", "3.9", "3.10"]
 
 
 isort:
