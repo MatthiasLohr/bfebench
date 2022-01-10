@@ -28,9 +28,9 @@ class CliRunTest(TestCase):
             "protocol_parameters": [("timeout", 10)],
         },
         "StateChannelFileSale": {
-           "strategy_pairs": [("Faithful", "Faithful")],
-           "protocol_parameters": [("timeout", 10)]
-        }
+            "strategy_pairs": [("Faithful", "Faithful")],
+            "protocol_parameters": [("timeout", 10)],
+        },
     }
 
     TEST_FILE_NAME = "testdata/bfebench-test-32KiB.bin"
