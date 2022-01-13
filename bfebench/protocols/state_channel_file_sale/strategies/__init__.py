@@ -15,12 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .faithful_buyer import FaithfulBuyer
-from .faithful_seller import FaithfulSeller
+from .buyer import StateChannelFileSaleBuyer as FaithfulBuyer
 from .grieving_seller import GrievingSeller
 from .leaf_forging_seller import LeafForgingSeller
 from .node_forging_seller import NodeForgingSeller
 from .root_forging_seller import RootForgingSeller
+from .seller import StateChannelFileSaleSeller as FaithfulSeller
 
 __all__ = [
     "FaithfulBuyer",

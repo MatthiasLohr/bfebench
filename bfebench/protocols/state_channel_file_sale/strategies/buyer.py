@@ -33,7 +33,40 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         p2p_stream: JsonObjectSocketStream,
         opposite_address: ChecksumAddress,
     ) -> None:
-        raise NotImplementedError()
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+        # ======== OPEN STATE CHANNEL ========
+        # See: https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#open-phase
+        channel_info = self.open_state_channel(environment, p2p_stream)
+
+        # validate remote signature
+        if not file_sale_helper.validate_signed_channel_state(
+            channel_state=channel_info.state,
+            signature=channel_info.sigs[0],
+            signer=opposite_address,
+        ):
+            self.logger.error("Seller's signature invalid!")
+            return
+
+        # ======== FUND STATE CHANNEL ========
+        self.fund_state_channel(
+            environment,
+            file_sale_helper.get_funding_id(
+                channel_info.state.channel_id, environment.wallet_address
+            ),
+        )
+
+        # ======== EXECUTE FILE EXCHANGE ========
+        for file_sale_iteration in range(1, self.protocol.file_sale_iterations + 1):
+            if self.protocol.file_sale_iterations > 1:
+                self.logger.debug(
+                    "starting file sale iteration %s" % file_sale_iteration
+                )
+
+            self.conduct_file_sale(file_sale_iteration)
+
+        # ======== CLOSE STATE CHANNEL ========
+        # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
+        self.close_state_channel(environment, p2p_stream, channel_info)
 
     def open_state_channel(
         self, environment: Environment, p2p_stream: JsonObjectSocketStream
@@ -60,4 +93,37 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             params=self.protocol.channel_params,
             state=channel_state,
             sigs=[remote_signature, file_sale_helper.sign_channel_state(channel_state)],
+        )
+
+    def fund_state_channel(self, environment: Environment, funding_id: bytes) -> None:
+        if self.protocol.buyer_deposit > 0:
+            environment.send_contract_transaction(
+                self.protocol.asset_holder_contract,
+                "deposit",
+                funding_id,
+                self.protocol.buyer_deposit,
+                value=self.protocol.buyer_deposit,
+            )
+
+    def conduct_file_sale(self, iteration: int) -> None:
+        pass  # TODO implement
+
+    def close_state_channel(
+        self,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        channel_info: Adjudicator.SignedState,
+    ) -> None:
+        # ======== CLOSE STATE CHANNEL ========
+        # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+
+        channel_info.state.is_final = True
+        p2p_stream.send_object(
+            {
+                "action": "close",
+                "signature": file_sale_helper.sign_channel_state(
+                    channel_info.state
+                ).hex(),
+            }
         )

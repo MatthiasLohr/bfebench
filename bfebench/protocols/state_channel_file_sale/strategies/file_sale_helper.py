@@ -150,8 +150,13 @@ class FileSaleHelper(object):
         )
 
     def sign_withdrawal_auth(
-        self, authorization: AssetHolder.WithdrawalAuth, private_key: HexBytes | bytes
+        self,
+        authorization: AssetHolder.WithdrawalAuth,
+        private_key: HexBytes | bytes | None = None,
     ) -> bytes:
+        if private_key is None:
+            private_key = self._environment.private_key
+
         signed_message = Account.sign_message(
             encode_defunct(self.hash_withdrawal_auth(authorization)), private_key
         )

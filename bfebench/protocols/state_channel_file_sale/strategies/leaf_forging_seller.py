@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .faithful_seller import FaithfulSeller
+from .seller import StateChannelFileSaleSeller
 
 
-class LeafForgingSeller(FaithfulSeller):
+class LeafForgingSeller(StateChannelFileSaleSeller):
     pass  # TODO implement

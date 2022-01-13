@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import logging
 from enum import Enum
 from time import sleep, time
 from typing import Any, Callable
@@ -33,6 +34,9 @@ from web3.types import TxReceipt
 from .contract import Contract
 
 DEFAULT_WAIT_POLL_INTERVAL = 0.3  # 300 ms
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnvironmentWaitResult(Enum):
@@ -126,6 +130,12 @@ class Environment(object):
         tx_receipt = self._send_transaction(
             factory=web3_contract_method(*args, **kwargs), value=value
         )
+
+        logger.debug(
+            "Executed contract transaction %s.%s, %d gas used"
+            % (contract.address, method, tx_receipt["gasUsed"])
+        )
+
         return tx_receipt
 
     def send_direct_transaction(
