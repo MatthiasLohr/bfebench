@@ -136,7 +136,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             receiver=environment.wallet_address,
             amount=file_sale_helper.get_funding_holdings(
                 funding_id
-            ),  # TODO change amount
+            ),
         )
         environment.send_contract_transaction(
             self.protocol.asset_holder_contract,
