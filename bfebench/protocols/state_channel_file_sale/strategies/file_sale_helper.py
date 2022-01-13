@@ -36,15 +36,20 @@ class FileSaleHelper(object):
     def __init__(
         self, environment: Environment, protocol: StateChannelFileSale
     ) -> None:
-        self._adjudicator_web3_contract = environment.get_web3_contract(
-            protocol.adjudicator_contract
+        self._environment = environment
+        self._protocol = protocol
+
+        self._adjudicator_web3_contract = self._environment.get_web3_contract(
+            self._protocol.adjudicator_contract
         )
-        self._app_web3_contract = environment.get_web3_contract(protocol.app_contract)
-        self._asset_holder_web3_contract = environment.get_web3_contract(
-            protocol.asset_holder_contract
+        self._app_web3_contract = self._environment.get_web3_contract(
+            protocol.app_contract
         )
-        self._helper_web3_contract = environment.get_web3_contract(
-            protocol.helper_contract
+        self._asset_holder_web3_contract = self._environment.get_web3_contract(
+            self._protocol.asset_holder_contract
+        )
+        self._helper_web3_contract = self._environment.get_web3_contract(
+            self._protocol.helper_contract
         )
 
     def get_channel_id(self, channel_params: Channel.Params) -> bytes:
@@ -103,12 +108,28 @@ class FileSaleHelper(object):
         return bytes(Web3.solidityKeccak(["bytes"], [self.encode_channel_state(state)]))
 
     def sign_channel_state(
-        self, state: Channel.State, private_key: HexBytes | bytes
+        self, channel_state: Channel.State, private_key: HexBytes | bytes | None = None
     ) -> bytes:
+        if private_key is None:
+            private_key = self._environment.private_key
+
         signed_message = Account.sign_message(
-            encode_defunct(self.hash_channel_state(state)), private_key
+            encode_defunct(self.hash_channel_state(channel_state)), private_key
         )
         return bytes(signed_message.signature)
+
+    def validate_signed_channel_state(
+        self,
+        channel_state: Channel.State,
+        signature: HexBytes | bytes,
+        signer: ChecksumAddress,
+    ) -> bool:
+        recovered_signer = Account.recover_message(
+            encode_defunct(self.hash_channel_state(channel_state)),
+            signature=signature,
+        )
+
+        return bool(recovered_signer == signer)
 
     def encode_app_data(self, app_state: FileSale.AppState) -> bytes:
         return cast(
@@ -135,3 +156,17 @@ class FileSaleHelper(object):
             encode_defunct(self.hash_withdrawal_auth(authorization)), private_key
         )
         return bytes(signed_message.signature)
+
+    def get_initial_channel_state(
+        self, channel_params: Channel.Params
+    ) -> Channel.State:
+        return Channel.State(
+            channel_id=self.get_channel_id(channel_params),
+            allocation=Channel.Allocation(
+                assets=[self._asset_holder_web3_contract.address],
+                balances=[
+                    [self._protocol.seller_deposit, self._protocol.buyer_deposit]
+                ],
+                locked=[],
+            ),
+        )

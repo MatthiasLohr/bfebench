@@ -21,7 +21,9 @@ from bfebench.utils.json_stream import JsonObjectSocketStream
 
 from ....environment import Environment
 from ...strategy import SellerStrategy
+from ..perun import Adjudicator
 from ..protocol import StateChannelFileSale
+from .file_sale_helper import FileSaleHelper
 
 
 class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
@@ -32,3 +34,30 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         opposite_address: ChecksumAddress,
     ) -> None:
         raise NotImplementedError()
+
+    def open_state_channel(
+        self, environment: Environment, p2p_stream: JsonObjectSocketStream
+    ) -> Adjudicator.SignedState:
+        # ======== OPEN STATE CHANNEL ========
+        # See: https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#open-phase
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+        channel_state = file_sale_helper.get_initial_channel_state(
+            self.protocol.channel_params
+        )
+
+        msg, _ = p2p_stream.receive_object()
+        assert msg["action"] == "open"
+        remote_signature = bytes.fromhex(msg["signature"])
+
+        p2p_stream.send_object(
+            {
+                "action": "open",
+                "signature": file_sale_helper.sign_channel_state(channel_state).hex(),
+            }
+        )
+
+        return Adjudicator.SignedState(
+            params=self.protocol.channel_params,
+            state=channel_state,
+            sigs=[file_sale_helper.sign_channel_state(channel_state), remote_signature],
+        )
