@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .adjudicator import Adjudicator
 from .asset_holder import AssetHolder
 from .channel import Channel
 
-__all__ = ["AssetHolder", "Channel"]
+__all__ = ["Adjudicator", "AssetHolder", "Channel"]
