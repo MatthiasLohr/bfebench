@@ -58,6 +58,8 @@ class StateChannelFileSale(Protocol):
         slice_count: int | None = None,
         timeout: int = DEFAULT_TIMEOUT,
         file_sale_iterations: int = 1,
+        seller_deposit: int = 0,
+        buyer_deposit: int | None = None,
         **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
@@ -99,6 +101,11 @@ class StateChannelFileSale(Protocol):
 
         if not self._file_sale_iterations >= 1:
             raise ValueError("_file_sale_iterations must be an int >= 1")
+
+        self._seller_deposit = int(seller_deposit)
+        self._buyer_deposit: int | None = None
+        if buyer_deposit is not None:
+            self._buyer_deposit = int(buyer_deposit)
 
         self._adjudicator_contract: Contract | None = None
         self._asset_holder_contract: Contract | None = None
@@ -217,6 +224,17 @@ class StateChannelFileSale(Protocol):
     @property
     def file_sale_iterations(self) -> int:
         return self._file_sale_iterations
+
+    @property
+    def seller_deposit(self) -> int:
+        return self._seller_deposit
+
+    @property
+    def buyer_deposit(self) -> int:
+        if self._buyer_deposit is not None:
+            return self._buyer_deposit
+        else:
+            return self._file_sale_iterations * self._price
 
     @property
     def channel_params(self) -> Channel.Params:
