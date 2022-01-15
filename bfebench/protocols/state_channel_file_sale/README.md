@@ -1,5 +1,7 @@
 # State Channel File Sale
 
+![State Channel File Sale State Chart](./state_chart.png)
+
 ## Strategies
 
 ### Seller
