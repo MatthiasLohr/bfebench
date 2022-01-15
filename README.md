@@ -3,6 +3,12 @@
 The BFEbench provides a benchmark framework for blockchain based fair exchange protocol.
 For the main project goals see the [base milestone](%"Comparison Fairswap vs. StateChannelFairswap")
 
+Supported protocols:
+
+  * [Fairswap](./bfebench/protocols/fairswap/README.md)
+  * [FairswapReusable](./bfebench/protocols/fairswap_reusable/README.md)
+  * [StateChannelFileSale](./bfebench/protocols/state_channel_file_sale/README.md)
+
 
 ## Usage
 
