@@ -28,13 +28,13 @@ note on link
   seller and buyer can
   register latest state
 end note
-DisputeRegistered --> DisputeExecution : TIMEOUT
+DisputeRegistered --> DisputeExecution : [S/B] TIMEOUT
 DisputeExecution --> DisputeExecution : [S/B] process()
 note on link
   seller and buyer can process
   single transition step
 end note
-DisputeExecution --> DisputeTimedOut : TIMEOUT
+DisputeExecution --> DisputeTimedOut : [S/B] TIMEOUT
 DisputeTimedOut --> ReadyForWithdraw : [S/B] conclude()
 
 Finalized --> ReadyForWithdraw : [S] _conclude()
