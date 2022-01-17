@@ -29,9 +29,9 @@ note on link
   register latest state
 end note
 DisputeRegistered --> DisputeExecution : [S/B] TIMEOUT
-DisputeExecution --> DisputeExecution : [S/B] process()
+DisputeExecution --> DisputeExecution : [S/B] progress()
 note on link
-  seller and buyer can process
+  seller and buyer can progress
   single transition step
 end note
 DisputeExecution --> DisputeTimedOut : [S/B] TIMEOUT
