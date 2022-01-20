@@ -4,7 +4,7 @@ services:
   # https://hub.docker.com/r/trufflesuite/ganache-cli (old)
   # https://hub.docker.com/r/trufflesuite/ganache (beta)
   ganache:
-    image: trufflesuite/ganache:v7.0.0-beta.2
+    image: trufflesuite/ganache:v7.0.0
     container_name: ganache
     command:
       - "--chain.hardfork=london"
