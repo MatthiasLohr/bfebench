@@ -95,7 +95,7 @@ class ContractTest(TestCase):
         scscm.add_contract_template_file(
             os.path.join(
                 os.path.dirname(__file__),
-                "../bfebench/protocols/fairswap",
+                "../../../bfebench/protocols/fairswap",
                 Fairswap.CONTRACT_TEMPLATE_FILE,
             ),
             {
