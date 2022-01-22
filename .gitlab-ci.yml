@@ -35,7 +35,7 @@ unittests:
 
 pre-commit checks:
   stage: test
-  image: python:${PYTHON_VERSION_DEFAULT}
+  image: python:${PYTHON_DEFAULT_VERSION}
   before_script:
     - pip install pre-commit
   script:
