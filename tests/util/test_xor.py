@@ -1,7 +1,7 @@
 # This file is part of the Blockchain-based Fair Exchange Benchmark Tool
 #    https://gitlab.com/MatthiasLohr/bfebench
 #
-# Copyright 2021 Matthias Lohr <mail@mlohr.com>
+# Copyright 2021-2022 Matthias Lohr <mail@mlohr.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

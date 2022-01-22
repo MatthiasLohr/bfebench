@@ -33,42 +33,10 @@ unittests:
       cobertura: coverage.xml
 
 
-flake8:
-  image: python:${python_version}
+pre-commit checks:
+  stage: test
+  image: python:${PYTHON_VERSION_DEFAULT}
   before_script:
-    - pip install --upgrade pip
-    - pip install flake8
+    - pip install pre-commit
   script:
-    - python -m flake8
-  parallel:
-    matrix:
-      - python_version: ["3.7", "3.8", "3.9", "3.10"]
-
-
-mypy:
-  image: python:${python_version}
-  before_script:
-    - pip install --upgrade pip
-    - pip install . mypy
-    - python -m mypy --install-types --non-interactive
-  script:
-    - python -m mypy
-  parallel:
-    matrix:
-      - python_version: ["3.7", "3.8", "3.9", "3.10"]
-
-
-isort:
-  image: python:${PYTHON_DEFAULT_VERSION}
-  before_script:
-    - pip install isort
-  script:
-    - isort --check .
-
-
-black:
-  image: python:${PYTHON_DEFAULT_VERSION}
-  before_script:
-    - pip install black
-  script:
-    - black --check .
+    - pre-commit run --all-files

@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from math import log2
-from typing import List, Tuple, Type
+from typing import List, Tuple, Type, cast
 
 from Crypto.Hash import keccak as base_keccak
 
@@ -27,7 +27,7 @@ B032 = b"\x00" * 32
 
 
 def keccak(data: bytes) -> bytes:
-    return base_keccak.new(data=data, digest_bytes=32).digest()
+    return cast(bytes, base_keccak.new(data=data, digest_bytes=32).digest())
 
 
 def crypt(value: bytes, index: int, key: bytes) -> bytes:
