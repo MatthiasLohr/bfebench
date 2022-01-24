@@ -24,7 +24,7 @@ from tempfile import mkdtemp
 from typing import Any, Dict, List
 
 import jinja2
-import solcx
+import solcx  # type: ignore
 from eth_typing.evm import ChecksumAddress
 from semantic_version import Version  # type: ignore
 from solcx.exceptions import SolcInstallationError  # type: ignore

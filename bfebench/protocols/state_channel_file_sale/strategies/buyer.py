@@ -20,6 +20,8 @@ from eth_typing.evm import ChecksumAddress
 from bfebench.utils.json_stream import JsonObjectSocketStream
 
 from ....environment import Environment
+from ....utils.merkle import from_bytes, obj2mt
+from ...fairswap.util import LeafDigestMismatchError, decode, keccak
 from ...strategy import BuyerStrategy
 from ..perun import Adjudicator
 from ..protocol import StateChannelFileSale
@@ -27,6 +29,15 @@ from .file_sale_helper import FileSaleHelper
 
 
 class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
+    def __init__(self, protocol: StateChannelFileSale) -> None:
+        super().__init__(protocol)
+
+        # caching expected file digest here to avoid hashing to be counted during execution
+        with open(self.protocol.filename, "rb") as fp:
+            data = fp.read()
+        data_merkle = from_bytes(data, keccak, slice_count=self.protocol.slice_count)
+        self._expected_plain_digest = data_merkle.digest
+
     def run(
         self,
         environment: Environment,
@@ -99,8 +110,71 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                 value=self.protocol.buyer_deposit,
             )
 
-    def conduct_file_sale(self, iteration: int) -> None:
-        pass  # TODO implement
+    def conduct_file_sale(self, p2p_stream: JsonObjectSocketStream, iteration: int) -> None:
+        self.logger.debug("Requesting file (iteration %d)" % iteration)
+        p2p_stream.send_object({"action": "request", "file_root": self._expected_plain_digest.hex()})
+
+        # === PHASE 1: wait for seller initialization ===
+        msg_init, _ = p2p_stream.receive_object()
+        assert msg_init["action"] == "initialize"
+        data_merkle_encrypted = obj2mt(
+            data=msg_init.get("tree"),
+            digest_func=keccak,
+            decode_func=lambda s: bytes.fromhex(str(s)),
+        )
+        key_commitment = bytes.fromhex(msg_init["key_commitment"])
+
+        # === PHASE 2: accept ===
+        assert bytes.fromhex(msg_init["file_root"]) == self._expected_plain_digest
+        assert bytes.fromhex(msg_init["ciphertext_root"]) == data_merkle_encrypted.digest
+        p2p_stream.send_object({"action": "accept"})
+
+        # === PHASE 3: wait for key revelation ===
+        self.logger.debug("waiting for key revelation")
+        msg_key_revelation, _ = p2p_stream.receive_object()
+        assert msg_key_revelation["action"] == "reveal_key"
+        data_key = bytes.fromhex(msg_key_revelation["key"])
+
+        # === PHASE 4: complain ===
+        if keccak(data_key) != key_commitment:
+            # TODO implement complainAboutKey
+            return
+
+        data_merkle, errors = decode(data_merkle_encrypted, data_key)
+        if len(errors) == 0:
+            self.logger.debug("file successfully decrypted, quitting.")
+            p2p_stream.send_object({"action": "confirm"})
+            return
+        elif isinstance(errors[-1], LeafDigestMismatchError):
+            # TODO implement complainAboutLeaf
+            # error: NodeDigestMismatchError = errors[-1]
+            # environment.send_contract_transaction(
+            #     contract,
+            #     "complainAboutLeaf",
+            #     error.index_out,
+            #     error.index_in,
+            #     error.out.data,
+            #     error.in1.data_as_list(),
+            #     error.in2.data_as_list(),
+            #     data_merkle_encrypted.get_proof(error.out),
+            #     data_merkle_encrypted.get_proof(error.in1),
+            # )
+            return
+        else:
+            # TODO implement complainAboutNode
+            # error = errors[-1]
+            # environment.send_contract_transaction(
+            #     contract,
+            #     "complainAboutNode",
+            #     error.index_out,
+            #     error.index_in,
+            #     error.out.data,
+            #     error.in1.data,
+            #     error.in2.data,
+            #     data_merkle_encrypted.get_proof(error.out),
+            #     data_merkle_encrypted.get_proof(error.in1),
+            #  )
+            return
 
     def close_state_channel(
         self,

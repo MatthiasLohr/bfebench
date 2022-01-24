@@ -17,9 +17,11 @@
 
 from eth_typing.evm import ChecksumAddress
 
-from bfebench.utils.json_stream import JsonObjectSocketStream
-
 from ....environment import Environment
+from ....utils.bytes import generate_bytes
+from ....utils.json_stream import JsonObjectSocketStream
+from ....utils.merkle import from_bytes, mt2obj
+from ...fairswap.util import encode, keccak
 from ...strategy import SellerStrategy
 from ..perun import Adjudicator, AssetHolder
 from ..protocol import StateChannelFileSale
@@ -59,7 +61,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             self.logger.debug("Received '%s' message from buyer" % msg["action"])
             if msg["action"] == "request":
                 # ======== EXECUTE FILE EXCHANGE ========
-                self.conduct_file_sale()
+                self.conduct_file_sale(p2p_stream, bytes.fromhex(msg["file_root"]))
 
             elif msg["action"] == "close":
                 # ======== CLOSE STATE CHANNEL ========
@@ -103,12 +105,40 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                 value=self.protocol.seller_deposit,
             )
 
-    def conduct_file_sale(self) -> None:
-        pass  # TODO implement
+    def conduct_file_sale(self, p2p_stream: JsonObjectSocketStream, file_root: bytes) -> None:
+        # === PHASE 1: transfer file / initialize (deploy contract) ===
+        # transmit encrypted data
+        with open(self.protocol.filename, "rb") as fp:
+            data = fp.read()
+        data_merkle = from_bytes(data, keccak, slice_count=self.protocol.slice_count)
+        data_key = generate_bytes(32)
+        data_merkle_encrypted = encode(data_merkle, data_key)
 
-    def close_state_channel(
-        self, environment: Environment, channel_info: Adjudicator.SignedState
-    ) -> None:
+        p2p_stream.send_object(
+            {
+                "action": "initialize",
+                "file_root": file_root.hex(),
+                "ciphertext_root": data_merkle_encrypted.digest.hex(),
+                "key_commitment": keccak(data_key).hex(),
+                "price": self.protocol.price,
+                "tree": mt2obj(data_merkle_encrypted, encode_func=lambda b: bytes(b).hex()),
+            }
+        )
+
+        # === PHASE 2: wait for buyer accept ===
+        self.logger.debug("waiting for accept")
+        msg_accept, _ = p2p_stream.receive_object()
+        assert msg_accept["action"] == "accept"
+        self.logger.debug("accepted")
+
+        # === PHASE 3: reveal key ===
+        p2p_stream.send_object({"action": "reveal_key", "key": data_key.hex()})
+
+        # === PHASE 5: wait for confirmation
+        self.logger.debug("waiting for confirmation or timeout...")
+        msg_confirmation, _ = p2p_stream.receive_object()
+
+    def close_state_channel(self, environment: Environment, channel_info: Adjudicator.SignedState) -> None:
         # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
         file_sale_helper = FileSaleHelper(environment, self.protocol)
 

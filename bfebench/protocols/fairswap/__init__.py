@@ -25,4 +25,4 @@ PROTOCOL_SPEC = ProtocolSpec(
     buyer_strategies={"Faithful": FaithfulBuyer, "Grieving": GrievingBuyer},
 )
 
-__all__ = ["Fairswap", "ProtocolSpec"]
+__all__ = ["Fairswap", "PROTOCOL_SPEC"]
