@@ -80,24 +80,14 @@ class Simulation(object):
             logger.debug("setting up strategies...")
             seller_socket = "seller-%d.ipc" % iteration
             buyer_socket = "buyer-%d.ipc" % iteration
-            seller_p2p_server = JsonObjectUnixDomainSocketServerStream(
-                os.path.join(self._tmp_dir, seller_socket)
-            )
-            buyer_p2p_server = JsonObjectUnixDomainSocketServerStream(
-                os.path.join(self._tmp_dir, buyer_socket)
-            )
+            seller_p2p_server = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, seller_socket))
+            buyer_p2p_server = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, buyer_socket))
 
-            p2p_forwarder = JsonObjectSocketStreamForwarder(
-                seller_p2p_server, buyer_p2p_server
-            )
+            p2p_forwarder = JsonObjectSocketStreamForwarder(seller_p2p_server, buyer_p2p_server)
             p2p_forwarder.start()
 
-            seller_p2p_client = JsonObjectUnixDomainSocketClientStream(
-                os.path.join(self._tmp_dir, seller_socket)
-            )
-            buyer_p2p_client = JsonObjectUnixDomainSocketClientStream(
-                os.path.join(self._tmp_dir, buyer_socket)
-            )
+            seller_p2p_client = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, seller_socket))
+            buyer_p2p_client = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, buyer_socket))
 
             seller_process = StrategyProcess(
                 strategy=self._seller_strategy,

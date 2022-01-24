@@ -61,11 +61,7 @@ class MerkleTest(TestCase):
             for index, leaf in enumerate(tree.leaves):
                 proof = tree.get_proof(leaf)
                 self.assertEqual(len(proof), int(log2(slice_count)))
-                self.assertTrue(
-                    MerkleTreeNode.validate_proof(
-                        tree.digest, leaf, index, proof, keccak
-                    )
-                )
+                self.assertTrue(MerkleTreeNode.validate_proof(tree.digest, leaf, index, proof, keccak))
 
     def test_mt2obj2mt_plain(self) -> None:
         obj = mt2obj(self.EXAMPLE_TREE1)
@@ -83,9 +79,7 @@ class MerkleTest(TestCase):
 
     def test_mt2obj2mt_hex(self) -> None:
         obj = mt2obj(self.EXAMPLE_TREE1, encode_func=lambda b: bytes(b).hex())
-        mt2 = obj2mt(
-            obj, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s))
-        )
+        mt2 = obj2mt(obj, digest_func=keccak, decode_func=lambda s: bytes.fromhex(str(s)))
 
         self.assertEqual(self.EXAMPLE_TREE1, mt2)
         self.assertEqual(self.EXAMPLE_TREE1.digest, mt2.digest)

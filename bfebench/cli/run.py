@@ -60,12 +60,8 @@ class RunCommand(SubCommand):
             type=int,
             default=1,
         )
-        argument_parser.add_argument(
-            "-e", "--environments-configuration", default=".environments.yaml"
-        )
-        argument_parser.add_argument(
-            "--output-csv", help="write CSV file with results", default=None
-        )
+        argument_parser.add_argument("-e", "--environments-configuration", default=".environments.yaml")
+        argument_parser.add_argument("--output-csv", help="write CSV file with results", default=None)
 
     def __call__(self, args: Namespace) -> int:
         protocol_specification = PROTOCOL_SPECIFICATIONS.get(args.protocol)
@@ -73,45 +69,27 @@ class RunCommand(SubCommand):
             raise RuntimeError("cannot load protocol specification")
 
         try:
-            environments_configuration = EnvironmentsConfiguration(
-                args.environments_configuration
-            )
+            environments_configuration = EnvironmentsConfiguration(args.environments_configuration)
         except FileNotFoundError as e:
-            logger.error(
-                "Could not load environments configuration: %s: %s"
-                % (e.strerror, e.filename)
-            )
+            logger.error("Could not load environments configuration: %s: %s" % (e.strerror, e.filename))
             return 1
 
         protocol = protocol_specification.protocol(
             filename=args.filename,
             price=args.price,
-            **{
-                str(key).replace("-", "_"): value
-                for key, value in args.protocol_parameters
-            }
+            **{str(key).replace("-", "_"): value for key, value in args.protocol_parameters}
         )
 
-        seller_strategy_cls = protocol_specification.seller_strategies.get(
-            args.seller_strategy
-        )
+        seller_strategy_cls = protocol_specification.seller_strategies.get(args.seller_strategy)
         if seller_strategy_cls is None:
             logger.error('could not find a seller strategy "%s"' % args.seller_strategy)
-            logger.error(
-                "use `bfebench list-strategies %s` to list available strategies"
-                % args.protocol
-            )
+            logger.error("use `bfebench list-strategies %s` to list available strategies" % args.protocol)
             return 1
 
-        buyer_strategy_cls = protocol_specification.buyer_strategies.get(
-            args.buyer_strategy
-        )
+        buyer_strategy_cls = protocol_specification.buyer_strategies.get(args.buyer_strategy)
         if buyer_strategy_cls is None:
             logger.error('could not find a buyer strategy "%s"' % args.buyer_strategy)
-            logger.error(
-                "use `bfebench list-strategies %s` to list available strategies"
-                % args.protocol
-            )
+            logger.error("use `bfebench list-strategies %s` to list available strategies" % args.protocol)
             return 1
 
         seller_strategy = seller_strategy_cls(protocol=protocol)

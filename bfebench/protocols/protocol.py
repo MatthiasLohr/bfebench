@@ -26,9 +26,7 @@ from ..errors import BaseError
 class Protocol(object):
     def __init__(self, filename: str, price: int, **kwargs: Any) -> None:
         if len(kwargs) > 0:
-            raise BaseError(
-                "unhandled protocol keyword parameters: %s" % ", ".join(kwargs.keys())
-            )
+            raise BaseError("unhandled protocol keyword parameters: %s" % ", ".join(kwargs.keys()))
 
         self._filename = filename
         self._price = price

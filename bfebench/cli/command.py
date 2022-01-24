@@ -49,9 +49,7 @@ class SubCommandManager(object):
         self._sub_commands: Dict[str, SubCommand] = {}
 
     def add_sub_command(self, command_name: str, command_cls: Type[SubCommand]) -> None:
-        self._sub_commands[command_name] = command_cls(
-            self._sub_command_sub_parser.add_parser(command_name)
-        )
+        self._sub_commands[command_name] = command_cls(self._sub_command_sub_parser.add_parser(command_name))
 
     def run(self) -> int:
         args = self._argument_parser.parse_args()

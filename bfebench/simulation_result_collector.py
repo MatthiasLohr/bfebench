@@ -41,10 +41,7 @@ class SimulationResultCollector(object):
         self._simulation_result.add_iteration_result(iteration_result)
 
         if self._csv_file is not None and self._csv_writer is not None:
-            self._csv_writer.writerow(
-                [self._simulation_start_date]
-                + SimulationResult.get_columns(iteration_result)
-            )
+            self._csv_writer.writerow([self._simulation_start_date] + SimulationResult.get_columns(iteration_result))
 
     def get_result(self) -> SimulationResult:
         return self._simulation_result

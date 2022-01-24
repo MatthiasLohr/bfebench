@@ -42,9 +42,7 @@ class StateChannelFileSale(Protocol):
     PERUN_ADJUDICATOR_CONTRACT_FILE = "perun-eth-contracts/contracts/Adjudicator.sol"
 
     PERUN_ASSET_HOLDER_CONTRACT_NAME = "AssetHolderETH"
-    PERUN_ASSET_HOLDER_CONTRACT_FILE = (
-        "perun-eth-contracts/contracts/AssetHolderETH.sol"
-    )
+    PERUN_ASSET_HOLDER_CONTRACT_FILE = "perun-eth-contracts/contracts/AssetHolderETH.sol"
 
     FILE_SALE_APP_CONTRACT_NAME = "FileSaleApp"
     FILE_SALE_APP_CONTRACT_FILE = "./FileSaleApp.sol"
@@ -73,21 +71,15 @@ class StateChannelFileSale(Protocol):
             if (file_size / self._slice_length).is_integer():
                 self._slice_count = int(file_size / self._slice_length)
             else:
-                raise ProtocolInitializationError(
-                    "file_size / slice_length must be int"
-                )
+                raise ProtocolInitializationError("file_size / slice_length must be int")
         else:
             if slice_length is None:
                 if (file_size / slice_count).is_integer():
                     self._slice_length = int(file_size / slice_count)
                 else:
-                    raise ProtocolInitializationError(
-                        "file_size / slice_count must be int"
-                    )
+                    raise ProtocolInitializationError("file_size / slice_count must be int")
             else:
-                raise ProtocolInitializationError(
-                    "you cannot set both slice_length and slice_count"
-                )
+                raise ProtocolInitializationError("you cannot set both slice_length and slice_count")
 
         if not log2(self._slice_count).is_integer():
             raise ProtocolInitializationError("slice_count must be a power of 2")
@@ -122,18 +114,10 @@ class StateChannelFileSale(Protocol):
         logger.debug("deploying contracts...")
         contracts_root_path = os.path.dirname(__file__)
         scscm = SolidityContractSourceCodeManager(allowed_paths=[contracts_root_path])
-        scscm.add_contract_file(
-            os.path.join(contracts_root_path, self.PERUN_ADJUDICATOR_CONTRACT_FILE)
-        )
-        scscm.add_contract_file(
-            os.path.join(contracts_root_path, self.PERUN_ASSET_HOLDER_CONTRACT_FILE)
-        )
-        scscm.add_contract_file(
-            os.path.join(contracts_root_path, self.FILE_SALE_APP_CONTRACT_FILE)
-        )
-        scscm.add_contract_file(
-            os.path.join(contracts_root_path, self.FILE_SALE_HELPER_CONTRACT_FILE)
-        )
+        scscm.add_contract_file(os.path.join(contracts_root_path, self.PERUN_ADJUDICATOR_CONTRACT_FILE))
+        scscm.add_contract_file(os.path.join(contracts_root_path, self.PERUN_ASSET_HOLDER_CONTRACT_FILE))
+        scscm.add_contract_file(os.path.join(contracts_root_path, self.FILE_SALE_APP_CONTRACT_FILE))
+        scscm.add_contract_file(os.path.join(contracts_root_path, self.FILE_SALE_HELPER_CONTRACT_FILE))
         contracts = scscm.compile(self.SOLC_VERSION)
         self._adjudicator_contract = contracts[self.PERUN_ADJUDICATOR_CONTRACT_NAME]
         self._asset_holder_contract = contracts[self.PERUN_ASSET_HOLDER_CONTRACT_NAME]
@@ -146,24 +130,18 @@ class StateChannelFileSale(Protocol):
             % (self._adjudicator_contract.address, tx_receipt["gasUsed"])
         )
 
-        tx_receipt = environment.deploy_contract(
-            self._asset_holder_contract, self._adjudicator_contract.address
-        )
+        tx_receipt = environment.deploy_contract(self._asset_holder_contract, self._adjudicator_contract.address)
         logger.debug(
             "deployed asset holder contract at %s (%s gas used)"
             % (self._asset_holder_contract.address, tx_receipt["gasUsed"])
         )
 
         tx_receipt = environment.deploy_contract(self._app_contract)
-        logger.debug(
-            "deployed app contract at %s (%s gas used)"
-            % (self._app_contract.address, tx_receipt["gasUsed"])
-        )
+        logger.debug("deployed app contract at %s (%s gas used)" % (self._app_contract.address, tx_receipt["gasUsed"]))
 
         tx_receipt = environment.deploy_contract(self._helper_contract)
         logger.debug(
-            "deployed helper contract at %s (%s gas used)"
-            % (self._helper_contract.address, tx_receipt["gasUsed"])
+            "deployed helper contract at %s (%s gas used)" % (self._helper_contract.address, tx_receipt["gasUsed"])
         )
 
     def set_up_iteration(

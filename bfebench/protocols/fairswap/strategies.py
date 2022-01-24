@@ -77,9 +77,7 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
             {
                 "contract_address": contract.address,
                 "contract_abi": contract.abi,
-                "tree": mt2obj(
-                    data_merkle_encrypted, encode_func=lambda b: bytes(b).hex()
-                ),
+                "tree": mt2obj(data_merkle_encrypted, encode_func=lambda b: bytes(b).hex()),
             }
         )
 
@@ -147,9 +145,7 @@ class FaithfulBuyer(FairswapBuyer):
             digest_func=keccak,
             decode_func=lambda s: bytes.fromhex(str(s)),
         )
-        contract = Contract(
-            abi=init_info.get("contract_abi"), address=init_info.get("contract_address")
-        )
+        contract = Contract(abi=init_info.get("contract_abi"), address=init_info.get("contract_address"))
         web3_contract = environment.get_web3_contract(contract)
 
         # === PHASE 2: accept ===
@@ -159,21 +155,14 @@ class FaithfulBuyer(FairswapBuyer):
             self.logger.debug("wrong plain file hash")
             return
 
-        if (
-            web3_contract.functions.ciphertextRoot().call()
-            == data_merkle_encrypted.digest
-        ):
+        if web3_contract.functions.ciphertextRoot().call() == data_merkle_encrypted.digest:
             self.logger.debug("confirming ciphertext hash")
         else:
             self.logger.debug("wrong ciphertext hash")
             return
 
-        tx_receipt = environment.send_contract_transaction(
-            contract, "accept", value=self.protocol.price
-        )
-        self.logger.debug(
-            "Sent 'accept' transaction (%s Gas used)" % tx_receipt["gasUsed"]
-        )
+        tx_receipt = environment.send_contract_transaction(contract, "accept", value=self.protocol.price)
+        self.logger.debug("Sent 'accept' transaction (%s Gas used)" % tx_receipt["gasUsed"])
 
         # === PHASE 3: wait for key revelation ===
         self.logger.debug("waiting for key revelation")

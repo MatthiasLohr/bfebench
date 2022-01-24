@@ -30,9 +30,7 @@ T = TypeVar("T", bound=Protocol)
 class Strategy(Generic[T]):
     def __init__(self, protocol: T) -> None:
         self._protocol = protocol
-        self._logger = logging.getLogger(
-            "%s.%s" % (self.__class__.__module__, self.__class__.__qualname__)
-        )
+        self._logger = logging.getLogger("%s.%s" % (self.__class__.__module__, self.__class__.__qualname__))
 
     @property
     def protocol(self) -> T:

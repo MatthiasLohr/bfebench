@@ -23,9 +23,7 @@ from typing import Any, Callable, List, Tuple, Union
 
 
 class MerkleTreeNode(object):
-    def __init__(
-        self, digest_func: Callable[[bytes], bytes], *children: "MerkleTreeNode"
-    ) -> None:
+    def __init__(self, digest_func: Callable[[bytes], bytes], *children: "MerkleTreeNode") -> None:
         if len(children) > 2:
             raise ValueError("Cannot have more than two children")
 
@@ -53,25 +51,16 @@ class MerkleTreeNode(object):
 
     @property
     def digests_dfs(self) -> List[bytes]:
-        return list(
-            itertools.chain.from_iterable([c.digests_dfs for c in self.children])
-        ) + [self.digest]
+        return list(itertools.chain.from_iterable([c.digests_dfs for c in self.children])) + [self.digest]
 
     @property
     def digests_pack(self) -> List[bytes]:
-        return [
-            digest
-            for digest, level in sorted(
-                self._digests_pack(0), key=lambda d: d[1], reverse=True
-            )
-        ]
+        return [digest for digest, level in sorted(self._digests_pack(0), key=lambda d: d[1], reverse=True)]
 
     def _digests_pack(self, level: int) -> List[Tuple[bytes, int]]:
-        return list(
-            itertools.chain.from_iterable(
-                [c._digests_pack(level + 1) for c in self.children]
-            )
-        ) + [(self.digest, level)]
+        return list(itertools.chain.from_iterable([c._digests_pack(level + 1) for c in self.children])) + [
+            (self.digest, level)
+        ]
 
     def has_indirect_child(self, node: "MerkleTreeNode") -> bool:
         if node in self.children:
@@ -116,10 +105,7 @@ class MerkleTreeNode(object):
         return "<%s.%s %s>" % (__name__, MerkleTreeNode.__name__, self.digest.hex())
 
     def __str__(self) -> str:
-        return "\n  ".join(
-            ["#:" + self.digest.hex()]
-            + "\n".join([str(child) for child in self.children]).split("\n")
-        )
+        return "\n  ".join(["#:" + self.digest.hex()] + "\n".join([str(child) for child in self.children]).split("\n"))
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MerkleTreeNode):
@@ -151,10 +137,7 @@ class MerkleTreeLeaf(MerkleTreeNode):
         self._data = data
 
     def data_as_list(self, slice_size: int = 32) -> List[bytes]:
-        return [
-            self.data[i * slice_size : (i + 1) * slice_size]
-            for i in range(int(len(self.data) / slice_size))
-        ]
+        return [self.data[i * slice_size : (i + 1) * slice_size] for i in range(int(len(self.data) / slice_size))]
 
     @property
     def leaves(self) -> List["MerkleTreeLeaf"]:
@@ -199,35 +182,24 @@ def from_leaves(leaves: List[MerkleTreeLeaf]) -> MerkleTreeNode:
             raise ValueError("All leaves have to use the same digest function!")
     nodes: List[MerkleTreeNode] = list(leaves)
     while len(nodes) > 1:
-        nodes = [
-            MerkleTreeNode(digest_func, *nodes[i : i + 2])
-            for i in range(0, len(nodes), 2)
-        ]
+        nodes = [MerkleTreeNode(digest_func, *nodes[i : i + 2]) for i in range(0, len(nodes), 2)]
     return nodes[0]
 
 
-def from_bytes(
-    data: bytes, digest_func: Callable[[bytes], bytes], slice_count: int = 8
-) -> MerkleTreeNode:
+def from_bytes(data: bytes, digest_func: Callable[[bytes], bytes], slice_count: int = 8) -> MerkleTreeNode:
     if slice_count < 2 or not math.log2(slice_count).is_integer():
         raise ValueError("slices_count must be >= 2 integer and power of 2")
     slice_len = math.ceil(len(data) / slice_count)
     return from_leaves(
         [
-            MerkleTreeLeaf(
-                digest_func=digest_func, data=data[slice_len * s : slice_len * (s + 1)]
-            )
+            MerkleTreeLeaf(digest_func=digest_func, data=data[slice_len * s : slice_len * (s + 1)])
             for s in range(slice_count)
         ]
     )
 
 
-def from_list(
-    items: List[bytes], digest_func: Callable[[bytes], bytes]
-) -> MerkleTreeNode:
-    return from_leaves(
-        [MerkleTreeLeaf(digest_func=digest_func, data=item) for item in items]
-    )
+def from_list(items: List[bytes], digest_func: Callable[[bytes], bytes]) -> MerkleTreeNode:
+    return from_leaves([MerkleTreeLeaf(digest_func=digest_func, data=item) for item in items])
 
 
 def mt2obj(
@@ -249,9 +221,7 @@ def obj2mt(
     decode_func: Callable[[Union[bytes, str]], bytes] | None = None,
 ) -> MerkleTreeNode:
     if isinstance(data, List):
-        return MerkleTreeNode(
-            digest_func, *[obj2mt(child, digest_func, decode_func) for child in data]
-        )
+        return MerkleTreeNode(digest_func, *[obj2mt(child, digest_func, decode_func) for child in data])
     elif isinstance(data, bytes) and decode_func is None:
         return MerkleTreeLeaf(digest_func, data)
     elif (isinstance(data, bytes) or isinstance(data, str)) and decode_func is not None:

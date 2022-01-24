@@ -27,12 +27,8 @@ from bfebench.environment import Environment
 
 
 class EnvironmentTest(TestCase):
-    TEST_WALLET_ADDRESS = ChecksumAddress(
-        HexAddress(HexStr("0x1D89080880C060691558eC16EF104aF5d8db000b"))
-    )
-    TEST_WALLET_KEY = HexBytes(
-        "0x1ac620dde6d7d3aeb4c462bfdd2a53555e1b90b44e977a468f413fc69ce5c4b4"
-    )
+    TEST_WALLET_ADDRESS = ChecksumAddress(HexAddress(HexStr("0x1D89080880C060691558eC16EF104aF5d8db000b")))
+    TEST_WALLET_KEY = HexBytes("0x1ac620dde6d7d3aeb4c462bfdd2a53555e1b90b44e977a468f413fc69ce5c4b4")
     WEB3 = Web3(HTTPProvider("http://localhost:8545/"))
 
     def test_matching(self) -> None:
@@ -54,6 +50,4 @@ class EnvironmentTest(TestCase):
         self.assertRaises(ValueError, Environment, self.WEB3)
 
     def test_init_key_address_mismatch(self) -> None:
-        self.assertRaises(
-            ValueError, Environment, self.WEB3, self.TEST_WALLET_ADDRESS, "0x00"
-        )
+        self.assertRaises(ValueError, Environment, self.WEB3, self.TEST_WALLET_ADDRESS, "0x00")

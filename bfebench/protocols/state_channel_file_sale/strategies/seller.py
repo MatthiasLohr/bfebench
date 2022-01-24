@@ -50,9 +50,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         # ======== FUND STATE CHANNEL ========
         self.fund_state_channel(
             environment,
-            file_sale_helper.get_funding_id(
-                channel_info.state.channel_id, environment.wallet_address
-            ),
+            file_sale_helper.get_funding_id(channel_info.state.channel_id, environment.wallet_address),
         )
 
         # ======== EXECUTE FILE EXCHANGE ========
@@ -76,9 +74,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         # ======== OPEN STATE CHANNEL ========
         # See: https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#open-phase
         file_sale_helper = FileSaleHelper(environment, self.protocol)
-        channel_state = file_sale_helper.get_initial_channel_state(
-            self.protocol.channel_params
-        )
+        channel_state = file_sale_helper.get_initial_channel_state(self.protocol.channel_params)
 
         msg, _ = p2p_stream.receive_object()
         assert msg["action"] == "open"
@@ -127,16 +123,12 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             channel_info.sigs,
         )
 
-        funding_id = file_sale_helper.get_funding_id(
-            channel_info.state.channel_id, environment.wallet_address
-        )
+        funding_id = file_sale_helper.get_funding_id(channel_info.state.channel_id, environment.wallet_address)
         authorization = AssetHolder.WithdrawalAuth(
             channel_id=channel_info.state.channel_id,
             participant=environment.wallet_address,
             receiver=environment.wallet_address,
-            amount=file_sale_helper.get_funding_holdings(
-                funding_id
-            ),
+            amount=file_sale_helper.get_funding_holdings(funding_id),
         )
         environment.send_contract_transaction(
             self.protocol.asset_holder_contract,

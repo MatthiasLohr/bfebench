@@ -46,37 +46,26 @@ class BulkExecuteCommand(SubCommand):
             type=int,
             default=1000,
         )
-        argument_parser.add_argument(
-            "--data-filename-template", default="testdata/bfebench-test-%s.bin"
-        )
+        argument_parser.add_argument("--data-filename-template", default="testdata/bfebench-test-%s.bin")
         argument_parser.add_argument(
             "--price",
             type=int,
             default=1000000000,
             help="price to be paid for the file",
         )
-        argument_parser.add_argument(
-            "-e", "--environments-configuration", default=".environments.yaml"
-        )
+        argument_parser.add_argument("-e", "--environments-configuration", default=".environments.yaml")
 
     def __call__(self, args: Namespace) -> int:
         with open(args.bulk_config, "r") as fp:
             bulk_config = yaml.safe_load(fp)
 
         try:
-            environments_configuration = EnvironmentsConfiguration(
-                args.environments_configuration
-            )
+            environments_configuration = EnvironmentsConfiguration(args.environments_configuration)
         except FileNotFoundError as e:
-            logger.error(
-                "Could not load environments configuration: %s: %s"
-                % (e.strerror, e.filename)
-            )
+            logger.error("Could not load environments configuration: %s: %s" % (e.strerror, e.filename))
             return 1
 
-        for protocol_config, size in itertools.product(
-            bulk_config.get("protocols"), bulk_config.get("sizes")
-        ):
+        for protocol_config, size in itertools.product(bulk_config.get("protocols"), bulk_config.get("sizes")):
             protocol_name = protocol_config.get("name")
 
             data_filename = args.data_filename_template % size
@@ -105,9 +94,7 @@ class BulkExecuteCommand(SubCommand):
                 try:
                     with open(csv_filename, "r") as f:
                         lines = f.readlines()
-                        existing_results = (
-                            len([line for line in lines if line.strip(" \n") != ""]) - 1
-                        )
+                        existing_results = len([line for line in lines if line.strip(" \n") != ""]) - 1
                 except FileNotFoundError:
                     existing_results = 0
 
@@ -123,15 +110,11 @@ class BulkExecuteCommand(SubCommand):
                     },
                 )
 
-                seller_strategy_cls = protocol_specification.seller_strategies.get(
-                    seller_strategy_name
-                )
+                seller_strategy_cls = protocol_specification.seller_strategies.get(seller_strategy_name)
                 if seller_strategy_cls is None:
                     raise RuntimeError()
 
-                buyer_strategy_cls = protocol_specification.buyer_strategies.get(
-                    buyer_strategy_name
-                )
+                buyer_strategy_cls = protocol_specification.buyer_strategies.get(buyer_strategy_name)
                 if buyer_strategy_cls is None:
                     raise RuntimeError()
 

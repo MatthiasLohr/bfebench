@@ -31,9 +31,7 @@ class EnvironmentsConfiguration(object):
             data = yaml.safe_load(fp)
 
         if data is None:
-            raise EnvironmentsConfigurationError(
-                "%s does not seem to contain valid YAML" % filename
-            )
+            raise EnvironmentsConfigurationError("%s does not seem to contain valid YAML" % filename)
 
         self._operator_environment = self._yaml2environment(data.get("operator"))
         self._seller_environment = self._yaml2environment(data.get("seller"))
@@ -50,9 +48,7 @@ class EnvironmentsConfiguration(object):
             raise ValueError("no wallet configuration provided")
 
         return Environment(
-            web3=Web3(
-                HTTPProvider(endpoint_config.get("url", "http://localhost:8545/"))
-            ),
+            web3=Web3(HTTPProvider(endpoint_config.get("url", "http://localhost:8545/"))),
             wallet_address=wallet_config.get("address"),
             private_key=wallet_config.get("privateKey"),
         )

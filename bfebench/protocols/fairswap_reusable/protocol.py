@@ -72,9 +72,7 @@ class FairswapReusable(Fairswap):
     ) -> None:
         logger.debug("deploying contract...")
         scscm = SolidityContractSourceCodeManager()
-        scscm.add_contract_file(
-            os.path.join(os.path.dirname(__file__), FairswapReusable.CONTRACT_FILE)
-        )
+        scscm.add_contract_file(os.path.join(os.path.dirname(__file__), FairswapReusable.CONTRACT_FILE))
         contracts = scscm.compile(Fairswap.CONTRACT_SOLC_VERSION)
         contract = contracts[FairswapReusable.CONTRACT_NAME]
         environment.deploy_contract(contract)
@@ -88,9 +86,5 @@ class FairswapReusable(Fairswap):
         return self._contract
 
     @staticmethod
-    def get_session_id(
-        seller: ChecksumAddress, buyer: ChecksumAddress, file_root_hash: bytes
-    ) -> bytes:
-        return keccak(
-            bytes.fromhex(seller[2:]) + bytes.fromhex(buyer[2:]) + file_root_hash
-        )
+    def get_session_id(seller: ChecksumAddress, buyer: ChecksumAddress, file_root_hash: bytes) -> bytes:
+        return keccak(bytes.fromhex(seller[2:]) + bytes.fromhex(buyer[2:]) + file_root_hash)

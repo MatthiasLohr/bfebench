@@ -51,13 +51,7 @@ class FaithfulSeller(SellerStrategy[FairswapReusable]):
         data_key = generate_bytes(32)
         data_merkle_encrypted = encode(data_merkle, data_key)
 
-        p2p_stream.send_object(
-            {
-                "tree": mt2obj(
-                    data_merkle_encrypted, encode_func=lambda b: bytes(b).hex()
-                )
-            }
-        )
+        p2p_stream.send_object({"tree": mt2obj(data_merkle_encrypted, encode_func=lambda b: bytes(b).hex())})
 
         session_id = self.protocol.get_session_id(
             seller=environment.wallet_address,
@@ -85,45 +79,28 @@ class FaithfulSeller(SellerStrategy[FairswapReusable]):
         web3_contract = environment.get_web3_contract(self.protocol.contract)
 
         result = environment.wait(
-            timeout=FileSaleSession(
-                *web3_contract.functions.sessions(session_id).call()
-            ).timeout
-            + 1,
-            condition=lambda: FileSaleSession(
-                *web3_contract.functions.sessions(session_id).call()
-            ).phase
-            == 2,
+            timeout=FileSaleSession(*web3_contract.functions.sessions(session_id).call()).timeout + 1,
+            condition=lambda: FileSaleSession(*web3_contract.functions.sessions(session_id).call()).phase == 2,
         )
 
         if result == EnvironmentWaitResult.TIMEOUT:
             self.logger.debug("timeout reached, requesting refund")
-            environment.send_contract_transaction(
-                self.protocol.contract, "refund", session_id
-            )
+            environment.send_contract_transaction(self.protocol.contract, "refund", session_id)
             return
         self.logger.debug("accepted")
 
         # === PHASE 3: reveal key ===
-        environment.send_contract_transaction(
-            self.protocol.contract, "revealKey", session_id, data_key
-        )
+        environment.send_contract_transaction(self.protocol.contract, "revealKey", session_id, data_key)
 
         # === PHASE 5: finalize
         self.logger.debug("waiting for confirmation or timeout...")
         result = environment.wait(
-            timeout=FileSaleSession(
-                *web3_contract.functions.sessions(session_id).call()
-            ).timeout
-            + 1,
-            condition=lambda: not FileSaleSession(
-                *web3_contract.functions.sessions(session_id).call()
-            ).length,
+            timeout=FileSaleSession(*web3_contract.functions.sessions(session_id).call()).timeout + 1,
+            condition=lambda: not FileSaleSession(*web3_contract.functions.sessions(session_id).call()).length,
         )
         if result == EnvironmentWaitResult.TIMEOUT:
             self.logger.debug("timeout reached, requesting refund")
-            environment.send_contract_transaction(
-                self.protocol.contract, "refund", session_id
-            )
+            environment.send_contract_transaction(self.protocol.contract, "refund", session_id)
             return
 
 
@@ -174,9 +151,7 @@ class FaithfulBuyer(FairswapReusableBuyer):
         web3_contract = environment.get_web3_contract(self.protocol.contract)
 
         # === PHASE 2: accept ===
-        session_info = FileSaleSession(
-            *web3_contract.functions.sessions(session_id).call()
-        )
+        session_info = FileSaleSession(*web3_contract.functions.sessions(session_id).call())
         if session_info.file_root == self.expected_plain_digest:
             self.logger.debug("confirming plain file hash")
         else:
@@ -189,32 +164,20 @@ class FaithfulBuyer(FairswapReusableBuyer):
             self.logger.debug("wrong ciphertext hash")
             return
 
-        environment.send_contract_transaction(
-            self.protocol.contract, "accept", session_id, value=self.protocol.price
-        )
+        environment.send_contract_transaction(self.protocol.contract, "accept", session_id, value=self.protocol.price)
 
         # === PHASE 3: wait for key revelation ===
         self.logger.debug("waiting for key revelation")
         result = environment.wait(
-            timeout=FileSaleSession(
-                *web3_contract.functions.sessions(session_id).call()
-            ).timeout
-            + 1,
-            condition=lambda: FileSaleSession(
-                *web3_contract.functions.sessions(session_id).call()
-            ).key
-            != B032,
+            timeout=FileSaleSession(*web3_contract.functions.sessions(session_id).call()).timeout + 1,
+            condition=lambda: FileSaleSession(*web3_contract.functions.sessions(session_id).call()).key != B032,
         )
         if result == EnvironmentWaitResult.TIMEOUT:
             self.logger.debug("timeout reached, requesting refund")
-            environment.send_contract_transaction(
-                self.protocol.contract, "refund", session_id
-            )
+            environment.send_contract_transaction(self.protocol.contract, "refund", session_id)
             return
 
-        data_key = FileSaleSession(
-            *web3_contract.functions.sessions(session_id).call()
-        ).key
+        data_key = FileSaleSession(*web3_contract.functions.sessions(session_id).call()).key
         self.logger.debug("key revealed")
 
         # === PHASE 4: complain ===

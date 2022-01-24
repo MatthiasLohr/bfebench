@@ -50,19 +50,15 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         # ======== FUND STATE CHANNEL ========
         self.fund_state_channel(
             environment,
-            file_sale_helper.get_funding_id(
-                channel_info.state.channel_id, environment.wallet_address
-            ),
+            file_sale_helper.get_funding_id(channel_info.state.channel_id, environment.wallet_address),
         )
 
         # ======== EXECUTE FILE EXCHANGE ========
         for file_sale_iteration in range(1, self.protocol.file_sale_iterations + 1):
             if self.protocol.file_sale_iterations > 1:
-                self.logger.debug(
-                    "starting file sale iteration %s" % file_sale_iteration
-                )
+                self.logger.debug("starting file sale iteration %s" % file_sale_iteration)
 
-            self.conduct_file_sale(file_sale_iteration)
+            self.conduct_file_sale(p2p_stream, file_sale_iteration)
 
         # ======== CLOSE STATE CHANNEL ========
         # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
@@ -74,9 +70,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         # ======== OPEN STATE CHANNEL ========
         # See: https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#open-phase
         file_sale_helper = FileSaleHelper(environment, self.protocol)
-        channel_state = file_sale_helper.get_initial_channel_state(
-            self.protocol.channel_params
-        )
+        channel_state = file_sale_helper.get_initial_channel_state(self.protocol.channel_params)
 
         p2p_stream.send_object(
             {
@@ -122,8 +116,6 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         p2p_stream.send_object(
             {
                 "action": "close",
-                "signature": file_sale_helper.sign_channel_state(
-                    channel_info.state
-                ).hex(),
+                "signature": file_sale_helper.sign_channel_state(channel_info.state).hex(),
             }
         )

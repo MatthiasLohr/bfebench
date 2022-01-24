@@ -22,14 +22,10 @@ from bfebench.environments_configuration import EnvironmentsConfiguration
 
 class EnvironmentsConfigurationTest(TestCase):
     def test_missing_file(self) -> None:
-        self.assertRaises(
-            FileNotFoundError, EnvironmentsConfiguration, "/some/imaginary/file.yaml"
-        )
+        self.assertRaises(FileNotFoundError, EnvironmentsConfiguration, "/some/imaginary/file.yaml")
 
     def test_load(self) -> None:
-        ec = EnvironmentsConfiguration(
-            "./tests/testdata/environment-configuration.yaml"
-        )
+        ec = EnvironmentsConfiguration("./tests/testdata/environment-configuration.yaml")
 
         # operator configuration
         self.assertEqual(

@@ -41,12 +41,8 @@ class JsonObjectSocketStream(TestCase):
 
     def test_server_client(self) -> None:
         # init
-        server = JsonObjectUnixDomainSocketServerStream(
-            os.path.join(self._tmp_dir, "socket")
-        )
-        client = JsonObjectUnixDomainSocketClientStream(
-            os.path.join(self._tmp_dir, "socket")
-        )
+        server = JsonObjectUnixDomainSocketServerStream(os.path.join(self._tmp_dir, "socket"))
+        client = JsonObjectUnixDomainSocketClientStream(os.path.join(self._tmp_dir, "socket"))
 
         # provide time to set up the server
         sleep(0.1)

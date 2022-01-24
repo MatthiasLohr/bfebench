@@ -59,9 +59,7 @@ class Environment(object):
 
         if private_key is None:
             if wallet_address is None:
-                raise ValueError(
-                    "you need to provide wallet_address or private_key or both"
-                )
+                raise ValueError("you need to provide wallet_address or private_key or both")
             self._wallet_address = wallet_address
             self._private_key = None
         else:
@@ -79,9 +77,7 @@ class Environment(object):
         self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
         if self.private_key is not None:
-            self.web3.middleware_onion.add(
-                construct_sign_and_send_raw_middleware(self.private_key)
-            )
+            self.web3.middleware_onion.add(construct_sign_and_send_raw_middleware(self.private_key))
 
     @property
     def web3(self) -> Web3:
@@ -107,15 +103,9 @@ class Environment(object):
     def wait_poll_interval(self) -> float:
         return self._wait_poll_interval
 
-    def deploy_contract(
-        self, contract: Contract, *constructor_args: Any, **constructor_kwargs: Any
-    ) -> TxReceipt:
-        web3_contract = self.web3.eth.contract(
-            abi=contract.abi, bytecode=contract.bytecode
-        )
-        tx_receipt = self._send_transaction(
-            factory=web3_contract.constructor(*constructor_args, **constructor_kwargs)
-        )
+    def deploy_contract(self, contract: Contract, *constructor_args: Any, **constructor_kwargs: Any) -> TxReceipt:
+        web3_contract = self.web3.eth.contract(abi=contract.abi, bytecode=contract.bytecode)
+        tx_receipt = self._send_transaction(factory=web3_contract.constructor(*constructor_args, **constructor_kwargs))
         contract.address = ChecksumAddress(tx_receipt["contractAddress"])
         return tx_receipt
 
@@ -127,20 +117,15 @@ class Environment(object):
     ) -> TxReceipt:
         web3_contract = self.get_web3_contract(contract)
         web3_contract_method = getattr(web3_contract.functions, method)
-        tx_receipt = self._send_transaction(
-            factory=web3_contract_method(*args, **kwargs), value=value
-        )
+        tx_receipt = self._send_transaction(factory=web3_contract_method(*args, **kwargs), value=value)
 
         logger.debug(
-            "Executed contract transaction %s.%s, %d gas used"
-            % (contract.address, method, tx_receipt["gasUsed"])
+            "Executed contract transaction %s.%s, %d gas used" % (contract.address, method, tx_receipt["gasUsed"])
         )
 
         return tx_receipt
 
-    def send_direct_transaction(
-        self, to: ChecksumAddress | None, value: int = 0
-    ) -> TxReceipt:
+    def send_direct_transaction(self, to: ChecksumAddress | None, value: int = 0) -> TxReceipt:
         return self._send_transaction(to=to, value=value)
 
     def _send_transaction(
@@ -151,9 +136,7 @@ class Environment(object):
     ) -> TxReceipt:
         tx_draft = {
             "from": self.wallet_address,
-            "nonce": self.web3.eth.get_transaction_count(
-                self.wallet_address, "pending"
-            ),
+            "nonce": self.web3.eth.get_transaction_count(self.wallet_address, "pending"),
             "chainId": self.web3.eth.chain_id,
             "value": value,
         }
@@ -201,10 +184,7 @@ class Environment(object):
                 return EnvironmentWaitResult.CONDITION
 
             if timeout is not None:
-                if (
-                    time() > timeout
-                    and self.web3.eth.get_block("latest").get("timestamp") >= timeout
-                ):
+                if time() > timeout and self.web3.eth.get_block("latest").get("timestamp") >= timeout:
                     return EnvironmentWaitResult.TIMEOUT
 
             sleep(wait_poll_interval)

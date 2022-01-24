@@ -156,9 +156,7 @@ class JsonObjectSocketStreamForwarder(object):
             self.count = 0
             self.bytes = 0
 
-    def __init__(
-        self, stream1: JsonObjectSocketStream, stream2: JsonObjectSocketStream
-    ) -> None:
+    def __init__(self, stream1: JsonObjectSocketStream, stream2: JsonObjectSocketStream) -> None:
         self._stream1 = stream1
         self._stream2 = stream2
 

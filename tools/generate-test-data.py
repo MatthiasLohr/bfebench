@@ -63,9 +63,7 @@ random.seed(args.random_seed)
 for p in range(args.lower_boundary_power, args.upper_boundary_power + 1):
     size = 2 ** p
     size_human_readable = sizeof_fmt(size)
-    filename = os.path.join(
-        args.target_directory, "bfebench-test-%s.bin" % size_human_readable
-    )
+    filename = os.path.join(args.target_directory, "bfebench-test-%s.bin" % size_human_readable)
 
     print("Generating %s with size of %d bytes" % (filename, size))
     with open(filename, "wb") as fp:

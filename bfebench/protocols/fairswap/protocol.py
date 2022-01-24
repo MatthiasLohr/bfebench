@@ -54,22 +54,16 @@ class Fairswap(Protocol):
             if (file_size / self._slice_length).is_integer():
                 self._slice_count = int(file_size / self._slice_length)
             else:
-                raise ProtocolInitializationError(
-                    "file_size / slice_length must be int"
-                )
+                raise ProtocolInitializationError("file_size / slice_length must be int")
         else:
             self._slice_count = int(slice_count)
             if slice_length is None:
                 if (file_size / self.slice_count).is_integer():
                     self._slice_length = int(file_size / self._slice_count)
                 else:
-                    raise ProtocolInitializationError(
-                        "file_size / slice_count must be int"
-                    )
+                    raise ProtocolInitializationError("file_size / slice_count must be int")
             else:
-                raise ProtocolInitializationError(
-                    "you cannot set both slice_length and slice_count"
-                )
+                raise ProtocolInitializationError("you cannot set both slice_length and slice_count")
 
         if not log2(self._slice_count).is_integer():
             raise ProtocolInitializationError("slice_count must be a power of 2")

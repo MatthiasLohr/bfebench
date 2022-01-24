@@ -20,9 +20,7 @@ from __future__ import annotations
 import random
 
 
-def generate_bytes(
-    length: int = 32, seed: int | None = None, avoid: bytes | None = None
-) -> bytes:
+def generate_bytes(length: int = 32, seed: int | None = None, avoid: bytes | None = None) -> bytes:
     if seed is not None:
         random.seed(seed)
     tmp = avoid

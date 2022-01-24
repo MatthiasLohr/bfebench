@@ -24,9 +24,7 @@ from bfebench.protocols.fairswap.util import B032
 
 class ContractCollectionTest(TestCase):
     def test_compile_fairswap(self) -> None:
-        contracts_path = os.path.join(
-            os.path.dirname(__file__), "../bfebench/protocols/fairswap"
-        )
+        contracts_path = os.path.join(os.path.dirname(__file__), "../bfebench/protocols/fairswap")
 
         scscm = SolidityContractSourceCodeManager()
         scscm.add_contract_template_file(
@@ -58,12 +56,8 @@ class ContractCollectionTest(TestCase):
         )
 
         scscm = SolidityContractSourceCodeManager(allowed_paths=[contracts_path])
-        scscm.add_contract_file(
-            os.path.join(contracts_path, "contracts/Adjudicator.sol")
-        )
-        scscm.add_contract_file(
-            os.path.join(contracts_path, "contracts/AssetHolderETH.sol")
-        )
+        scscm.add_contract_file(os.path.join(contracts_path, "contracts/Adjudicator.sol"))
+        scscm.add_contract_file(os.path.join(contracts_path, "contracts/AssetHolderETH.sol"))
 
         contracts = scscm.compile("0.7.0")
 

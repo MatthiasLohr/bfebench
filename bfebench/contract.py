@@ -81,9 +81,7 @@ class SolidityContractSourceCodeManager(object):
     def add_contract_file(self, contract_file: str) -> None:
         self._source_files.append(self._normalize_path(contract_file))
 
-    def add_contract_template_file(
-        self, contract_template_file: str, context: dict[str, Any]
-    ) -> None:
+    def add_contract_template_file(self, contract_template_file: str, context: dict[str, Any]) -> None:
         if contract_template_file.endswith(".tpl.sol"):
             tmp_source_code_file = os.path.basename(contract_template_file)[:-8]
         else:
@@ -104,9 +102,7 @@ class SolidityContractSourceCodeManager(object):
         self._ensure_solc(solc_version)
         solcx.set_solc_version(solc_version)
 
-        compile_result = solcx.compile_files(
-            source_files=self._source_files, allow_paths=self._allowed_paths
-        )
+        compile_result = solcx.compile_files(source_files=self._source_files, allow_paths=self._allowed_paths)
 
         contracts = {}
         for contract_identifier, contract_result in compile_result.items():
