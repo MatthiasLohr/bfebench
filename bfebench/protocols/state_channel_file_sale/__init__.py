@@ -15,13 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from bfebench.protocols import ProtocolSpec
-
+from ..protocol_spec import ProtocolSpec
 from .protocol import StateChannelFileSale
 from .strategies import (
     FaithfulBuyer,
     FaithfulSeller,
     GrievingSeller,
+    KeyForgingSeller,
     LeafForgingSeller,
     NodeForgingSeller,
     RootForgingSeller,
@@ -32,9 +32,12 @@ PROTOCOL_SPEC = ProtocolSpec(
     seller_strategies={
         "Faithful": FaithfulSeller,
         "Grieving": GrievingSeller,
+        "KeyForging": KeyForgingSeller,
         "LeafForging": LeafForgingSeller,
         "NodeForging": NodeForgingSeller,
         "RootForging": RootForgingSeller,
     },
     buyer_strategies={"Faithful": FaithfulBuyer},
 )
+
+__all__ = ["PROTOCOL_SPEC"]

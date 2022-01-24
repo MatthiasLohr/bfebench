@@ -34,6 +34,7 @@ class CliRunTest(TestCase):
             "strategy_pairs": [
                 ("Faithful", "Faithful"),
                 ("Grieving", "Faithful"),
+                ("KeyForging", "Faithful"),
                 ("RootForging", "Faithful"),
                 ("NodeForging", "Faithful"),
                 ("LeafForging", "Faithful"),

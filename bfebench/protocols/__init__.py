@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Dict
+
 from .fairswap import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP
 from .fairswap_reusable import PROTOCOL_SPEC as PROTOCOL_SPEC_FAIRSWAP_REUSABLE
 from .protocol import Protocol
@@ -24,7 +26,7 @@ from .state_channel_file_sale import (
 )
 from .strategy import BuyerStrategy, SellerStrategy, Strategy
 
-PROTOCOL_SPECIFICATIONS = {
+PROTOCOL_SPECIFICATIONS: Dict[str, ProtocolSpec] = {
     "Fairswap": PROTOCOL_SPEC_FAIRSWAP,
     "FairswapReusable": PROTOCOL_SPEC_FAIRSWAP_REUSABLE,
     "StateChannelFileSale": PROTOCOL_SPEC_STATE_CHANNEL_FILE_SALE,
