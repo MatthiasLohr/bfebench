@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from math import log2
-from typing import List, Tuple, Type, cast
+from typing import List, Tuple, Type
 
 from Crypto.Hash import keccak as base_keccak
 
