@@ -1,7 +1,7 @@
 # This file is part of the Blockchain-based Fair Exchange Benchmark Tool
 #    https://gitlab.com/MatthiasLohr/bfebench
 #
-# Copyright 2021 Matthias Lohr <mail@mlohr.com>
+# Copyright 2021-2022 Matthias Lohr <mail@mlohr.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,12 +53,16 @@ class JsonObjectSocketStream(object):
     def socket_connection(self) -> socket.socket:
         raise NotImplementedError()
 
-    def receive_object(self) -> Tuple[Any, int]:
+    def receive_object(self, timeout: float | None = None) -> Tuple[Any, int]:
+        self.socket_connection.settimeout(timeout)
+
         object_end_pos = 0
 
         while True:
             try:
                 chunk = self.socket_connection.recv(self.chunk_size)
+            except socket.timeout:
+                raise TimeoutError()
             except ConnectionResetError:
                 logger.warning("ConnectionResetError during receiving")
                 return None, 0
