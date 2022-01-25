@@ -30,7 +30,7 @@ from ...environment import Environment
 from ...errors import ProtocolInitializationError
 from ...protocols import Protocol
 from ..fairswap.protocol import DEFAULT_SLICE_LENGTH, DEFAULT_TIMEOUT
-from .perun import Channel
+from .perun import Adjudicator, Channel
 
 logger = logging.getLogger(__name__)
 
@@ -222,3 +222,29 @@ class StateChannelFileSale(Protocol):
 
     def is_last_iteration(self, current_iteration: int) -> bool:
         return self.file_sale_iterations == current_iteration
+
+
+class StateChannelDisagreement(Exception):
+    def __init__(self, reason: str, last_common_state: Adjudicator.SignedState, register: bool) -> None:
+        """
+        Signal that some form of disagreement including timeout occured in the state channel.
+
+        :param reason: reason of the disagreement
+        :param last_common_state: the last commonly signed state before the disagreement happened
+        :param register: recommendation to the catching method to register the dispute or not (=just react)
+        """
+        self._last_common_state = last_common_state
+        self._register = register
+        super().__init__(reason)
+
+    @property
+    def last_common_state(self) -> Adjudicator.SignedState:
+        return self._last_common_state
+
+    @property
+    def register(self) -> bool:
+        """
+
+        :return: recommendation to the method catching this error to register the dispute or not (=just react)
+        """
+        return self._register

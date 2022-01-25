@@ -24,7 +24,7 @@ from ....utils.merkle import from_bytes, mt2obj
 from ...fairswap.util import encode, keccak
 from ...strategy import SellerStrategy
 from ..perun import Adjudicator, AssetHolder
-from ..protocol import StateChannelFileSale
+from ..protocol import StateChannelDisagreement, StateChannelFileSale
 from .file_sale_helper import FileSaleHelper
 
 
@@ -38,12 +38,12 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         file_sale_helper = FileSaleHelper(environment, self.protocol)
         # ======== OPEN STATE CHANNEL ========
         # See: https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#open-phase
-        channel_info = self.open_state_channel(environment, p2p_stream)
+        last_common_state = self.open_state_channel(environment, p2p_stream)
 
         # validate remote signature
         if not file_sale_helper.validate_signed_channel_state(
-            channel_state=channel_info.state,
-            signature=channel_info.sigs[1],
+            channel_state=last_common_state.state,
+            signature=last_common_state.sigs[1],
             signer=opposite_address,
         ):
             self.logger.error("Buyer's signature invalid!")
@@ -52,7 +52,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         # ======== FUND STATE CHANNEL ========
         self.fund_state_channel(
             environment,
-            file_sale_helper.get_funding_id(channel_info.state.channel_id, environment.wallet_address),
+            file_sale_helper.get_funding_id(last_common_state.state.channel_id, environment.wallet_address),
         )
 
         # ======== EXECUTE FILE EXCHANGE ========
@@ -62,15 +62,28 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             self.logger.debug("Received '%s' message from buyer" % msg["action"])
             if msg["action"] == "request":
                 # ======== EXECUTE FILE EXCHANGE ========
-                self.conduct_file_sale(
-                    p2p_stream=p2p_stream, file_root=bytes.fromhex(msg["file_root"]), iteration=iteration
-                )
+                try:
+                    self.conduct_file_sale(
+                        last_common_state=last_common_state,
+                        environment=environment,
+                        p2p_stream=p2p_stream,
+                        file_root=bytes.fromhex(msg["file_root"]),
+                        iteration=iteration,
+                    )
+                except StateChannelDisagreement as disagreement:
+                    self.logger.debug("channel disagreement: " + str(disagreement))
+                    self.dispute(
+                        environment=environment,
+                        last_common_state=disagreement.last_common_state,
+                        register=disagreement.register,
+                    )
+                    return
 
             elif msg["action"] == "close":
                 # ======== CLOSE STATE CHANNEL ========
                 # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
-                channel_info.sigs[1] = bytes.fromhex(msg["signature"])
-                self.close_state_channel(environment, channel_info)
+                last_common_state.sigs[1] = bytes.fromhex(msg["signature"])
+                self.close_state_channel(environment, last_common_state)
                 return
 
             iteration += 1
@@ -110,7 +123,14 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                 value=self.protocol.seller_deposit,
             )
 
-    def conduct_file_sale(self, p2p_stream: JsonObjectSocketStream, file_root: bytes, iteration: int) -> None:
+    def conduct_file_sale(
+        self,
+        last_common_state: Adjudicator.SignedState,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        file_root: bytes,
+        iteration: int,
+    ) -> None:
         # === PHASE 1: transfer file / initialize (deploy contract) ===
         # transmit encrypted data
         with open(self.protocol.filename, "rb") as fp:
@@ -141,26 +161,29 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
 
         # === PHASE 5: wait for confirmation
         self.logger.debug("waiting for confirmation or timeout...")
-        msg_confirmation, _ = p2p_stream.receive_object()
+        try:
+            msg_confirmation, _ = p2p_stream.receive_object(self.protocol.timeout)
+        except TimeoutError:
+            raise StateChannelDisagreement("timeout, starting dispute", last_common_state, True)
 
-    def close_state_channel(self, environment: Environment, channel_info: Adjudicator.SignedState) -> None:
+    def close_state_channel(self, environment: Environment, last_common_state: Adjudicator.SignedState) -> None:
         # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
         file_sale_helper = FileSaleHelper(environment, self.protocol)
 
-        channel_info.state.is_final = True
-        channel_info.sigs[0] = file_sale_helper.sign_channel_state(channel_info.state)
+        last_common_state.state.is_final = True
+        last_common_state.sigs[0] = file_sale_helper.sign_channel_state(last_common_state.state)
 
         environment.send_contract_transaction(
             self.protocol.adjudicator_contract,
             "concludeFinal",
             tuple(self.protocol.channel_params),
-            tuple(channel_info.state),
-            channel_info.sigs,
+            tuple(last_common_state.state),
+            last_common_state.sigs,
         )
 
-        funding_id = file_sale_helper.get_funding_id(channel_info.state.channel_id, environment.wallet_address)
+        funding_id = file_sale_helper.get_funding_id(last_common_state.state.channel_id, environment.wallet_address)
         authorization = AssetHolder.WithdrawalAuth(
-            channel_id=channel_info.state.channel_id,
+            channel_id=last_common_state.state.channel_id,
             participant=environment.wallet_address,
             receiver=environment.wallet_address,
             amount=file_sale_helper.get_funding_holdings(funding_id),
@@ -171,6 +194,18 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             tuple(authorization),
             file_sale_helper.sign_withdrawal_auth(authorization),
         )
+
+    def dispute(self, environment: Environment, last_common_state: Adjudicator.SignedState, register: bool) -> None:
+        if register:
+            self.logger.debug("registering dispute")
+            environment.send_contract_transaction(
+                self.protocol.adjudicator_contract,
+                "register",
+                tuple(last_common_state),
+                [],
+            )
+
+        # TODO implement
 
     def get_key_to_be_sent(self, original_key: bytes, iteration: int) -> bytes:
         return original_key

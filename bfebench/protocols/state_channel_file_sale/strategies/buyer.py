@@ -24,7 +24,7 @@ from ....utils.merkle import from_bytes, obj2mt
 from ...fairswap.util import LeafDigestMismatchError, decode, keccak
 from ...strategy import BuyerStrategy
 from ..perun import Adjudicator
-from ..protocol import StateChannelFileSale
+from ..protocol import StateChannelDisagreement, StateChannelFileSale
 from .file_sale_helper import FileSaleHelper
 
 
@@ -47,12 +47,12 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         file_sale_helper = FileSaleHelper(environment, self.protocol)
         # ======== OPEN STATE CHANNEL ========
         # See: https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#open-phase
-        channel_info = self.open_state_channel(environment, p2p_stream)
+        last_common_state = self.open_state_channel(environment, p2p_stream)
 
         # validate remote signature
         if not file_sale_helper.validate_signed_channel_state(
-            channel_state=channel_info.state,
-            signature=channel_info.sigs[0],
+            channel_state=last_common_state.state,
+            signature=last_common_state.sigs[0],
             signer=opposite_address,
         ):
             self.logger.error("Seller's signature invalid!")
@@ -61,7 +61,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         # ======== FUND STATE CHANNEL ========
         self.fund_state_channel(
             environment,
-            file_sale_helper.get_funding_id(channel_info.state.channel_id, environment.wallet_address),
+            file_sale_helper.get_funding_id(last_common_state.state.channel_id, environment.wallet_address),
         )
 
         # ======== EXECUTE FILE EXCHANGE ========
@@ -69,11 +69,21 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             if self.protocol.file_sale_iterations > 1:
                 self.logger.debug("starting file sale iteration %s" % file_sale_iteration)
 
-            self.conduct_file_sale(environment, p2p_stream, file_sale_iteration)
+            try:
+                self.conduct_file_sale(
+                    last_common_state=last_common_state,
+                    environment=environment,
+                    p2p_stream=p2p_stream,
+                    iteration=file_sale_iteration,
+                )
+            except StateChannelDisagreement as disagreement:
+                self.logger.debug("channel disagreement: " + str(disagreement))
+                self.dispute(environment, disagreement.last_common_state, disagreement.register)
+                return
 
         # ======== CLOSE STATE CHANNEL ========
         # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
-        self.close_state_channel(environment, p2p_stream, channel_info)
+        self.close_state_channel(environment, p2p_stream, last_common_state)
 
     def open_state_channel(
         self, environment: Environment, p2p_stream: JsonObjectSocketStream
@@ -110,7 +120,13 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                 value=self.protocol.buyer_deposit,
             )
 
-    def conduct_file_sale(self, environment: Environment, p2p_stream: JsonObjectSocketStream, iteration: int) -> None:
+    def conduct_file_sale(
+        self,
+        last_common_state: Adjudicator.SignedState,
+        environment: Environment,
+        p2p_stream: JsonObjectSocketStream,
+        iteration: int,
+    ) -> None:
         self.logger.debug("Requesting file (iteration %d)" % iteration)
         p2p_stream.send_object({"action": "request", "file_root": self._expected_plain_digest.hex()})
 
@@ -137,8 +153,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
 
         # === PHASE 4: complain ===
         if keccak(data_key) != key_commitment:
-            self.logger.debug("Received key does not match commitment, leaving")
-            return
+            raise StateChannelDisagreement("key does not match commitment", last_common_state, False)
 
         data_merkle, errors = decode(data_merkle_encrypted, data_key)
         if len(errors) == 0:
@@ -180,16 +195,25 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         self,
         environment: Environment,
         p2p_stream: JsonObjectSocketStream,
-        channel_info: Adjudicator.SignedState,
+        last_common_state: Adjudicator.SignedState,
     ) -> None:
         # ======== CLOSE STATE CHANNEL ========
         # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
         file_sale_helper = FileSaleHelper(environment, self.protocol)
 
-        channel_info.state.is_final = True
+        last_common_state.state.is_final = True
         p2p_stream.send_object(
             {
                 "action": "close",
-                "signature": file_sale_helper.sign_channel_state(channel_info.state).hex(),
+                "signature": file_sale_helper.sign_channel_state(last_common_state.state).hex(),
             }
         )
+
+    def dispute(self, environment: Environment, last_common_state: Adjudicator.SignedState, register: bool) -> None:
+        if register:
+            self.logger.debug("registering dispute")
+            environment.send_contract_transaction(
+                self.protocol.adjudicator_contract, "register", tuple(last_common_state), []
+            )
+
+        # TODO implement
