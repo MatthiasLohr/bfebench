@@ -43,6 +43,6 @@ class Adjudicator(object):
         sigs: List[bytes]
 
         def __iter__(self) -> Any:
-            yield self.params
-            yield self.state
+            yield tuple(self.params)
+            yield tuple(self.state)
             yield self.sigs
