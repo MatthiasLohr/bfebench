@@ -27,7 +27,7 @@ from .strategies import (
     RootForgingSeller,
 )
 
-PROTOCOL_SPEC = ProtocolSpec(
+PROTOCOL_SPEC: ProtocolSpec = ProtocolSpec(
     protocol=StateChannelFileSale,
     seller_strategies={
         "Faithful": FaithfulSeller,

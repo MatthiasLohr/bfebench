@@ -56,12 +56,15 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         )
 
         # ======== EXECUTE FILE EXCHANGE ========
+        iteration = 1
         while True:
             msg, _ = p2p_stream.receive_object()
             self.logger.debug("Received '%s' message from buyer" % msg["action"])
             if msg["action"] == "request":
                 # ======== EXECUTE FILE EXCHANGE ========
-                self.conduct_file_sale(p2p_stream, bytes.fromhex(msg["file_root"]))
+                self.conduct_file_sale(
+                    p2p_stream=p2p_stream, file_root=bytes.fromhex(msg["file_root"]), iteration=iteration
+                )
 
             elif msg["action"] == "close":
                 # ======== CLOSE STATE CHANNEL ========
@@ -69,6 +72,8 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                 channel_info.sigs[1] = bytes.fromhex(msg["signature"])
                 self.close_state_channel(environment, channel_info)
                 return
+
+            iteration += 1
 
     def open_state_channel(
         self, environment: Environment, p2p_stream: JsonObjectSocketStream
@@ -105,7 +110,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                 value=self.protocol.seller_deposit,
             )
 
-    def conduct_file_sale(self, p2p_stream: JsonObjectSocketStream, file_root: bytes) -> None:
+    def conduct_file_sale(self, p2p_stream: JsonObjectSocketStream, file_root: bytes, iteration: int) -> None:
         # === PHASE 1: transfer file / initialize (deploy contract) ===
         # transmit encrypted data
         with open(self.protocol.filename, "rb") as fp:
@@ -132,7 +137,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         self.logger.debug("accepted")
 
         # === PHASE 3: reveal key ===
-        p2p_stream.send_object({"action": "reveal_key", "key": data_key.hex()})
+        p2p_stream.send_object({"action": "reveal_key", "key": self.get_key_to_be_sent(data_key, iteration).hex()})
 
         # === PHASE 5: wait for confirmation
         self.logger.debug("waiting for confirmation or timeout...")
@@ -166,3 +171,6 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             tuple(authorization),
             file_sale_helper.sign_withdrawal_auth(authorization),
         )
+
+    def get_key_to_be_sent(self, original_key: bytes, iteration: int) -> bytes:
+        return original_key

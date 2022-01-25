@@ -118,17 +118,6 @@ contract FileSaleApp is App {
         return keccak256(Channel.encodeParams(params));
     }
 
-
-    function complainAboutKey(
-        Channel.Params memory params,
-        Channel.State memory state,
-        bytes memory sellerSignature
-    ) public {
-        (AppState memory appState) = abi.decode(state.appData, (AppState));
-        require(appState.keyCommit != keccak256(abi.encode(appState.key)));
-        complainSuccessful[channelID(params)] = true;
-    }
-
     /**
      * ======== Fairswap Filesale ===
      * by Stefan Dziembowski, Lisa Eckey, Sebastian Faust -- https://github.com/lEthDev/FairSwap

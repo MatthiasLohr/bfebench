@@ -219,3 +219,6 @@ class StateChannelFileSale(Protocol):
         if self._channel_params is None:
             raise RuntimeError("accessing uninitialized channel params")
         return self._channel_params
+
+    def is_last_iteration(self, current_iteration: int) -> bool:
+        return self.file_sale_iterations == current_iteration

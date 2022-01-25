@@ -15,8 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ....utils.bytes import generate_bytes
 from .seller import StateChannelFileSaleSeller
 
 
 class KeyForgingSeller(StateChannelFileSaleSeller):
-    pass  # TODO implement
+    def get_key_to_be_sent(self, original_key: bytes, iteration: int) -> bytes:
+        if self.protocol.is_last_iteration(iteration):
+            return generate_bytes(32, avoid=original_key)
+        else:
+            return original_key

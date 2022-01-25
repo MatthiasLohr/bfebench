@@ -69,7 +69,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             if self.protocol.file_sale_iterations > 1:
                 self.logger.debug("starting file sale iteration %s" % file_sale_iteration)
 
-            self.conduct_file_sale(p2p_stream, file_sale_iteration)
+            self.conduct_file_sale(environment, p2p_stream, file_sale_iteration)
 
         # ======== CLOSE STATE CHANNEL ========
         # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
@@ -110,7 +110,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                 value=self.protocol.buyer_deposit,
             )
 
-    def conduct_file_sale(self, p2p_stream: JsonObjectSocketStream, iteration: int) -> None:
+    def conduct_file_sale(self, environment: Environment, p2p_stream: JsonObjectSocketStream, iteration: int) -> None:
         self.logger.debug("Requesting file (iteration %d)" % iteration)
         p2p_stream.send_object({"action": "request", "file_root": self._expected_plain_digest.hex()})
 
@@ -137,7 +137,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
 
         # === PHASE 4: complain ===
         if keccak(data_key) != key_commitment:
-            # TODO implement complainAboutKey
+            self.logger.debug("Received key does not match commitment, leaving")
             return
 
         data_merkle, errors = decode(data_merkle_encrypted, data_key)
