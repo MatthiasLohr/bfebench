@@ -168,7 +168,10 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
 
         self.logger.debug("init signature validated")
         last_common_state.state = proposed_channel_state
-        last_common_state.sigs[0] = bytes.fromhex(msg_init["signature"])
+        last_common_state.sigs = [
+            bytes.fromhex(msg_init["signature"]),
+            file_sale_helper.sign_channel_state(proposed_channel_state),
+        ]
 
         p2p_stream.send_object(
             {"action": "accept", "signature": file_sale_helper.sign_channel_state(proposed_channel_state).hex()}

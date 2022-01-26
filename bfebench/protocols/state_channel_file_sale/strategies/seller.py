@@ -172,6 +172,17 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         self.logger.debug("waiting for accept")
         msg_accept, _ = p2p_stream.receive_object()
         assert msg_accept["action"] == "accept"
+        if not file_sale_helper.validate_signed_channel_state(
+            channel_state=new_channel_state, signature=bytes.fromhex(msg_accept["signature"]), signer=opposite_address
+        ):
+            raise StateChannelDisagreement("accept signature mismatch", last_common_state, True)
+
+        last_common_state.state = new_channel_state
+        last_common_state.sigs = [
+            file_sale_helper.sign_channel_state(new_channel_state),
+            bytes.fromhex(msg_accept["signature"]),
+        ]
+
         self.logger.debug("accepted")
 
         # === PHASE 3: reveal key ===
