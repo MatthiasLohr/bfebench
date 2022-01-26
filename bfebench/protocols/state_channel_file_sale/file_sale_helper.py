@@ -17,8 +17,7 @@
 
 from __future__ import annotations
 
-from types import TracebackType
-from typing import Literal, Type, cast
+from typing import cast
 
 from eth_abi.abi import encode_abi
 from eth_account import Account
@@ -133,22 +132,3 @@ class FileSaleHelper(object):
             ),
             app_data=FileSale.AppState().encode_abi(),
         )
-
-    def app_state(self, channel_state: Channel.State) -> FileSaleAppStateModifier:
-        return FileSaleAppStateModifier(self, channel_state)
-
-
-class FileSaleAppStateModifier(object):
-    def __init__(self, file_sale_helper: FileSaleHelper, channel_state: Channel.State) -> None:
-        self._file_sale_helper = file_sale_helper
-        self._channel_state = channel_state
-        self._app_state = FileSale.AppState.decode_abi(self._channel_state.app_data)
-
-    def __enter__(self) -> FileSale.AppState:
-        return self._app_state
-
-    def __exit__(
-        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> Literal[False]:
-        self._channel_state.app_data = self._app_state.encode_abi()
-        return False
