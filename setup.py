@@ -42,6 +42,8 @@ setup(
         "PyYAML==5.4.1",
         "tabulate==0.8.9",
         "web3==5.26.0",
+        # see https://mypy.readthedocs.io/en/stable/literal_types.html#literal-types
+        "typing_extensions~=3.10.0.2;python_version<'3.8.0'",
     ],
     python_requires=">=3.7.*, <4",
     packages=find_packages(exclude=["tests", "tests.*"]),
