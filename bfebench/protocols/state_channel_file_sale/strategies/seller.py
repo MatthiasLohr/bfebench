@@ -23,8 +23,9 @@ from ....utils.json_stream import JsonObjectSocketStream
 from ....utils.merkle import from_bytes, mt2obj
 from ...fairswap.util import encode, keccak
 from ...strategy import SellerStrategy
+from ..file_sale import FileSale
 from ..file_sale_helper import FileSaleHelper
-from ..perun import Adjudicator, AssetHolder
+from ..perun import Adjudicator, AssetHolder, Channel
 from ..protocol import StateChannelDisagreement, StateChannelFileSale
 
 
@@ -67,6 +68,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                         last_common_state=last_common_state,
                         environment=environment,
                         p2p_stream=p2p_stream,
+                        opposite_address=opposite_address,
                         file_root=bytes.fromhex(msg["file_root"]),
                         iteration=iteration,
                     )
@@ -128,9 +130,12 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         last_common_state: Adjudicator.SignedState,
         environment: Environment,
         p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
         file_root: bytes,
         iteration: int,
     ) -> None:
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+
         # === PHASE 1: transfer file / initialize (deploy contract) ===
         # transmit encrypted data
         with open(self.protocol.filename, "rb") as fp:
@@ -139,14 +144,27 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         data_key = generate_bytes(32)
         data_merkle_encrypted = encode(data_merkle, data_key)
 
+        new_app_state = FileSale.AppState(
+            file_root=file_root,
+            ciphertext_root=data_merkle_encrypted.digest,
+            key_commitment=keccak(data_key),
+            price=self.protocol.price,
+        )
+        new_channel_state = Channel.State(
+            channel_id=last_common_state.state.channel_id,
+            outcome=last_common_state.state.outcome,
+            app_data=new_app_state.encode_abi(),
+        )
+
         p2p_stream.send_object(
             {
                 "action": "initialize",
-                "file_root": file_root.hex(),
-                "ciphertext_root": data_merkle_encrypted.digest.hex(),
-                "key_commitment": keccak(data_key).hex(),
-                "price": self.protocol.price,
+                "file_root": new_app_state.file_root.hex(),
+                "ciphertext_root": new_app_state.ciphertext_root.hex(),
+                "key_commitment": new_app_state.key_commitment.hex(),
+                "price": new_app_state.price,
                 "tree": mt2obj(data_merkle_encrypted, encode_func=lambda b: bytes(b).hex()),
+                "signature": file_sale_helper.sign_channel_state(new_channel_state).hex(),
             }
         )
 
@@ -157,7 +175,14 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         self.logger.debug("accepted")
 
         # === PHASE 3: reveal key ===
-        p2p_stream.send_object({"action": "reveal_key", "key": self.get_key_to_be_sent(data_key, iteration).hex()})
+        # TODO adjust balance
+        p2p_stream.send_object(
+            {
+                "action": "reveal_key",
+                "key": self.get_key_to_be_sent(data_key, iteration).hex(),
+                "signature": None,  # TODO send signature
+            }
+        )
 
         # === PHASE 5: wait for confirmation
         self.logger.debug("waiting for confirmation or timeout...")

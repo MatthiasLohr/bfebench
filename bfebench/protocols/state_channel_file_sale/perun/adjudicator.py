@@ -37,10 +37,11 @@ class Adjudicator(object):
             yield self.phase
             yield self.state_hash
 
-    class SignedState(NamedTuple):
-        params: Channel.Params
-        state: Channel.State
-        sigs: List[bytes]
+    class SignedState(object):
+        def __init__(self, params: Channel.Params, state: Channel.State, sigs: List[bytes]) -> None:
+            self.params = params
+            self.state = state
+            self.sigs = sigs
 
         def __iter__(self) -> Any:
             yield tuple(self.params)

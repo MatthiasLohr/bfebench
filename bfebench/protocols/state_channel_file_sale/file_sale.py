@@ -38,14 +38,14 @@ class FileSale(object):
             self,
             file_root: bytes = B032,
             ciphertext_root: bytes = B032,
-            key_commit: bytes = B032,
+            key_commitment: bytes = B032,
             key: bytes = B032,
             price: int = 0,
             phase: FileSalePhase = FileSalePhase.CONFIRMED_IDLE,
         ) -> None:
             self.file_root = file_root
             self.ciphertext_root = ciphertext_root
-            self.key_commit = key_commit
+            self.key_commitment = key_commitment
             self.key = key
             self.price = price
             self.phase = FileSalePhase(phase)
@@ -53,7 +53,7 @@ class FileSale(object):
         def __iter__(self) -> Any:
             yield self.file_root
             yield self.ciphertext_root
-            yield self.key_commit
+            yield self.key_commitment
             yield self.key
             yield self.price
             yield self.phase.value

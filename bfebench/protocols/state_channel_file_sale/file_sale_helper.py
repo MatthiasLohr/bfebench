@@ -126,7 +126,7 @@ class FileSaleHelper(object):
     def get_initial_channel_state(self, channel_params: Channel.Params) -> Channel.State:
         return Channel.State(
             channel_id=self.get_channel_id(channel_params),
-            allocation=Channel.Allocation(
+            outcome=Channel.Allocation(
                 assets=[self._asset_holder_web3_contract.address],
                 balances=[[self._protocol.seller_deposit, self._protocol.buyer_deposit]],
                 locked=[],

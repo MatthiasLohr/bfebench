@@ -23,8 +23,9 @@ from ....environment import Environment
 from ....utils.merkle import from_bytes, obj2mt
 from ...fairswap.util import LeafDigestMismatchError, decode, keccak
 from ...strategy import BuyerStrategy
+from ..file_sale import FileSale
 from ..file_sale_helper import FileSaleHelper
-from ..perun import Adjudicator
+from ..perun import Adjudicator, Channel
 from ..protocol import StateChannelDisagreement, StateChannelFileSale
 
 
@@ -74,6 +75,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                     last_common_state=last_common_state,
                     environment=environment,
                     p2p_stream=p2p_stream,
+                    opposite_address=opposite_address,
                     iteration=file_sale_iteration,
                 )
             except StateChannelDisagreement as disagreement:
@@ -125,8 +127,11 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         last_common_state: Adjudicator.SignedState,
         environment: Environment,
         p2p_stream: JsonObjectSocketStream,
+        opposite_address: ChecksumAddress,
         iteration: int,
     ) -> None:
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+
         self.logger.debug("Requesting file (iteration %d)" % iteration)
         p2p_stream.send_object({"action": "request", "file_root": self._expected_plain_digest.hex()})
 
@@ -140,10 +145,34 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         )
         key_commitment = bytes.fromhex(msg_init["key_commitment"])
 
-        # === PHASE 2: accept ===
+        # === PHASE 2: accept (check before!) ===
         assert bytes.fromhex(msg_init["file_root"]) == self._expected_plain_digest
         assert bytes.fromhex(msg_init["ciphertext_root"]) == data_merkle_encrypted.digest
-        p2p_stream.send_object({"action": "accept"})
+        proposed_app_state = FileSale.AppState(
+            file_root=bytes.fromhex(msg_init["file_root"]),
+            ciphertext_root=bytes.fromhex(msg_init["ciphertext_root"]),
+            key_commitment=bytes.fromhex(msg_init["key_commitment"]),
+            price=msg_init["price"],
+        )
+        proposed_channel_state = Channel.State(
+            channel_id=last_common_state.state.channel_id,
+            outcome=last_common_state.state.outcome,
+            app_data=proposed_app_state.encode_abi(),
+        )
+        if not file_sale_helper.validate_signed_channel_state(
+            channel_state=proposed_channel_state,
+            signature=bytes.fromhex(msg_init["signature"]),
+            signer=opposite_address,
+        ):
+            raise StateChannelDisagreement("init signature mismatch", last_common_state, False)
+
+        self.logger.debug("init signature validated")
+        last_common_state.state = proposed_channel_state
+        last_common_state.sigs[0] = bytes.fromhex(msg_init["signature"])
+
+        p2p_stream.send_object(
+            {"action": "accept", "signature": file_sale_helper.sign_channel_state(proposed_channel_state).hex()}
+        )
 
         # === PHASE 3: wait for key revelation ===
         self.logger.debug("waiting for key revelation")
@@ -158,7 +187,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         data_merkle, errors = decode(data_merkle_encrypted, data_key)
         if len(errors) == 0:
             self.logger.debug("file successfully decrypted, quitting.")
-            p2p_stream.send_object({"action": "confirm"})
+            p2p_stream.send_object({"action": "confirm", "signature": None})  # TODO send signature
             return
         elif isinstance(errors[-1], LeafDigestMismatchError):
             # TODO implement complainAboutLeaf

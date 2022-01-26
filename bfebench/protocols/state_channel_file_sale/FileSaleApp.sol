@@ -26,7 +26,7 @@ pragma experimental ABIEncoderV2;
 import "./perun-eth-contracts/contracts/App.sol";
 
 contract FileSaleApp is App {
-    enum Phase {IDLE, INITIALIZED, ACCEPTED, KEY_REVEALED, DISPUTE}
+    enum Phase {CONFIRMED_IDLE, ACCEPTED, KEY_REVEALED, COMPLAINT_SUCCESSFUL}
 
     struct AppState {
         bytes32 fileRoot;
@@ -41,68 +41,42 @@ contract FileSaleApp is App {
      * This mapping channelID => bool stores if a complaint for the channel identified by  its channelID was
      * successful.
      */
-    mapping (bytes32 => bool) public complainSuccessful;
+    mapping (bytes32 => bool) public complaintSuccessful;
 
     /**
      * @notice ValidTransition checks if there was a valid transition between two states.
      * @param params The parameters of the channel.
-     * @param from The current state.
-     * @param to The potential next state.
+     * @param currentState The current state.
+     * @param nextState The potential next state.
      * @param signerIdx Index of the participant who signed this transition.
      */
     function validTransition(
         Channel.Params calldata params,
-        Channel.State calldata from,
-        Channel.State calldata to,
+        Channel.State calldata currentState,
+        Channel.State calldata nextState,
         uint256 signerIdx)
-    external pure override
-    {
-        (AppState memory appFrom) = abi.decode(from.appData, (AppState));
-        (AppState memory appTo) = abi.decode(to.appData, (AppState));
-        if (appTo.phase == Phase.INITIALIZED) {
-            // ======== seller initializes new transfer ========
-            require(signerIdx == 0, "only seller can initialize");
-            require(appFrom.phase == Phase.IDLE, "IDLE -> INITIALIZED violation");
-            // TODO check outcome Allocation
+    external pure override {
+        (AppState memory currentFileSaleState) = abi.decode(currentState.appData, (AppState));
+        (AppState memory nextFileSaleState) = abi.decode(nextState.appData, (AppState));
+        if (currentFileSaleState.phase == Phase.ACCEPTED && nextFileSaleState.phase == Phase.KEY_REVEALED) {
+            require(currentFileSaleState.fileRoot == nextFileSaleState.fileRoot, "fileRoot mismatch");
+            require(currentFileSaleState.ciphertextRoot == nextFileSaleState.ciphertextRoot, "ciphertextRoot mismatch");
+            require(currentFileSaleState.keyCommit == nextFileSaleState.keyCommit, "keyCommit mismatch");
+            require(keccak256(abi.encode(nextFileSaleState.key)) == nextFileSaleState.keyCommit, "key hash mismatch");
+            require(currentFileSaleState.price == nextFileSaleState.price, "price mismatch");
+            require(currentState.outcome.balances[0][1] >= currentFileSaleState.price, "not enough funds for buyer");
+            // transfer money from seller to buyer
+            require(currentState.outcome.balances[0][0] == nextState.outcome.balances[0][0] + nextFileSaleState.price, "seller balance diff mismatch");
+            require(currentState.outcome.balances[0][1] == nextState.outcome.balances[0][1] - nextFileSaleState.price, "buyer balance diff mismatch");
         }
-        else if (appTo.phase == Phase.ACCEPTED) {
-            // ======== buyer accepts transfer ========
-            require(signerIdx == 1, "only buyer can accept");
-            require(appFrom.phase == Phase.INITIALIZED, "INITIALIZED -> ACCEPTED violation");
-            require(appFrom.fileRoot == appTo.fileRoot, "fileRoot mismatch");
-            require(appFrom.ciphertextRoot == appTo.ciphertextRoot, "ciphertextRoot mismatch");
-            require(appFrom.keyCommit == appTo.keyCommit, "keyCommit mismatch");
-            require(appFrom.price == appTo.price, "price mismatch");
-            // TODO check outcome Allocation
+        else if (currentFileSaleState.phase == Phase.KEY_REVEALED && nextFileSaleState.phase == Phase.COMPLAINT_SUCCESSFUL) {
+            // TODO ensure complaint was successful
+            // transfer back money from buyer to seller
+            require(currentState.outcome.balances[0][0] == nextState.outcome.balances[0][0] - nextFileSaleState.price, "seller balance diff mismatch");
+            require(currentState.outcome.balances[0][1] == nextState.outcome.balances[0][1] + nextFileSaleState.price, "buyer balance diff mismatch");
         }
-        else if (appTo.phase == Phase.KEY_REVEALED) {
-            // ======== seller reveals key ========
-            require(signerIdx == 0, "only seller can reveal key");
-            require(appFrom.phase == Phase.ACCEPTED, "ACCEPTED -> KEY_REVEALED violation");
-            require(appFrom.fileRoot == appTo.fileRoot, "fileRoot mismatch");
-            require(appFrom.ciphertextRoot == appTo.ciphertextRoot, "ciphertextRoot mismatch");
-            require(appFrom.keyCommit == appTo.keyCommit, "keyCommit mismatch");
-            require(appTo.keyCommit == keccak256(abi.encode(appTo.key)), "key mismatch");
-            require(appFrom.price == appTo.price, "price mismatch");
-            // TODO check outcome Allocation
-        }
-        else if (appTo.phase == Phase.IDLE) {
-            // ======== buyer confirms ========
-            require(signerIdx == 1, "only buyer can confirm");
-            require(appFrom.phase == Phase.KEY_REVEALED, "KEY_REVEALED -> IDLE violation");
-            // TODO check outcome Allocation
-        }
-        else if (appTo.phase == Phase.DISPUTE) {
-            require(signerIdx == 1, "only buyer can dispute");
-            require(appFrom.phase == Phase.KEY_REVEALED, "KEY_REVEALED -> DISPUTE violation");
-            require(appFrom.fileRoot == appTo.fileRoot, "fileRoot mismatch");
-            require(appFrom.ciphertextRoot == appTo.ciphertextRoot, "ciphertextRoot mismatch");
-            require(appFrom.keyCommit == appTo.keyCommit, "keyCommit mismatch");
-            require(appTo.keyCommit == keccak256(abi.encode(appTo.key)), "key mismatch");
-            require(appFrom.price == appTo.price, "price mismatch");
-            // TODO verify complain
-            // when dispute is successful, payment should be reverted
-            // TODO check outcome Allocation
+        else {
+            revert("not a valid transition");
         }
     }
 
@@ -142,7 +116,7 @@ contract FileSaleApp is App {
         require (vrfy((2 << _proofZm.length) - 2, _Zm, _proofZm, appState.ciphertextRoot));
         require (cryptSmall((2 << _proofZm.length) - 2, _Zm, appState.key) != appState.fileRoot);
         // store successful complaint
-        complainSuccessful[channelID(params)] = true;
+        complaintSuccessful[channelID(params)] = true;
     }
 
     // function complain about wrong hash of two inputs
@@ -170,7 +144,7 @@ contract FileSaleApp is App {
         require (_proofZin[_proofZin.length - 1] == keccak256(abi.encode(_Zin2)));
         require (Xout != keccak256(abi.encode(cryptLarge(_indexIn, _Zin1, appState.key), cryptLarge(_indexIn + 1, _Zin2, appState.key))));
         // store successful complaint
-        complainSuccessful[channelID(params)] = true;
+        complaintSuccessful[channelID(params)] = true;
     }
 
     // function complain about wrong hash of two inputs
@@ -198,7 +172,7 @@ contract FileSaleApp is App {
         require (_proofZin[_proofZin.length - 1] == _Zin2);
         require (Xout != keccak256(abi.encode(cryptSmall(_indexIn, _Zin1, appState.key), cryptSmall(_indexIn+ 1, _Zin2, appState.key))));
         // store successful complaint
-        complainSuccessful[channelID(params)] = true;
+        complaintSuccessful[channelID(params)] = true;
     }
 
     // function to both encrypt and decrypt text chunks with key k
