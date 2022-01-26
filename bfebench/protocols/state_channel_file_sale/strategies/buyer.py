@@ -183,6 +183,21 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         assert msg_key_revelation["action"] == "reveal_key"
         data_key = bytes.fromhex(msg_key_revelation["key"])
 
+        proposed_app_state.key = data_key
+        proposed_channel_state.app_data = proposed_app_state.encode_abi()
+        proposed_channel_state.outcome.balances = [
+            [
+                last_common_state.state.outcome.balances[0][0] + self.protocol.price,
+                last_common_state.state.outcome.balances[0][1] - self.protocol.price,
+            ]
+        ]
+        if not file_sale_helper.validate_signed_channel_state(
+            channel_state=proposed_channel_state,
+            signature=bytes.fromhex(msg_key_revelation["signature"]),
+            signer=opposite_address,
+        ):
+            raise StateChannelDisagreement("key revelation signature mismatch", last_common_state, False)
+
         # === PHASE 4: complain ===
         if keccak(data_key) != key_commitment:
             raise StateChannelDisagreement("key does not match commitment", last_common_state, False)

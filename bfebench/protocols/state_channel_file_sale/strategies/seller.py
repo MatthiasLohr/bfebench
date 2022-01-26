@@ -186,12 +186,21 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         self.logger.debug("accepted")
 
         # === PHASE 3: reveal key ===
-        # TODO adjust balance
+        key_to_be_sent = self.get_key_to_be_sent(data_key, iteration)
+        new_app_state.key = key_to_be_sent
+        new_channel_state.app_data = new_app_state.encode_abi()
+        new_channel_state.outcome.balances = [
+            [
+                last_common_state.state.outcome.balances[0][0] + self.protocol.price,
+                last_common_state.state.outcome.balances[0][1] - self.protocol.price,
+            ]
+        ]
+
         p2p_stream.send_object(
             {
                 "action": "reveal_key",
-                "key": self.get_key_to_be_sent(data_key, iteration).hex(),
-                "signature": None,  # TODO send signature
+                "key": key_to_be_sent.hex(),
+                "signature": file_sale_helper.sign_channel_state(new_channel_state).hex(),
             }
         )
 

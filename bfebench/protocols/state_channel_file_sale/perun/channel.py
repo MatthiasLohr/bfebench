@@ -47,10 +47,13 @@ class Channel(object):
             yield self.balances
             yield self.index_map
 
-    class Allocation(NamedTuple):
-        assets: List[ChecksumAddress] = []
-        balances: List[List[int]] = [[]]
-        locked: List["Channel.SubAlloc"] = []
+    class Allocation(object):
+        def __init__(
+            self, assets: List[ChecksumAddress], balances: List[List[int]], locked: List["Channel.SubAlloc"]
+        ) -> None:
+            self.assets = assets
+            self.balances = balances
+            self.locked = locked
 
         def __iter__(self) -> Any:
             yield self.assets

@@ -29,7 +29,7 @@ class Protocol(object):
             raise BaseError("unhandled protocol keyword parameters: %s" % ", ".join(kwargs.keys()))
 
         self._filename = filename
-        self._price = price
+        self._price = int(price)
 
     @property
     def filename(self) -> str:
