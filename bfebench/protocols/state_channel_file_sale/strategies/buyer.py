@@ -158,6 +158,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         )
         proposed_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,
+            version=last_common_state.state.version + 1,
             outcome=deepcopy(last_common_state.state.outcome),
             app_data=proposed_app_state.encode_abi(),
         )
@@ -193,6 +194,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         )
         proposed_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,
+            version=last_common_state.state.version + 1,
             outcome=Channel.Allocation(
                 assets=last_common_state.state.outcome.assets,
                 balances=[
