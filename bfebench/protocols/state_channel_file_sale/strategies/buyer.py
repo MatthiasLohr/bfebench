@@ -198,15 +198,22 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         ):
             raise StateChannelDisagreement("key revelation signature mismatch", last_common_state, False)
 
-        # === PHASE 4: complain ===
         if keccak(data_key) != key_commitment:
             raise StateChannelDisagreement("key does not match commitment", last_common_state, False)
 
         data_merkle, errors = decode(data_merkle_encrypted, data_key)
         if len(errors) == 0:
-            self.logger.debug("file successfully decrypted, quitting.")
-            p2p_stream.send_object({"action": "confirm", "signature": None})  # TODO send signature
+            self.logger.debug("file successfully decrypted")
+            last_common_state.state = proposed_channel_state
+            last_common_state.sigs = [
+                bytes.fromhex(msg_key_revelation["signature"]),
+                file_sale_helper.sign_channel_state(last_common_state.state),
+            ]
+
+            p2p_stream.send_object({"action": "confirm", "signature": last_common_state.sigs[1].hex()})
             return
+
+        # === PHASE 4: complain ===
         elif isinstance(errors[-1], LeafDigestMismatchError):
             # TODO implement complainAboutLeaf
             # error: NodeDigestMismatchError = errors[-1]

@@ -208,6 +208,17 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         self.logger.debug("waiting for confirmation or timeout...")
         try:
             msg_confirmation, _ = p2p_stream.receive_object(self.protocol.timeout)
+            if not file_sale_helper.validate_signed_channel_state(
+                channel_state=new_channel_state,
+                signature=bytes.fromhex(msg_confirmation["signature"]),
+                signer=opposite_address,
+            ):
+                raise StateChannelDisagreement("confirmation signature mismatch", last_common_state, True)
+            last_common_state.state = new_channel_state
+            last_common_state.sigs = [
+                file_sale_helper.sign_channel_state(new_channel_state),
+                bytes.fromhex(msg_confirmation["signature"]),
+            ]
         except TimeoutError:
             raise StateChannelDisagreement("timeout, starting dispute", last_common_state, True)
 
