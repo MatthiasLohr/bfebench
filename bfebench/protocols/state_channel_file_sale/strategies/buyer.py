@@ -23,9 +23,9 @@ from ....environment import Environment
 from ....utils.merkle import from_bytes, obj2mt
 from ...fairswap.util import LeafDigestMismatchError, decode, keccak
 from ...strategy import BuyerStrategy
+from ..file_sale_helper import FileSaleHelper
 from ..perun import Adjudicator
 from ..protocol import StateChannelDisagreement, StateChannelFileSale
-from .file_sale_helper import FileSaleHelper
 
 
 class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):

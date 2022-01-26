@@ -18,18 +18,37 @@
 from enum import IntEnum
 from typing import Any
 
+from eth_abi.abi import decode_single, encode_abi
+
 from ..fairswap.util import B032
+
+
+class FileSalePhase(IntEnum):
+    CONFIRMED_IDLE = 0
+    ACCEPTED = 1
+    KEY_REVEALED = 2
+    COMPLAINT_SUCCESSFUL = 3
 
 
 class FileSale(object):
     class AppState(object):
-        def __init__(self) -> None:
-            self.file_root = B032
-            self.ciphertext_root = B032
-            self.key_commit = B032
-            self.key = B032
-            self.price = 0
-            self.phase = FileSale.Phase.IDLE
+        TYPES = "(bytes32,bytes32,bytes32,bytes32,uint,uint)"
+
+        def __init__(
+            self,
+            file_root: bytes = B032,
+            ciphertext_root: bytes = B032,
+            key_commit: bytes = B032,
+            key: bytes = B032,
+            price: int = 0,
+            phase: FileSalePhase = FileSalePhase.CONFIRMED_IDLE,
+        ) -> None:
+            self.file_root = file_root
+            self.ciphertext_root = ciphertext_root
+            self.key_commit = key_commit
+            self.key = key
+            self.price = price
+            self.phase = FileSalePhase(phase)
 
         def __iter__(self) -> Any:
             yield self.file_root
@@ -39,8 +58,14 @@ class FileSale(object):
             yield self.price
             yield self.phase.value
 
-    class Phase(IntEnum):
-        IDLE = 0
-        INITIALIZED = 1
-        ACCEPTED = 2
-        KEY_REVEALED = 3
+        def encode_abi(self) -> bytes:
+            return encode_abi([self.TYPES], [tuple(self)])
+
+        @classmethod
+        def decode_abi(cls, data: bytes) -> "FileSale.AppState":
+            return FileSale.AppState(*decode_single(cls.TYPES, data))
+
+        def __eq__(self, other: Any) -> bool:
+            if not isinstance(other, self.__class__):
+                return False
+            return tuple(self) == tuple(other)

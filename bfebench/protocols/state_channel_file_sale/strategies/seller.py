@@ -23,9 +23,9 @@ from ....utils.json_stream import JsonObjectSocketStream
 from ....utils.merkle import from_bytes, mt2obj
 from ...fairswap.util import encode, keccak
 from ...strategy import SellerStrategy
+from ..file_sale_helper import FileSaleHelper
 from ..perun import Adjudicator, AssetHolder
 from ..protocol import StateChannelDisagreement, StateChannelFileSale
-from .file_sale_helper import FileSaleHelper
 
 
 class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):

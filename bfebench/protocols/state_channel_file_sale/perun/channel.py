@@ -58,11 +58,11 @@ class Channel(object):
             yield [tuple(entry) for entry in self.locked]
 
     class State(object):
-        def __init__(self, channel_id: bytes, allocation: "Channel.Allocation") -> None:
+        def __init__(self, channel_id: bytes, allocation: "Channel.Allocation", app_data: bytes) -> None:
             self.channel_id = channel_id
             self.version = 1
             self.outcome = allocation
-            self.app_data = b""
+            self.app_data = app_data
             self.is_final = False
 
         def __iter__(self) -> Any:

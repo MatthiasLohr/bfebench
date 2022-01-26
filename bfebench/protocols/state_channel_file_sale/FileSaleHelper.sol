@@ -20,7 +20,6 @@
 pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "./FileSaleApp.sol";
 import "./perun-eth-contracts/contracts/Channel.sol";
 
 contract FileSaleHelper {
@@ -34,10 +33,6 @@ contract FileSaleHelper {
     }
 
     function encodeChannelState(Channel.State memory state) public pure returns (bytes memory) {
-        return abi.encode(state);
-    }
-
-    function encodeAppState(FileSaleApp.AppState memory state) public pure returns (bytes memory){
         return abi.encode(state);
     }
 }

@@ -17,7 +17,8 @@
 
 from __future__ import annotations
 
-from typing import cast
+from types import TracebackType
+from typing import Literal, Type, cast
 
 from eth_abi.abi import encode_abi
 from eth_account import Account
@@ -26,10 +27,10 @@ from eth_typing.evm import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
 
-from ....environment import Environment
-from ..file_sale import FileSale
-from ..perun import AssetHolder, Channel
-from ..protocol import StateChannelFileSale
+from ...environment import Environment
+from .file_sale import FileSale
+from .perun import AssetHolder, Channel
+from .protocol import StateChannelFileSale
 
 
 class FileSaleHelper(object):
@@ -105,12 +106,6 @@ class FileSaleHelper(object):
 
         return bool(recovered_signer == signer)
 
-    def encode_app_data(self, app_state: FileSale.AppState) -> bytes:
-        return cast(
-            bytes,
-            self._helper_web3_contract.functions.encodeAppState(tuple(app_state)).call(),
-        )
-
     def encode_withdrawal_auth(self, authorization: AssetHolder.WithdrawalAuth) -> bytes:
         return encode_abi(["(bytes32,address,address,uint256)"], [tuple(authorization)])
 
@@ -136,4 +131,24 @@ class FileSaleHelper(object):
                 balances=[[self._protocol.seller_deposit, self._protocol.buyer_deposit]],
                 locked=[],
             ),
+            app_data=FileSale.AppState().encode_abi(),
         )
+
+    def app_state(self, channel_state: Channel.State) -> FileSaleAppStateModifier:
+        return FileSaleAppStateModifier(self, channel_state)
+
+
+class FileSaleAppStateModifier(object):
+    def __init__(self, file_sale_helper: FileSaleHelper, channel_state: Channel.State) -> None:
+        self._file_sale_helper = file_sale_helper
+        self._channel_state = channel_state
+        self._app_state = FileSale.AppState.decode_abi(self._channel_state.app_data)
+
+    def __enter__(self) -> FileSale.AppState:
+        return self._app_state
+
+    def __exit__(
+        self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> Literal[False]:
+        self._channel_state.app_data = self._app_state.encode_abi()
+        return False
