@@ -25,6 +25,7 @@ repos:
           - "tabulate==0.8.9"
           - "web3==5.26.0"
           # typing dependencies
+          - "typing_extensions"  # see https://mypy.readthedocs.io/en/stable/literal_types.html#literal-types
           - "types-PyYAML"
           - "types-setuptools"
           - "types-tabulate"
