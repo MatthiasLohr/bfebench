@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
+
 from eth_typing.evm import ChecksumAddress
 
 from ....environment import Environment
@@ -152,7 +154,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         )
         new_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,
-            outcome=last_common_state.state.outcome,
+            outcome=deepcopy(last_common_state.state.outcome),
             app_data=new_app_state.encode_abi(),
         )
 
@@ -187,14 +189,28 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
 
         # === PHASE 3: reveal key ===
         key_to_be_sent = self.get_key_to_be_sent(data_key, iteration)
-        new_app_state.key = key_to_be_sent
-        new_channel_state.app_data = new_app_state.encode_abi()
-        new_channel_state.outcome.balances = [
-            [
-                last_common_state.state.outcome.balances[0][0] + self.protocol.price,
-                last_common_state.state.outcome.balances[0][1] - self.protocol.price,
-            ]
-        ]
+
+        new_app_state = FileSale.AppState(
+            file_root=file_root,
+            ciphertext_root=data_merkle_encrypted.digest,
+            key_commitment=keccak(data_key),
+            price=self.protocol.price,
+            key=key_to_be_sent,
+        )
+        new_channel_state = Channel.State(
+            channel_id=last_common_state.state.channel_id,
+            outcome=Channel.Allocation(
+                assets=last_common_state.state.outcome.assets,
+                balances=[
+                    [
+                        last_common_state.state.outcome.balances[0][0] + self.protocol.price,
+                        last_common_state.state.outcome.balances[0][1] - self.protocol.price,
+                    ]
+                ],
+                locked=[],
+            ),
+            app_data=new_app_state.encode_abi(),
+        )
 
         p2p_stream.send_object(
             {
@@ -204,7 +220,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             }
         )
 
-        # === PHASE 5: wait for confirmation
+        # === PHASE 4: wait for confirmation
         self.logger.debug("waiting for confirmation or timeout...")
         try:
             msg_confirmation, _ = p2p_stream.receive_object(self.protocol.timeout)

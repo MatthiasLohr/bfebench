@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
+
 from eth_typing.evm import ChecksumAddress
 
 from bfebench.utils.json_stream import JsonObjectSocketStream
@@ -156,7 +158,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         )
         proposed_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,
-            outcome=last_common_state.state.outcome,
+            outcome=deepcopy(last_common_state.state.outcome),
             app_data=proposed_app_state.encode_abi(),
         )
         if not file_sale_helper.validate_signed_channel_state(
@@ -181,16 +183,29 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         self.logger.debug("waiting for key revelation")
         msg_key_revelation, _ = p2p_stream.receive_object()
         assert msg_key_revelation["action"] == "reveal_key"
-        data_key = bytes.fromhex(msg_key_revelation["key"])
 
-        proposed_app_state.key = data_key
-        proposed_channel_state.app_data = proposed_app_state.encode_abi()
-        proposed_channel_state.outcome.balances = [
-            [
-                last_common_state.state.outcome.balances[0][0] + self.protocol.price,
-                last_common_state.state.outcome.balances[0][1] - self.protocol.price,
-            ]
-        ]
+        proposed_app_state = FileSale.AppState(
+            file_root=bytes.fromhex(msg_init["file_root"]),
+            ciphertext_root=bytes.fromhex(msg_init["ciphertext_root"]),
+            key_commitment=bytes.fromhex(msg_init["key_commitment"]),
+            price=msg_init["price"],
+            key=bytes.fromhex(msg_key_revelation["key"]),
+        )
+        proposed_channel_state = Channel.State(
+            channel_id=last_common_state.state.channel_id,
+            outcome=Channel.Allocation(
+                assets=last_common_state.state.outcome.assets,
+                balances=[
+                    [
+                        last_common_state.state.outcome.balances[0][0] + self.protocol.price,
+                        last_common_state.state.outcome.balances[0][1] - self.protocol.price,
+                    ]
+                ],
+                locked=[],
+            ),
+            app_data=proposed_app_state.encode_abi(),
+        )
+
         if not file_sale_helper.validate_signed_channel_state(
             channel_state=proposed_channel_state,
             signature=bytes.fromhex(msg_key_revelation["signature"]),
@@ -198,10 +213,10 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         ):
             raise StateChannelDisagreement("key revelation signature mismatch", last_common_state, False)
 
-        if keccak(data_key) != key_commitment:
+        if keccak(proposed_app_state.key) != key_commitment:
             raise StateChannelDisagreement("key does not match commitment", last_common_state, False)
 
-        data_merkle, errors = decode(data_merkle_encrypted, data_key)
+        data_merkle, errors = decode(data_merkle_encrypted, proposed_app_state.key)
         if len(errors) == 0:
             self.logger.debug("file successfully decrypted")
             last_common_state.state = proposed_channel_state
