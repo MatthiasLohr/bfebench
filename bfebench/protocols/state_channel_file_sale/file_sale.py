@@ -24,10 +24,9 @@ from ..fairswap.util import B032
 
 
 class FileSalePhase(IntEnum):
-    CONFIRMED_IDLE = 0
+    COMPLETED = 0
     ACCEPTED = 1
-    KEY_REVEALED = 2
-    COMPLAINT_SUCCESSFUL = 3
+    COMPLAINT_SUCCESSFUL = 2
 
 
 class FileSale(object):
@@ -41,7 +40,7 @@ class FileSale(object):
             key_commitment: bytes = B032,
             key: bytes = B032,
             price: int = 0,
-            phase: FileSalePhase = FileSalePhase.CONFIRMED_IDLE,
+            phase: FileSalePhase = FileSalePhase.COMPLETED,
         ) -> None:
             self.file_root = file_root
             self.ciphertext_root = ciphertext_root

@@ -1,7 +1,7 @@
 // This file is part of the Blockchain-based Fair Exchange Benchmark Tool
 //    https://gitlab.com/MatthiasLohr/bfebench
 //
-// Copyright 2021 Matthias Lohr <mail@mlohr.com>
+// Copyright 2021-2022 Matthias Lohr <mail@mlohr.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,58 +26,77 @@ pragma experimental ABIEncoderV2;
 import "./perun-eth-contracts/contracts/App.sol";
 
 contract FileSaleApp is App {
-    enum Phase {CONFIRMED_IDLE, ACCEPTED, KEY_REVEALED, COMPLAINT_SUCCESSFUL}
+    enum Phase {COMPLETED, ACCEPTED, COMPLAINT_SUCCESSFUL}
 
     struct AppState {
         bytes32 fileRoot;
         bytes32 ciphertextRoot;
-        bytes32 keyCommit;
+        bytes32 keyCommitment;
         bytes32 key;
         uint price;
         Phase phase;
     }
 
     /**
-     * This mapping channelID => bool stores if a complaint for the channel identified by  its channelID was
-     * successful.
+     * @notice This mapping from channelIds to cost stores if a complaint was conducted successfully and saves the cost
+     * occured for the complaint.
+     * A cost of 0 means that a complaint never took place (successfully) for the channel.
      */
-    mapping (bytes32 => bool) public complaintSuccessful;
+    mapping (bytes32 => uint) public complaintCost;
 
     /**
      * @notice ValidTransition checks if there was a valid transition between two states.
      * @param params The parameters of the channel.
-     * @param currentState The current state.
-     * @param nextState The potential next state.
+     * @param currentChannelState The current state.
+     * @param nextChannelState The potential next state.
      * @param signerIdx Index of the participant who signed this transition.
      */
     function validTransition(
         Channel.Params calldata params,
-        Channel.State calldata currentState,
-        Channel.State calldata nextState,
-        uint256 signerIdx)
-    external pure override {
-        (AppState memory currentFileSaleState) = abi.decode(currentState.appData, (AppState));
-        (AppState memory nextFileSaleState) = abi.decode(nextState.appData, (AppState));
-        if (currentFileSaleState.phase == Phase.ACCEPTED && nextFileSaleState.phase == Phase.KEY_REVEALED) {
-            require(currentFileSaleState.fileRoot == nextFileSaleState.fileRoot, "fileRoot mismatch");
-            require(currentFileSaleState.ciphertextRoot == nextFileSaleState.ciphertextRoot, "ciphertextRoot mismatch");
-            require(currentFileSaleState.keyCommit == nextFileSaleState.keyCommit, "keyCommit mismatch");
-            require(keccak256(abi.encode(nextFileSaleState.key)) == nextFileSaleState.keyCommit, "key hash mismatch");
-            require(currentFileSaleState.price == nextFileSaleState.price, "price mismatch");
-            require(currentState.outcome.balances[0][1] >= currentFileSaleState.price, "not enough funds for buyer");
-            // transfer money from seller to buyer
-            require(currentState.outcome.balances[0][0] == nextState.outcome.balances[0][0] + nextFileSaleState.price, "seller balance diff mismatch");
-            require(currentState.outcome.balances[0][1] == nextState.outcome.balances[0][1] - nextFileSaleState.price, "buyer balance diff mismatch");
+        Channel.State calldata currentChannelState,
+        Channel.State calldata nextChannelState,
+        uint256 signerIdx
+    ) external pure override {
+        (AppState memory currentAppState) = abi.decode(currentChannelState.appData, (AppState));
+        (AppState memory nextAppState) = abi.decode(nextChannelState.appData, (AppState));
+        if (currentAppState.phase == Phase.ACCEPTED && nextAppState.phase == Phase.COMPLETED) { // ACCEPTED -> COMPLETED
+            require(signerIdx == 0, "only seller can complete");
+            // check app state transitions
+            require(nextAppState.fileRoot == currentAppState.fileRoot, "fileRoot mismatch");
+            require(nextAppState.ciphertextRoot == currentAppState.ciphertextRoot, "ciphertextRoot mismatch");
+            require(nextAppState.keyCommitment == currentAppState.keyCommitment, "keyCommitment mismatch");
+            require(keccak256(abi.encode(nextAppState.key)) == nextAppState.keyCommitment, "invalid key");
+            require(nextAppState.price == currentAppState.price, "price mismatch");
+            // check balance diff (transfer from buyer to seller)
+            require(nextChannelState.outcome.balances[0][0] == currentChannelState.outcome.balances[0][0] + nextAppState.price, "seller balance mismatch");
+            require(nextChannelState.outcome.balances[0][1] == currentChannelState.outcome.balances[0][1] - nextAppState.price, "buyer balance mismatch");
         }
-        else if (currentFileSaleState.phase == Phase.KEY_REVEALED && nextFileSaleState.phase == Phase.COMPLAINT_SUCCESSFUL) {
-            // TODO ensure complaint was successful
-            // transfer back money from buyer to seller
-            require(currentState.outcome.balances[0][0] == nextState.outcome.balances[0][0] - nextFileSaleState.price, "seller balance diff mismatch");
-            require(currentState.outcome.balances[0][1] == nextState.outcome.balances[0][1] + nextFileSaleState.price, "buyer balance diff mismatch");
+        else if (currentAppState.phase == Phase.COMPLETED && nextAppState.phase == Phase.COMPLAINT_SUCCESSFUL) { // COMPLETED -> COMPLAINT_SUCCESSFUL
+            require(signerIdx == 1, "only buyer can complain");
+            // check app state transitions
+            require(nextAppState.fileRoot == currentAppState.fileRoot, "fileRoot mismatch");
+            require(nextAppState.ciphertextRoot == currentAppState.ciphertextRoot, "ciphertextRoot mismatch");
+            require(nextAppState.keyCommitment == currentAppState.keyCommitment, "keyCommitment mismatch");
+            require(nextAppState.key == currentAppState.keyCommitment, "invalid key");
+            require(nextAppState.price == currentAppState.price, "price mismatch");
+            // check if complaint was successful
+            /* TODO !!! ADD CHECK! SECURITY RELEVANT !!!
+             * The following check needs to be enabled, which is currently not possible due to the "pure" limitation of this function, as defined by the App interface.
+             * See https://github.com/hyperledger-labs/perun-eth-contracts/issues/22 for an ongoing discussion/question around that.
+             * For testing purposes, it is assumed that a successful dispute took place before this Phase transition.
+             */
+            //require(getCost(channelID(params)) > 0, "no complaint registered");
+            // check balance diff (transfer back from seller to buyer)
+            require(nextChannelState.outcome.balances[0][0] == currentChannelState.outcome.balances[0][0] - nextAppState.price, "seller balance mismatch");
+            require(nextChannelState.outcome.balances[0][1] == currentChannelState.outcome.balances[0][1] + nextAppState.price, "buyer balance mismatch");
         }
         else {
-            revert("not a valid transition");
+            revert("invalid state transition");
         }
+    }
+
+    function getCost(bytes32 channelId) internal view returns (uint) {
+        return complaintCost[channelId];
     }
 
     /**
@@ -88,7 +107,7 @@ contract FileSaleApp is App {
      * Source:
      * https://github.com/hyperledger-labs/perun-eth-contracts/blob/abd762dc7d3271f797e304d8bb641f71f8c5c206/contracts/Adjudicator.sol#L270-L277
      */
-    function channelID(Channel.Params memory params) public pure returns (bytes32) {
+    function getChannelID(Channel.Params memory params) public pure returns (bytes32) {
         return keccak256(Channel.encodeParams(params));
     }
 
@@ -106,17 +125,19 @@ contract FileSaleApp is App {
         bytes memory sellerSignature,
         bytes32 _Zm,
         bytes32[] memory _proofZm
-    )
-    public
-    {
+    ) public {
+        // start gas counter
+        uint gasInitial = gasleft();
+        //
         (AppState memory appState) = abi.decode(state.appData, (AppState));
-        // State Channel checks
-        // TODO implement
+        // verify seller's signature for this state
+        require(Sig.verify(abi.encode(state), sellerSignature, params.participants[0]), "invalid signature");
         // Fairswap checks
         require (vrfy((2 << _proofZm.length) - 2, _Zm, _proofZm, appState.ciphertextRoot));
         require (cryptSmall((2 << _proofZm.length) - 2, _Zm, appState.key) != appState.fileRoot);
         // store successful complaint
-        complaintSuccessful[channelID(params)] = true;
+        bytes32 channelID = getChannelID(params);
+        complaintCost[channelID] = gasInitial - gasleft();
     }
 
     // function complain about wrong hash of two inputs
@@ -131,12 +152,13 @@ contract FileSaleApp is App {
         bytes32[] memory _Zin2,
         bytes32[] memory _proofZout,
         bytes32[] memory _proofZin
-    )
-    public
-    {
+    ) public {
+        // start gas counter
+        uint gasInitial = gasleft();
+        //
         (AppState memory appState) = abi.decode(state.appData, (AppState));
-        // State Channel checks
-        // TODO implement
+        // verify seller's signature for this state
+        require(Sig.verify(abi.encode(state), sellerSignature, params.participants[0]), "invalid signature");
         // Fairswap checks
         require (vrfy(_indexOut, _Zout, _proofZout, appState.ciphertextRoot));
         bytes32 Xout = cryptSmall(_indexOut, _Zout, appState.key);
@@ -144,7 +166,8 @@ contract FileSaleApp is App {
         require (_proofZin[_proofZin.length - 1] == keccak256(abi.encode(_Zin2)));
         require (Xout != keccak256(abi.encode(cryptLarge(_indexIn, _Zin1, appState.key), cryptLarge(_indexIn + 1, _Zin2, appState.key))));
         // store successful complaint
-        complaintSuccessful[channelID(params)] = true;
+        bytes32 channelID = getChannelID(params);
+        complaintCost[channelID] = gasInitial - gasleft();
     }
 
     // function complain about wrong hash of two inputs
@@ -159,12 +182,13 @@ contract FileSaleApp is App {
         bytes32 _Zin2,
         bytes32[] memory _proofZout,
         bytes32[] memory _proofZin
-    )
-    public
-    {
+    ) public {
+        // start gas counter
+        uint gasInitial = gasleft();
+        //
         (AppState memory appState) = abi.decode(state.appData, (AppState));
-        // State Channel checks
-        // TODO implement
+        // verify seller's signature for this state
+        require(Sig.verify(abi.encode(state), sellerSignature, params.participants[0]), "invalid signature");
         // Fairswap checks
         require (vrfy(_indexOut, _Zout, _proofZout, appState.ciphertextRoot));
         bytes32 Xout = cryptSmall(_indexOut, _Zout, appState.key);
@@ -172,7 +196,8 @@ contract FileSaleApp is App {
         require (_proofZin[_proofZin.length - 1] == _Zin2);
         require (Xout != keccak256(abi.encode(cryptSmall(_indexIn, _Zin1, appState.key), cryptSmall(_indexIn+ 1, _Zin2, appState.key))));
         // store successful complaint
-        complaintSuccessful[channelID(params)] = true;
+        bytes32 channelID = getChannelID(params);
+        complaintCost[channelID] = gasInitial - gasleft();
     }
 
     // function to both encrypt and decrypt text chunks with key k
