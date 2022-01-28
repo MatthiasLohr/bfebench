@@ -20,13 +20,14 @@ from __future__ import annotations
 import logging
 from enum import Enum
 from time import sleep, time
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 from eth_account.account import Account
 from eth_typing.evm import ChecksumAddress
 from hexbytes.main import HexBytes
 from web3 import Web3
 from web3.contract import Contract as Web3Contract
+from web3.datastructures import AttributeDict
 from web3.middleware.geth_poa import geth_poa_middleware
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
 from web3.types import TxReceipt
@@ -191,3 +192,24 @@ class Environment(object):
 
     def get_balance(self) -> int:
         return self.web3.eth.get_balance(self.wallet_address)
+
+    def filter_events_by_name(
+        self, contract: Contract, event_name: str, timeout: float | None = None
+    ) -> Generator[AttributeDict[str, Any], None, None]:
+        event_filter = getattr(self.get_web3_contract(contract).events, event_name).createFilter(fromBlock="pending")
+        last_event = time()
+        while True:
+            events = event_filter.get_new_entries()
+            if len(events) > 0:
+                last_event = time()
+                for event in events:
+                    # tx_receipt = self.web3.eth.wait_for_transaction_receipt(event['transactionHash'])
+                    yield event
+            else:
+                sleep_interval = DEFAULT_WAIT_POLL_INTERVAL
+                if timeout is not None:
+                    if time() > last_event + timeout:
+                        raise TimeoutError()
+                    sleep_interval = min(sleep_interval, last_event + timeout - time())
+
+                sleep(sleep_interval)
