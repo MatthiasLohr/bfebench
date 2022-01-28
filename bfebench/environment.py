@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from enum import Enum
 from time import sleep, time
-from typing import Any, Callable, Generator
+from typing import Any, Callable, Generator, Tuple
 
 from eth_account.account import Account
 from eth_typing.evm import ChecksumAddress
@@ -195,7 +195,7 @@ class Environment(object):
 
     def filter_events_by_name(
         self, contract: Contract, event_name: str, timeout: float | None = None
-    ) -> Generator[AttributeDict[str, Any], None, None]:
+    ) -> Generator[Tuple[AttributeDict[str, Any], TxReceipt], None, None]:
         event_filter = getattr(self.get_web3_contract(contract).events, event_name).createFilter(fromBlock="pending")
         last_event = time()
         while True:
@@ -203,8 +203,8 @@ class Environment(object):
             if len(events) > 0:
                 last_event = time()
                 for event in events:
-                    # tx_receipt = self.web3.eth.wait_for_transaction_receipt(event['transactionHash'])
-                    yield event
+                    tx_receipt = self.web3.eth.wait_for_transaction_receipt(event["transactionHash"])
+                    yield event, tx_receipt
             else:
                 sleep_interval = DEFAULT_WAIT_POLL_INTERVAL
                 if timeout is not None:

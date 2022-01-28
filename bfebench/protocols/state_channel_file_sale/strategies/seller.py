@@ -27,7 +27,7 @@ from ...fairswap.util import encode, keccak
 from ...strategy import SellerStrategy
 from ..file_sale import FileSale
 from ..file_sale_helper import FileSaleHelper
-from ..perun import Adjudicator, AssetHolder, Channel
+from ..perun import Adjudicator, Channel
 from ..protocol import StateChannelDisagreement, StateChannelFileSale
 
 
@@ -255,31 +255,21 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             last_common_state.sigs,
         )
 
-        funding_id = file_sale_helper.get_funding_id(last_common_state.state.channel_id, environment.wallet_address)
-        authorization = AssetHolder.WithdrawalAuth(
-            channel_id=last_common_state.state.channel_id,
-            participant=environment.wallet_address,
-            receiver=environment.wallet_address,
-            amount=file_sale_helper.get_funding_holdings(funding_id),
-        )
-        environment.send_contract_transaction(
-            self.protocol.asset_holder_contract,
-            "withdraw",
-            tuple(authorization),
-            file_sale_helper.sign_withdrawal_auth(authorization),
-        )
+        file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
 
     def dispute(self, environment: Environment, last_common_state: Adjudicator.SignedState, register: bool) -> None:
-        if register:
-            self.logger.debug("registering dispute")
-            environment.send_contract_transaction(
-                self.protocol.adjudicator_contract,
-                "register",
-                tuple(last_common_state),
-                [],
-            )
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+        file_sale_helper.dispute_prepare(last_common_state, register)
 
-        # TODO implement
+        environment.send_contract_transaction(
+            self.protocol.adjudicator_contract,
+            "conclude",
+            tuple(last_common_state.params),
+            tuple(last_common_state.state),
+            [],
+        )
+
+        file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
 
     def get_key_to_be_sent(self, original_key: bytes, iteration: int) -> bytes:
         return original_key

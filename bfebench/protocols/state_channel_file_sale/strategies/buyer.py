@@ -281,10 +281,17 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         )
 
     def dispute(self, environment: Environment, last_common_state: Adjudicator.SignedState, register: bool) -> None:
-        if register:
-            self.logger.debug("registering dispute")
-            environment.send_contract_transaction(
-                self.protocol.adjudicator_contract, "register", tuple(last_common_state), []
-            )
+        file_sale_helper = FileSaleHelper(environment, self.protocol)
+        file_sale_helper.dispute_prepare(last_common_state, register)
 
-        # TODO implement
+        try:
+            for event, tx_receipt in environment.filter_events_by_name(
+                contract=self.protocol.asset_holder_contract, event_name="OutcomeSet", timeout=self.protocol.timeout * 2
+            ):
+                if event["args"]["channelID"] != last_common_state.state.channel_id:
+                    continue
+
+                file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
+                return
+        except TimeoutError:
+            return

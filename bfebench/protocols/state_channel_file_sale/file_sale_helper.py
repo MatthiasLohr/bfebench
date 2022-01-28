@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from eth_abi.abi import encode_abi
@@ -28,8 +29,10 @@ from web3 import Web3
 
 from ...environment import Environment
 from .file_sale import FileSale
-from .perun import AssetHolder, Channel
+from .perun import Adjudicator, AssetHolder, Channel
 from .protocol import StateChannelFileSale
+
+logger = logging.getLogger(__name__)
 
 
 class FileSaleHelper(object):
@@ -105,7 +108,8 @@ class FileSaleHelper(object):
 
         return bool(recovered_signer == signer)
 
-    def encode_withdrawal_auth(self, authorization: AssetHolder.WithdrawalAuth) -> bytes:
+    @staticmethod
+    def encode_withdrawal_auth(authorization: AssetHolder.WithdrawalAuth) -> bytes:
         return encode_abi(["(bytes32,address,address,uint256)"], [tuple(authorization)])
 
     def hash_withdrawal_auth(self, authorization: AssetHolder.WithdrawalAuth) -> bytes:
@@ -133,3 +137,57 @@ class FileSaleHelper(object):
             ),
             app_data=FileSale.AppState().encode_abi(),
         )
+
+    def dispute_prepare(self, last_common_state: Adjudicator.SignedState, register: bool) -> None:
+        # register state if the calling party wants to start the dispute
+        if register:
+            self._environment.send_contract_transaction(
+                self._protocol.adjudicator_contract,
+                "register",
+                tuple(last_common_state),
+                [],
+            )
+
+        # watch channel updates to ensure latest version is registered
+        try:
+            for event, tx_receipt in self._environment.filter_events_by_name(
+                contract=self._protocol.adjudicator_contract,
+                event_name="ChannelUpdate",
+                timeout=self._protocol.timeout * 2,
+            ):
+                # skip if not current channel
+                if event["args"]["channelID"] != last_common_state.state.channel_id:
+                    continue
+
+                # skip we self triggered the event
+                if tx_receipt["from"] == self._environment.wallet_address:
+                    continue
+
+                # check if we have a higher state
+                if last_common_state.state.version > int(event["args"]["version"]):
+                    self._environment.send_contract_transaction(
+                        self._protocol.adjudicator_contract,
+                        "register",
+                        tuple(last_common_state),
+                        [],
+                    )
+        except TimeoutError:
+            return
+
+    def withdraw_holdings(self, channel_id: bytes) -> None:
+        funding_id = self.get_funding_id(channel_id, self._environment.wallet_address)
+        holdings = self.get_funding_holdings(funding_id)
+        if holdings > 0:
+            authorization = AssetHolder.WithdrawalAuth(
+                channel_id=channel_id,
+                participant=self._environment.wallet_address,
+                receiver=self._environment.wallet_address,
+                amount=holdings,
+            )
+            self._environment.send_contract_transaction(
+                self._protocol.asset_holder_contract,
+                "withdraw",
+                tuple(authorization),
+                self.sign_withdrawal_auth(authorization),
+            )
+            logger.debug("withdrawn %d" % holdings)
