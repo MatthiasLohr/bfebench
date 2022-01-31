@@ -36,7 +36,7 @@ def crypt(value: bytes, index: int, key: bytes) -> bytes:
 
 def encode(root: MerkleTreeNode, key: bytes) -> MerkleTreeNode:
     leaves_enc = [crypt(leaf.data, index, key) for index, leaf in enumerate(root.leaves)]
-    digests_enc = [crypt(digest, 2 * len(leaves_enc) + index, key) for index, digest in enumerate(root.digests_pack)]
+    digests_enc = [crypt(digest, len(leaves_enc) + index, key) for index, digest in enumerate(root.digests_pack)]
     return from_leaves(
         [MerkleTreeLeaf(keccak, x) for x in leaves_enc]
         + [MerkleTreeLeaf(keccak, x) for x in digests_enc]
@@ -48,7 +48,7 @@ def encode_forge_first_leaf(root: MerkleTreeNode, key: bytes) -> MerkleTreeNode:
     leaf_data = [leaf.data for leaf in root.leaves]
     leaf_data[0] = b"\0" * len(leaf_data[0])
     leaf_data_enc = [crypt(data, index, key) for index, data in enumerate(leaf_data)]
-    digests_enc = [crypt(digest, 2 * len(leaf_data_enc) + index, key) for index, digest in enumerate(root.digests_pack)]
+    digests_enc = [crypt(digest, len(leaf_data_enc) + index, key) for index, digest in enumerate(root.digests_pack)]
     return from_leaves(
         [MerkleTreeLeaf(keccak, x) for x in leaf_data_enc]
         + [MerkleTreeLeaf(keccak, x) for x in digests_enc]
@@ -66,7 +66,7 @@ def encode_forge_first_leaf_first_hash(root: MerkleTreeNode, key: bytes) -> Merk
         MerkleTreeLeaf(keccak, leaf_data[0]),
         MerkleTreeLeaf(keccak, leaf_data[1]),
     ).digest
-    digests_enc = [crypt(digest, 2 * len(leaf_data_enc) + index, key) for index, digest in enumerate(digests)]
+    digests_enc = [crypt(digest, len(leaf_data_enc) + index, key) for index, digest in enumerate(digests)]
     return from_leaves(
         [MerkleTreeLeaf(keccak, x) for x in leaf_data_enc]
         + [MerkleTreeLeaf(keccak, x) for x in digests_enc]
@@ -94,7 +94,7 @@ def decode(root: MerkleTreeNode, key: bytes) -> Tuple[MerkleTreeNode, List["Node
             node = MerkleTreeNode(keccak, nodes[i], nodes[i + 1])
             expected_digest = crypt(
                 leaf_bytes_enc[digest_index].data,
-                digest_start_index + digest_index,
+                digest_index,
                 key,
             )
 
@@ -106,12 +106,12 @@ def decode(root: MerkleTreeNode, key: bytes) -> Tuple[MerkleTreeNode, List["Node
                 actual_digest = keccak(
                     crypt(
                         leaf_bytes_enc[node_index].data,
-                        digest_start_index + node_index,
+                        node_index,
                         key,
                     )
                     + crypt(
                         leaf_bytes_enc[node_index + 1].data,
-                        digest_start_index + node_index + 1,
+                        node_index + 1,
                         key,
                     )
                 )
