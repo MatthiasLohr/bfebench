@@ -25,7 +25,7 @@ from ....utils.json_stream import JsonObjectSocketStream
 from ....utils.merkle import MerkleTreeNode, from_bytes, mt2obj
 from ...fairswap.util import encode, keccak
 from ...strategy import SellerStrategy
-from ..file_sale import FileSale
+from ..file_sale import FileSale, FileSalePhase
 from ..file_sale_helper import FileSaleHelper
 from ..perun import Adjudicator, Channel
 from ..protocol import StateChannelDisagreement, StateChannelFileSale
@@ -151,6 +151,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             ciphertext_root=data_merkle_encrypted.digest,
             key_commitment=keccak(data_key),
             price=self.protocol.price,
+            phase=FileSalePhase.ACCEPTED,
         )
         new_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,
@@ -197,6 +198,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             key_commitment=keccak(data_key),
             price=self.protocol.price,
             key=key_to_be_sent,
+            phase=FileSalePhase.COMPLETED,
         )
         new_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,

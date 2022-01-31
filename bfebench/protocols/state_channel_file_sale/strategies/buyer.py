@@ -34,7 +34,7 @@ from ...fairswap.util import (
     keccak,
 )
 from ...strategy import BuyerStrategy
-from ..file_sale import FileSale
+from ..file_sale import FileSale, FileSalePhase
 from ..file_sale_helper import FileSaleHelper
 from ..perun import Adjudicator, Channel
 from ..protocol import StateChannelDisagreement, StateChannelFileSale
@@ -169,6 +169,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             ciphertext_root=bytes.fromhex(msg_init["ciphertext_root"]),
             key_commitment=bytes.fromhex(msg_init["key_commitment"]),
             price=msg_init["price"],
+            phase=FileSalePhase.ACCEPTED,
         )
         proposed_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,
@@ -205,6 +206,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             key_commitment=bytes.fromhex(msg_init["key_commitment"]),
             price=msg_init["price"],
             key=bytes.fromhex(msg_key_revelation["key"]),
+            phase=FileSalePhase.COMPLETED,
         )
         proposed_channel_state = Channel.State(
             channel_id=last_common_state.state.channel_id,
