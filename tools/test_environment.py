@@ -32,7 +32,7 @@ class EnvironmentTest(TestCase):
     WEB3 = Web3(HTTPProvider("http://localhost:8545/"))
 
     def test_matching(self) -> None:
-        env = Environment(self.WEB3, self.TEST_WALLET_ADDRESS, self.TEST_WALLET_KEY)
+        env = Environment(web3=self.WEB3, wallet_address=self.TEST_WALLET_ADDRESS, private_key=self.TEST_WALLET_KEY)
         self.assertEqual(env.wallet_address, self.TEST_WALLET_ADDRESS)
         self.assertEqual(env.private_key, self.TEST_WALLET_KEY)
 

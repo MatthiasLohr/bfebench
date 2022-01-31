@@ -33,12 +33,12 @@ class EnvironmentsConfiguration(object):
         if data is None:
             raise EnvironmentsConfigurationError("%s does not seem to contain valid YAML" % filename)
 
-        self._operator_environment = self._yaml2environment(data.get("operator"))
-        self._seller_environment = self._yaml2environment(data.get("seller"))
-        self._buyer_environment = self._yaml2environment(data.get("buyer"))
+        self._operator_environment = self._yaml2environment(data.get("operator"), "Operator")
+        self._seller_environment = self._yaml2environment(data.get("seller"), "Seller")
+        self._buyer_environment = self._yaml2environment(data.get("buyer"), "Buyer")
 
     @staticmethod
-    def _yaml2environment(data: Dict[str, Any]) -> Environment:
+    def _yaml2environment(data: Dict[str, Any], wallet_name: str) -> Environment:
         endpoint_config = data.get("endpoint")
         if endpoint_config is None:
             raise ValueError("no endpoint configuration provided")
@@ -50,6 +50,7 @@ class EnvironmentsConfiguration(object):
         return Environment(
             web3=Web3(HTTPProvider(endpoint_config.get("url", "http://localhost:8545/"))),
             wallet_address=wallet_config.get("address"),
+            wallet_name=wallet_name,
             private_key=wallet_config.get("privateKey"),
         )
 

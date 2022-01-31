@@ -50,11 +50,13 @@ class Environment(object):
         self,
         web3: Web3,
         wallet_address: ChecksumAddress | None = None,
+        wallet_name: str | None = None,
         private_key: HexBytes | None = None,
         wait_poll_interval: float = DEFAULT_WAIT_POLL_INTERVAL,
         gas_limit: int | None = None,
     ) -> None:
         self._web3 = web3
+        self._wallet_name = wallet_name
         self._wait_poll_interval = wait_poll_interval
         self._gas_limit = gas_limit
 
@@ -89,6 +91,13 @@ class Environment(object):
         return self._wallet_address
 
     @property
+    def wallet_name(self) -> str:
+        if self._wallet_name is not None:
+            return self._wallet_name
+        else:
+            return str(self._wallet_address)
+
+    @property
     def private_key(self) -> HexBytes | None:
         return self._private_key
 
@@ -121,7 +130,7 @@ class Environment(object):
         tx_receipt = self._send_transaction(factory=web3_contract_method(*args, **kwargs), value=value)
 
         logger.debug(
-            "Executed contract transaction %s.%s, %d gas used" % (contract.address, method, tx_receipt["gasUsed"])
+            "%s invoked %s.%s(), %d gas used" % (self.wallet_name, contract.name, method, tx_receipt["gasUsed"])
         )
 
         return tx_receipt

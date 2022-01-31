@@ -38,10 +38,12 @@ class Contract(object):
         abi: Dict[str, Any],
         bytecode: str | None = None,
         address: ChecksumAddress | None = None,
+        name: str | None = None,
     ) -> None:
         self._abi = abi
         self._bytecode = bytecode
         self._address = address
+        self._name = name
 
     @property
     def abi(self) -> Dict[str, Any]:
@@ -58,6 +60,13 @@ class Contract(object):
     @address.setter
     def address(self, address: ChecksumAddress) -> None:
         self._address = address
+
+    @property
+    def name(self) -> str:
+        if self._name is not None:
+            return self._name
+        else:
+            return str(self.address)
 
 
 class SolidityContract(Contract):
@@ -110,8 +119,7 @@ class SolidityContractSourceCodeManager(object):
             contracts.update(
                 {
                     contract_name: SolidityContract(
-                        abi=contract_result.get("abi"),
-                        bytecode=contract_result.get("bin"),
+                        abi=contract_result.get("abi"), bytecode=contract_result.get("bin"), name=contract_name
                     )
                 }
             )
