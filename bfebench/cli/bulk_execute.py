@@ -18,6 +18,7 @@
 import itertools
 import logging
 from argparse import ArgumentParser, Namespace
+from typing import Iterable, Tuple
 
 import yaml
 
@@ -75,10 +76,18 @@ class BulkExecuteCommand(SubCommand):
             if protocol_specification is None:
                 raise RuntimeError("cannot load protocol specification")
 
-            for seller_strategy_name, buyer_strategy_name in itertools.product(
-                protocol_specification.seller_strategies.keys(),
-                protocol_specification.buyer_strategies.keys(),
-            ):
+            strategy_pairs: Iterable[Tuple[str, str]]
+            if protocol_config.get("strategy_pairs"):
+                strategy_pairs = [
+                    (spc.get("seller"), spc.get("buyer")) for spc in protocol_config.get("strategy_pairs")
+                ]
+            else:
+                strategy_pairs = itertools.product(
+                    protocol_specification.seller_strategies.keys(),
+                    protocol_specification.buyer_strategies.keys(),
+                )
+
+            for seller_strategy_name, buyer_strategy_name in strategy_pairs:
                 logger.info(
                     f"simulating {protocol_name} (seller: {seller_strategy_name}, buyer: {buyer_strategy_name})"
                     f" size {size}..."

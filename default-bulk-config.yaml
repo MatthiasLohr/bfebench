@@ -9,6 +9,19 @@ protocols:
     parameters:
       file_sale_iterations: 10
       timeout: 10
+    strategy_pairs:
+      - seller: Faithful
+        buyer: Faithful
+      - seller: Grieving
+        buyer: Faithful
+      - seller: KeyForging
+        buyer: Faithful
+      - seller: RootForging
+        buyer: Faithful
+      - seller: NodeForging
+        buyer: Faithful
+      - seller: LeafForging
+        buyer: Faithful
 sizes:
   - 1KiB
   - 2KiB
