@@ -21,7 +21,7 @@ import logging
 import os
 from math import log2
 from random import randint
-from typing import Any
+from typing import Any, Callable
 
 from eth_typing.evm import ChecksumAddress
 
@@ -225,7 +225,13 @@ class StateChannelFileSale(Protocol):
 
 
 class StateChannelDisagreement(Exception):
-    def __init__(self, reason: str, last_common_state: Adjudicator.SignedState, register: bool) -> None:
+    def __init__(
+        self,
+        reason: str,
+        last_common_state: Adjudicator.SignedState,
+        register: bool,
+        complain_method: Callable[[], Any] | None = None,
+    ) -> None:
         """
         Signal that some form of disagreement including timeout occured in the state channel.
 
@@ -235,6 +241,7 @@ class StateChannelDisagreement(Exception):
         """
         self._last_common_state = last_common_state
         self._register = register
+        self._complain_method = complain_method
         super().__init__(reason)
 
     @property
@@ -248,3 +255,7 @@ class StateChannelDisagreement(Exception):
         :return: recommendation to the method catching this error to register the dispute or not (=just react)
         """
         return self._register
+
+    @property
+    def complain_method(self) -> Callable[[], Any] | None:
+        return self._complain_method

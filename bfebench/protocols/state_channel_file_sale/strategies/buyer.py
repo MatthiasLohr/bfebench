@@ -15,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 from copy import deepcopy
+from typing import Callable
 
 from eth_typing.evm import ChecksumAddress
 
@@ -23,7 +26,13 @@ from bfebench.utils.json_stream import JsonObjectSocketStream
 
 from ....environment import Environment
 from ....utils.merkle import from_bytes, obj2mt
-from ...fairswap.util import LeafDigestMismatchError, decode, keccak
+from ...fairswap.util import (
+    LeafDigestMismatchError,
+    NodeDigestMismatchError,
+    crypt,
+    decode,
+    keccak,
+)
 from ...strategy import BuyerStrategy
 from ..file_sale import FileSale
 from ..file_sale_helper import FileSaleHelper
@@ -82,7 +91,12 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                 )
             except StateChannelDisagreement as disagreement:
                 self.logger.debug("channel disagreement: " + str(disagreement))
-                self.dispute(environment, disagreement.last_common_state, disagreement.register)
+                self.dispute(
+                    environment=environment,
+                    last_common_state=disagreement.last_common_state,
+                    register=disagreement.register,
+                    complain_method=disagreement.complain_method,
+                )
                 return
 
         # ======== CLOSE STATE CHANNEL ========
@@ -216,7 +230,29 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             raise StateChannelDisagreement("key revelation signature mismatch", last_common_state, False)
 
         if keccak(proposed_app_state.key) != key_commitment:
+            # released key does not match key commitment
             raise StateChannelDisagreement("key does not match commitment", last_common_state, False)
+
+        if (
+            crypt(data_merkle_encrypted.leaves[-2].data, 2 * self.protocol.slice_count - 2, proposed_app_state.key)
+            != self._expected_plain_digest
+        ):
+            # released key matches key commitment,
+            # but decoding root element using this key reveals wrong plain root hash
+            raise StateChannelDisagreement(
+                reason="decrypted plain file hash does not match",
+                last_common_state=last_common_state,
+                register=True,
+                complain_method=lambda: environment.send_contract_transaction(
+                    self.protocol.app_contract,
+                    "complainAboutRoot",
+                    tuple(last_common_state.params),
+                    tuple(last_common_state.state),
+                    last_common_state.sigs[0],
+                    data_merkle_encrypted.leaves[-2].data,
+                    data_merkle_encrypted.get_proof(data_merkle_encrypted.leaves[-2]),
+                ),
+            )
 
         data_merkle, errors = decode(data_merkle_encrypted, proposed_app_state.key)
         if len(errors) == 0:
@@ -232,35 +268,47 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
 
         # === PHASE 4: complain ===
         elif isinstance(errors[-1], LeafDigestMismatchError):
-            # TODO implement complainAboutLeaf
-            # error: NodeDigestMismatchError = errors[-1]
-            # environment.send_contract_transaction(
-            #     contract,
-            #     "complainAboutLeaf",
-            #     error.index_out,
-            #     error.index_in,
-            #     error.out.data,
-            #     error.in1.data_as_list(),
-            #     error.in2.data_as_list(),
-            #     data_merkle_encrypted.get_proof(error.out),
-            #     data_merkle_encrypted.get_proof(error.in1),
-            # )
-            return
+            error: NodeDigestMismatchError = errors[-1]
+            raise StateChannelDisagreement(
+                reason="leaf hash mismatch",
+                last_common_state=last_common_state,
+                register=True,
+                complain_method=lambda: environment.send_contract_transaction(
+                    self.protocol.app_contract,
+                    "complainAboutLeaf",
+                    tuple(last_common_state.params),
+                    tuple(last_common_state.state),
+                    last_common_state.sigs[0],
+                    error.index_out,
+                    error.index_in,
+                    error.out.data,
+                    error.in1.data_as_list(),
+                    error.in2.data_as_list(),
+                    data_merkle_encrypted.get_proof(error.out),
+                    data_merkle_encrypted.get_proof(error.in1),
+                ),
+            )
         else:
-            # TODO implement complainAboutNode
-            # error = errors[-1]
-            # environment.send_contract_transaction(
-            #     contract,
-            #     "complainAboutNode",
-            #     error.index_out,
-            #     error.index_in,
-            #     error.out.data,
-            #     error.in1.data,
-            #     error.in2.data,
-            #     data_merkle_encrypted.get_proof(error.out),
-            #     data_merkle_encrypted.get_proof(error.in1),
-            #  )
-            return
+            error = errors[-1]
+            raise StateChannelDisagreement(
+                reason="node hash mismatch",
+                last_common_state=last_common_state,
+                register=True,
+                complain_method=lambda: environment.send_contract_transaction(
+                    self.protocol.app_contract,
+                    "complainAboutNode",
+                    tuple(last_common_state.params),
+                    tuple(last_common_state.state),
+                    last_common_state.sigs[0],
+                    error.index_out,
+                    error.index_in,
+                    error.out.data,
+                    error.in1.data,
+                    error.in2.data,
+                    data_merkle_encrypted.get_proof(error.out),
+                    data_merkle_encrypted.get_proof(error.in1),
+                ),
+            )
 
     def close_state_channel(
         self,
@@ -280,8 +328,19 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             }
         )
 
-    def dispute(self, environment: Environment, last_common_state: Adjudicator.SignedState, register: bool) -> None:
+    def dispute(
+        self,
+        environment: Environment,
+        last_common_state: Adjudicator.SignedState,
+        register: bool,
+        complain_method: Callable[[], None] | None = None,
+    ) -> None:
         file_sale_helper = FileSaleHelper(environment, self.protocol)
+        last_common_app_state = FileSale.AppState.decode_abi(last_common_state.state.app_data)
+        self.logger.debug(
+            "starting dispute based on version %d and app state %s"
+            % (last_common_state.state.version, last_common_app_state.phase.name)
+        )
         file_sale_helper.dispute_prepare(last_common_state, register)
 
         try:
@@ -290,6 +349,9 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             ):
                 if event["args"]["channelID"] != last_common_state.state.channel_id:
                     continue
+
+                self.logger.debug("observed channel update")
+                # TODO send complain
 
                 file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
                 return

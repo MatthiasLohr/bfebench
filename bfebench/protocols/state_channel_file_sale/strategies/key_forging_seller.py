@@ -24,4 +24,4 @@ class KeyForgingSeller(StateChannelFileSaleSeller):
         if self.protocol.is_last_iteration(iteration):
             return generate_bytes(32, avoid=original_key)
         else:
-            return original_key
+            return super().get_key_to_be_sent(original_key, iteration)

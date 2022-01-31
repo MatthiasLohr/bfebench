@@ -14,9 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from ....utils.merkle import MerkleTreeNode
+from ...fairswap.util import encode_forge_first_leaf_first_hash
 from .seller import StateChannelFileSaleSeller
 
 
 class NodeForgingSeller(StateChannelFileSaleSeller):
-    pass  # TODO implement
+    def encode_file(self, root: MerkleTreeNode, key: bytes, iteration: int) -> MerkleTreeNode:
+        if self.protocol.is_last_iteration(iteration):
+            return encode_forge_first_leaf_first_hash(root, key)
+        else:
+            return super().encode_file(root, key, iteration)

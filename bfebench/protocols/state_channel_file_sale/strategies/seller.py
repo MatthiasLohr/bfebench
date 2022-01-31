@@ -22,7 +22,7 @@ from eth_typing.evm import ChecksumAddress
 from ....environment import Environment
 from ....utils.bytes import generate_bytes
 from ....utils.json_stream import JsonObjectSocketStream
-from ....utils.merkle import from_bytes, mt2obj
+from ....utils.merkle import MerkleTreeNode, from_bytes, mt2obj
 from ...fairswap.util import encode, keccak
 from ...strategy import SellerStrategy
 from ..file_sale import FileSale
@@ -144,7 +144,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             data = fp.read()
         data_merkle = from_bytes(data, keccak, slice_count=self.protocol.slice_count)
         data_key = generate_bytes(32)
-        data_merkle_encrypted = encode(data_merkle, data_key)
+        data_merkle_encrypted = self.encode_file(data_merkle, data_key, iteration)
 
         new_app_state = FileSale.AppState(
             file_root=file_root,
@@ -240,6 +240,9 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
         except TimeoutError:
             raise StateChannelDisagreement("timeout, starting dispute", last_common_state, True)
 
+    def encode_file(self, root: MerkleTreeNode, key: bytes, iteration: int) -> MerkleTreeNode:
+        return encode(root, key)
+
     def close_state_channel(self, environment: Environment, last_common_state: Adjudicator.SignedState) -> None:
         # see https://labs.hyperledger.org/perun-doc/concepts/protocols_phases.html#finalize-phase
         file_sale_helper = FileSaleHelper(environment, self.protocol)
@@ -259,6 +262,11 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
 
     def dispute(self, environment: Environment, last_common_state: Adjudicator.SignedState, register: bool) -> None:
         file_sale_helper = FileSaleHelper(environment, self.protocol)
+        last_common_app_state = FileSale.AppState.decode_abi(last_common_state.state.app_data)
+        self.logger.debug(
+            "starting dispute based on version %d and app state %s"
+            % (last_common_state.state.version, last_common_app_state.phase.name)
+        )
         file_sale_helper.dispute_prepare(last_common_state, register)
 
         environment.send_contract_transaction(
