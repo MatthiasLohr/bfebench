@@ -229,32 +229,21 @@ class StateChannelDisagreement(Exception):
         self,
         reason: str,
         last_common_state: Adjudicator.SignedState,
-        register: bool,
         complain_method: Callable[[], Any] | None = None,
     ) -> None:
         """
-        Signal that some form of disagreement including timeout occured in the state channel.
+        Signal that some form of disagreement including timeout occurred in the state channel.
 
         :param reason: reason of the disagreement
         :param last_common_state: the last commonly signed state before the disagreement happened
-        :param register: recommendation to the catching method to register the dispute or not (=just react)
         """
         self._last_common_state = last_common_state
-        self._register = register
         self._complain_method = complain_method
         super().__init__(reason)
 
     @property
     def last_common_state(self) -> Adjudicator.SignedState:
         return self._last_common_state
-
-    @property
-    def register(self) -> bool:
-        """
-
-        :return: recommendation to the method catching this error to register the dispute or not (=just react)
-        """
-        return self._register
 
     @property
     def complain_method(self) -> Callable[[], Any] | None:

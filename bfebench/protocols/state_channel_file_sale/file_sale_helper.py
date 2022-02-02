@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Any, Generator, Tuple, cast
 
 from eth_abi.abi import encode_abi
 from eth_account import Account
@@ -26,8 +26,11 @@ from eth_account.messages import encode_defunct
 from eth_typing.evm import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
+from web3.contract import ContractFunction
+from web3.datastructures import AttributeDict
 
 from ...environment import Environment
+from ..fairswap.util import B032
 from .file_sale import FileSale
 from .perun import Adjudicator, AssetHolder, Channel
 from .protocol import StateChannelFileSale
@@ -138,42 +141,6 @@ class FileSaleHelper(object):
             app_data=FileSale.AppState().encode_abi(),
         )
 
-    def dispute_prepare(self, last_common_state: Adjudicator.SignedState, register: bool) -> None:
-        # register state if the calling party wants to start the dispute
-        if register:
-            self._environment.send_contract_transaction(
-                self._protocol.adjudicator_contract,
-                "register",
-                tuple(last_common_state),
-                [],
-            )
-
-        # watch channel updates to ensure latest version is registered
-        try:
-            for event, tx_receipt in self._environment.filter_events_by_name(
-                contract=self._protocol.adjudicator_contract,
-                event_name="ChannelUpdate",
-                timeout=self._protocol.timeout * 2,
-            ):
-                # skip if not current channel
-                if event["args"]["channelID"] != last_common_state.state.channel_id:
-                    continue
-
-                # skip we self triggered the event
-                if tx_receipt["from"] == self._environment.wallet_address:
-                    continue
-
-                # check if we have a higher state
-                if last_common_state.state.version > int(event["args"]["version"]):
-                    self._environment.send_contract_transaction(
-                        self._protocol.adjudicator_contract,
-                        "register",
-                        tuple(last_common_state),
-                        [],
-                    )
-        except TimeoutError:
-            return
-
     def withdraw_holdings(self, channel_id: bytes) -> None:
         funding_id = self.get_funding_id(channel_id, self._environment.wallet_address)
         holdings = self.get_funding_holdings(funding_id)
@@ -191,3 +158,44 @@ class FileSaleHelper(object):
                 self.sign_withdrawal_auth(authorization),
             )
             logger.debug("withdrawn %d" % holdings)
+
+    def dispute_registered(self, channel_id: bytes) -> bool:
+        return self.get_dispute(channel_id).state_hash != B032
+
+    def get_dispute(self, channel_id: bytes) -> Adjudicator.Dispute:
+        dispute_raw = self._adjudicator_web3_contract.functions.disputes(channel_id).call()
+        return Adjudicator.Dispute(
+            timeout=dispute_raw[0],
+            challenge_duration=dispute_raw[1],
+            version=dispute_raw[2],
+            has_app=dispute_raw[3],
+            phase=Adjudicator.DisputePhase(dispute_raw[4]),
+            state_hash=dispute_raw[5],
+        )
+
+    def dispute_register(self, last_common_state: Adjudicator.SignedState) -> None:
+        self._environment.send_contract_transaction(
+            self._protocol.adjudicator_contract, "register", tuple(last_common_state), []
+        )
+
+    def dispute_get_updates(
+        self, channel_id: bytes
+    ) -> Generator[Tuple[AttributeDict[str, Any], ContractFunction, Tuple[Any, ...]], None, None]:
+        for event in self._environment.filter_events_by_name(
+            self._protocol.adjudicator_contract, "ChannelUpdate", self._protocol.timeout * 2
+        ):
+            # skip if not current channel
+            if event["args"]["channelID"] != channel_id:
+                continue
+
+            # skip we self triggered the event
+            tx_receipt = self._environment.web3.eth.get_transaction_receipt(event["transactionHash"])
+            assert tx_receipt is not None
+            if tx_receipt["from"] == self._environment.wallet_address:
+                continue
+
+            # get cause (contract function call) and its parameters
+            tx = self._environment.web3.eth.get_transaction(event["transactionHash"])
+            cause, cause_params = self._adjudicator_web3_contract.decode_function_input(tx["input"])
+
+            yield event, cause, cause_params

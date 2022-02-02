@@ -22,9 +22,8 @@ from typing import Callable
 
 from eth_typing.evm import ChecksumAddress
 
-from bfebench.utils.json_stream import JsonObjectSocketStream
-
 from ....environment import Environment
+from ....utils.json_stream import JsonObjectSocketStream
 from ....utils.merkle import from_bytes, obj2mt
 from ...fairswap.util import (
     LeafDigestMismatchError,
@@ -94,7 +93,6 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                 self.dispute(
                     environment=environment,
                     last_common_state=disagreement.last_common_state,
-                    register=disagreement.register,
                     complain_method=disagreement.complain_method,
                 )
                 return
@@ -182,7 +180,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             signature=bytes.fromhex(msg_init["signature"]),
             signer=opposite_address,
         ):
-            raise StateChannelDisagreement("init signature mismatch", last_common_state, False)
+            raise StateChannelDisagreement("init signature mismatch", last_common_state)
 
         self.logger.debug("init signature validated")
         last_common_state.state = proposed_channel_state
@@ -229,11 +227,11 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             signature=bytes.fromhex(msg_key_revelation["signature"]),
             signer=opposite_address,
         ):
-            raise StateChannelDisagreement("key revelation signature mismatch", last_common_state, False)
+            raise StateChannelDisagreement("key revelation signature mismatch", last_common_state)
 
         if keccak(proposed_app_state.key) != key_commitment:
             # released key does not match key commitment
-            raise StateChannelDisagreement("key does not match commitment", last_common_state, False)
+            raise StateChannelDisagreement("key does not match commitment", last_common_state)
 
         if (
             crypt(data_merkle_encrypted.leaves[-2].data, 2 * self.protocol.slice_count - 2, proposed_app_state.key)
@@ -244,7 +242,6 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             raise StateChannelDisagreement(
                 reason="decrypted plain file hash does not match",
                 last_common_state=last_common_state,
-                register=True,
                 complain_method=lambda: environment.send_contract_transaction(
                     self.protocol.app_contract,
                     "complainAboutRoot",
@@ -274,7 +271,6 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             raise StateChannelDisagreement(
                 reason="leaf hash mismatch",
                 last_common_state=last_common_state,
-                register=True,
                 complain_method=lambda: environment.send_contract_transaction(
                     self.protocol.app_contract,
                     "complainAboutLeaf",
@@ -295,7 +291,6 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
             raise StateChannelDisagreement(
                 reason="node hash mismatch",
                 last_common_state=last_common_state,
-                register=True,
                 complain_method=lambda: environment.send_contract_transaction(
                     self.protocol.app_contract,
                     "complainAboutNode",
@@ -334,28 +329,44 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         self,
         environment: Environment,
         last_common_state: Adjudicator.SignedState,
-        register: bool,
         complain_method: Callable[[], None] | None = None,
     ) -> None:
         file_sale_helper = FileSaleHelper(environment, self.protocol)
-        last_common_app_state = FileSale.AppState.decode_abi(last_common_state.state.app_data)
-        self.logger.debug(
-            "starting dispute based on version %d and app state %s"
-            % (last_common_state.state.version, last_common_app_state.phase.name)
-        )
-        file_sale_helper.dispute_prepare(last_common_state, register)
+        last_dispute_state = last_common_state
 
-        try:
-            for event, tx_receipt in environment.filter_events_by_name(
-                contract=self.protocol.asset_holder_contract, event_name="OutcomeSet", timeout=self.protocol.timeout * 2
-            ):
-                if event["args"]["channelID"] != last_common_state.state.channel_id:
-                    continue
+        # buyer only will register a dispute if money to gain
+        if last_common_state.state.outcome.balances[0][1] > 0:
+            if not file_sale_helper.dispute_registered(last_common_state.state.channel_id):
+                file_sale_helper.dispute_register(last_common_state)
 
-                self.logger.debug("observed channel update")
-                # TODO send complain
+        while True:
+            dispute_state = file_sale_helper.get_dispute(last_common_state.state.channel_id)
+            if dispute_state.phase == Adjudicator.DisputePhase.CONCLUDED:
+                break
 
-                file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
-                return
-        except TimeoutError:
-            return
+            try:
+                for event, cause, cause_params in file_sale_helper.dispute_get_updates(
+                    last_common_state.state.channel_id
+                ):
+                    self.logger.debug("observed channel updated caused by %s" % cause.function_identifier)
+                    if cause.function_identifier == "register":
+                        # seller registered state
+                        pass
+                        pass
+                    elif cause.function_identifier == "progress":
+                        pass
+                    elif cause.function_identifier == "conclude":
+                        # seller concluded, so buyer does not have to
+                        break
+            except TimeoutError:
+                environment.send_contract_transaction(
+                    self.protocol.adjudicator_contract,
+                    "conclude",
+                    tuple(last_dispute_state.params),
+                    tuple(last_dispute_state.state),
+                    [],
+                )
+                break
+
+        # dispute is over, withdraw holdings
+        file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
