@@ -15,18 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from enum import IntEnum
 from typing import Any, List, NamedTuple
 
 from .channel import Channel
 
 
 class Adjudicator(object):
+    class DisputePhase(IntEnum):
+        DISPUTE = 0
+        FORCEEXEC = 1
+        CONCLUDED = 2
+
     class Dispute(NamedTuple):
         timeout: int
         challenge_duration: int
         version: int
         has_app: bool
-        phase: int
+        phase: "Adjudicator.DisputePhase"
         state_hash: bytes
 
         def __iter__(self) -> Any:
