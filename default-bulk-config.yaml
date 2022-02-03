@@ -2,9 +2,18 @@ protocols:
   - name: Fairswap
     parameters:
       timeout: 10
-  - name: FairswapReusable
-    parameters:
-      timeout: 10
+    strategy_pairs:
+      - seller: Faithful
+        buyer: Faithful
+      - seller: Faithful
+        buyer: Grieving
+      - seller: RootForging
+        buyer: Faithful
+      - seller: NodeForging
+        buyer: Faithful
+      - seller: Faithful
+        buyer: LeafForging
+
   - name: StateChannelFileSale
     parameters:
       file_sale_iterations: 10
