@@ -77,7 +77,7 @@ contract FileSaleApp is App {
             require(nextAppState.fileRoot == currentAppState.fileRoot, "fileRoot mismatch");
             require(nextAppState.ciphertextRoot == currentAppState.ciphertextRoot, "ciphertextRoot mismatch");
             require(nextAppState.keyCommitment == currentAppState.keyCommitment, "keyCommitment mismatch");
-            require(nextAppState.key == currentAppState.keyCommitment, "invalid key");
+            require(nextAppState.key == currentAppState.key, "invalid key");
             require(nextAppState.price == currentAppState.price, "price mismatch");
             // check if complaint was successful
             /* TODO !!! ADD CHECK! SECURITY RELEVANT !!!
