@@ -195,7 +195,7 @@ class FaithfulBuyer(FairswapBuyer):
             environment.send_contract_transaction(
                 contract,
                 "complainAboutRoot",
-                data_merkle_encrypted.leaves[-2].data,
+                data_merkle_encrypted.leaves[-2].digest,
                 data_merkle_encrypted.get_proof(data_merkle_encrypted.leaves[-2]),
             )
             return
