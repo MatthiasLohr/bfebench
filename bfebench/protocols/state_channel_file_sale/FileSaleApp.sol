@@ -160,11 +160,11 @@ contract FileSaleApp is App {
         // verify seller's signature for this state
         require(Sig.verify(abi.encode(state), sellerSignature, params.participants[0]), "invalid signature");
         // Fairswap checks
-        require (vrfy(_indexOut, _Zout, _proofZout, appState.ciphertextRoot));
+        require (vrfy(_indexOut, _Zout, _proofZout, appState.ciphertextRoot), "output verification");
         bytes32 Xout = cryptSmall(_indexOut, _Zout, appState.key);
-        require (vrfy(_indexIn, keccak256(abi.encode(_Zin1)), _proofZin, appState.ciphertextRoot));
-        require (_proofZin[_proofZin.length - 1] == keccak256(abi.encode(_Zin2)));
-        require (Xout != keccak256(abi.encode(cryptLarge(_indexIn, _Zin1, appState.key), cryptLarge(_indexIn + 1, _Zin2, appState.key))));
+        require (vrfy(_indexIn, keccak256(abi.encode(_Zin1)), _proofZin, appState.ciphertextRoot), "in1 verification");
+        require (_proofZin[_proofZin.length - 1] == keccak256(abi.encode(_Zin2)), "in2 verification");
+        require (Xout != keccak256(abi.encode(cryptLarge(_indexIn, _Zin1, appState.key), cryptLarge(_indexIn + 1, _Zin2, appState.key))), "result verification");
         // store successful complaint
         bytes32 channelID = getChannelID(params);
         complaintCost[channelID] = gasInitial - gasleft();
