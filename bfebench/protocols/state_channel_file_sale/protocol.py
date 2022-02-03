@@ -27,7 +27,6 @@ from eth_typing.evm import ChecksumAddress
 
 from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
-from ...errors import ProtocolInitializationError
 from ...protocols import Protocol
 from ..fairswap.protocol import DEFAULT_SLICE_LENGTH, DEFAULT_TIMEOUT
 from .perun import Adjudicator, Channel
@@ -64,28 +63,22 @@ class StateChannelFileSale(Protocol):
 
         file_size = os.path.getsize(self.filename)
 
-        if slice_count is None:
-            if slice_length is None:
-                self._slice_length = DEFAULT_SLICE_LENGTH
+        if slice_length is None and slice_count is None:
+            self._slice_length = DEFAULT_SLICE_LENGTH
+            self._slice_count = int(file_size / self._slice_length)
+        elif slice_length is None and slice_count is not None:
+            self._slice_count = int(slice_count)
+            self._slice_length = int(file_size / self._slice_count)
+        elif slice_length is not None and slice_count is None:
+            self._slice_length = int(slice_length)
+            self._slice_count = int(file_size / self._slice_length)
+        elif slice_length is not None and slice_count is not None:
+            self._slice_length = int(slice_length)
+            self._slice_count = int(slice_count)
 
-            if (file_size / self._slice_length).is_integer():
-                self._slice_count = int(file_size / self._slice_length)
-            else:
-                raise ProtocolInitializationError("file_size / slice_length must be int")
-        else:
-            if slice_length is None:
-                if (file_size / slice_count).is_integer():
-                    self._slice_length = int(file_size / slice_count)
-                else:
-                    raise ProtocolInitializationError("file_size / slice_count must be int")
-            else:
-                raise ProtocolInitializationError("you cannot set both slice_length and slice_count")
-
-        if not log2(self._slice_count).is_integer():
-            raise ProtocolInitializationError("slice_count must be a power of 2")
-
-        if self._slice_length % 32 > 0:
-            raise ProtocolInitializationError("slice_length must be a multiple of 32")
+        assert self._slice_count * self._slice_length == file_size
+        assert self._slice_length % 32 == 0  # slice length must be multiple of 32
+        log2(self._slice_count).is_integer()  # slice_count must be power of 2
 
         self._timeout = int(timeout)
 
@@ -98,6 +91,8 @@ class StateChannelFileSale(Protocol):
         self._buyer_deposit: int | None = None
         if buyer_deposit is not None:
             self._buyer_deposit = int(buyer_deposit)
+
+        logger.debug("slice count: %d, slice length: %d" % (self.slice_count, self.slice_length))
 
         self._adjudicator_contract: Contract | None = None
         self._asset_holder_contract: Contract | None = None
@@ -229,6 +224,7 @@ class StateChannelDisagreement(Exception):
         self,
         reason: str,
         last_common_state: Adjudicator.SignedState,
+        last_local_state: Channel.State | None = None,
         complain_method: Callable[[], Any] | None = None,
     ) -> None:
         """
@@ -238,8 +234,13 @@ class StateChannelDisagreement(Exception):
         :param last_common_state: the last commonly signed state before the disagreement happened
         """
         self._last_common_state = last_common_state
+        self._last_state = last_local_state
         self._complain_method = complain_method
         super().__init__(reason)
+
+    @property
+    def last_local_state(self) -> Channel.State | None:
+        return self._last_state
 
     @property
     def last_common_state(self) -> Adjudicator.SignedState:

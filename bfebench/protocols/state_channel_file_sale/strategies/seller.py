@@ -14,8 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from copy import deepcopy
+from time import sleep, time
 
 from eth_typing.evm import ChecksumAddress
 
@@ -79,6 +81,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                     self.dispute(
                         environment=environment,
                         last_common_state=disagreement.last_common_state,
+                        last_local_state=disagreement.last_local_state,
                     )
                     return
 
@@ -232,14 +235,18 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                 signature=bytes.fromhex(msg_confirmation["signature"]),
                 signer=opposite_address,
             ):
-                raise StateChannelDisagreement("confirmation signature mismatch", last_common_state)
+                raise StateChannelDisagreement(
+                    "confirmation signature mismatch", last_common_state, last_local_state=new_channel_state
+                )
             last_common_state.state = new_channel_state
             last_common_state.sigs = [
                 file_sale_helper.sign_channel_state(new_channel_state),
                 bytes.fromhex(msg_confirmation["signature"]),
             ]
         except TimeoutError:
-            raise StateChannelDisagreement("timeout, starting dispute", last_common_state)
+            raise StateChannelDisagreement(
+                "timeout, starting dispute", last_common_state, last_local_state=new_channel_state
+            )
 
     def encode_file(self, root: MerkleTreeNode, key: bytes, iteration: int) -> MerkleTreeNode:
         return encode(root, key)
@@ -261,43 +268,67 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
 
         file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
 
-    def dispute(self, environment: Environment, last_common_state: Adjudicator.SignedState) -> None:
+    def dispute(
+        self,
+        environment: Environment,
+        last_common_state: Adjudicator.SignedState,
+        last_local_state: Channel.State | None = None,
+    ) -> None:
         file_sale_helper = FileSaleHelper(environment, self.protocol)
-        last_dispute_state = last_common_state
-
-        # seller only will register a dispute if money to gain
-        if last_common_state.state.outcome.balances[0][0] > 0:
-            if not file_sale_helper.dispute_registered(last_common_state.state.channel_id):
-                file_sale_helper.dispute_register(last_common_state)
+        channel_event_filter = file_sale_helper.create_channel_event_filter()
+        last_channel_state = last_common_state.state
 
         while True:
-            dispute_state = file_sale_helper.get_dispute(last_common_state.state.channel_id)
-            if dispute_state.phase == Adjudicator.DisputePhase.CONCLUDED:
+            dispute = file_sale_helper.get_dispute(last_common_state.state.channel_id)
+            last_channel_state, last_app_state = file_sale_helper.update_last_state(
+                channel_event_filter, last_channel_state
+            )
+
+            if dispute.phase == Adjudicator.DisputePhase.DISPUTE:
+                # if we have a newer commonly signed state than already registered and an incentive to register:
+                if (
+                    last_common_state.state.outcome.balances[0][0] > 0
+                    and last_common_state.state.version > dispute.version
+                ):
+                    file_sale_helper.dispute_register(last_common_state)
+                    continue
+
+                # if DISPUTE phase timed out and we have an incentive
+                if (
+                    last_local_state is not None
+                    and last_local_state.outcome.balances[0][0] > last_channel_state.outcome.balances[0][0]
+                    and last_local_state.version > last_channel_state.version
+                    and time() > dispute.timeout + 1
+                ):
+                    environment.send_contract_transaction(
+                        self.protocol.adjudicator_contract,
+                        "progress",
+                        tuple(last_common_state.params),
+                        tuple(last_channel_state),
+                        tuple(last_local_state),
+                        0,  # seller is signing
+                        file_sale_helper.sign_channel_state(last_local_state),
+                    )
+                    continue
+
+            elif dispute.phase == Adjudicator.DisputePhase.FORCEEXEC:
+                # if FORCEEXEC phase timed out and we have an incentive
+                if last_channel_state.outcome.balances[0][0] > 0 and time() > dispute.timeout + 1:
+                    environment.send_contract_transaction(
+                        self.protocol.adjudicator_contract,
+                        "conclude",
+                        tuple(last_common_state.params),
+                        tuple(last_channel_state),
+                        [],
+                    )
+                    continue
+
+            elif dispute.phase == Adjudicator.DisputePhase.CONCLUDED:
                 break
 
-            try:
-                for event, cause, cause_params in file_sale_helper.dispute_get_updates(
-                    last_common_state.state.channel_id
-                ):
-                    self.logger.debug("observed channel updated caused by %s" % cause.function_identifier)
-                    if cause.function_identifier == "register":
-                        # buyer registered state
-                        pass
-                        pass
-                    elif cause.function_identifier == "progress":
-                        pass
-                    elif cause.function_identifier == "conclude":
-                        # buyer concluded, so seller does not have to
-                        break
-            except TimeoutError:
-                environment.send_contract_transaction(
-                    self.protocol.adjudicator_contract,
-                    "conclude",
-                    tuple(last_dispute_state.params),
-                    tuple(last_dispute_state.state),
-                    [],
-                )
-                break
+            else:
+                raise RuntimeError("should never reach here")
+            sleep(1)
 
         # dispute is over, withdraw holdings
         file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)

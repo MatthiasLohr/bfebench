@@ -26,6 +26,7 @@ from eth_account.messages import encode_defunct
 from eth_typing.evm import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
+from web3._utils.filters import LogFilter
 from web3.contract import ContractFunction
 from web3.datastructures import AttributeDict
 
@@ -199,3 +200,27 @@ class FileSaleHelper(object):
             cause, cause_params = self._adjudicator_web3_contract.decode_function_input(tx["input"])
 
             yield event, cause, cause_params
+
+    def create_channel_event_filter(self) -> LogFilter:
+        return cast(LogFilter, self._adjudicator_web3_contract.events.ChannelUpdate.createFilter(fromBlock="latest"))
+
+    def update_last_state(
+        self, event_filter: LogFilter, last_channel_state: Channel.State
+    ) -> Tuple[Channel.State, FileSale.AppState]:
+        for event in event_filter.get_new_entries():
+            if event["args"]["channelID"] != last_channel_state.channel_id:
+                continue
+
+            tx = self._environment.web3.eth.get_transaction(event["transactionHash"])
+            assert tx is not None
+            cause, cause_parameters = self._adjudicator_web3_contract.decode_function_input(tx["input"])
+
+            if cause.function_identifier == "register":
+                signed_state = Adjudicator.SignedState.from_tuple(*cause_parameters["channel"])
+                last_channel_state = signed_state.state
+            elif cause.function_identifier in ("progress", "conclude"):
+                last_channel_state = Channel.State.from_tuple(*cause_parameters["state"])
+            else:
+                raise RuntimeError("unrecognized cause: %s" % cause.function_identifier)
+
+        return last_channel_state, FileSale.AppState.decode_abi(last_channel_state.app_data)
