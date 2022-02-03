@@ -81,8 +81,8 @@ contract FileSale {
 
     // function complain about wrong hash of file
     function complainAboutRoot(bytes32 _Zm, bytes32[depth] memory _proofZm) allowed(receiver, stage.keyRevealed) public {
-        require (vrfy(2 * (n - 1), _Zm, _proofZm));
-        require (cryptSmall(2 * (n - 1), _Zm) != fileRoot);
+        require (vrfy(2 * (n - 1), _Zm, _proofZm), "proof verification");
+        require (cryptSmall(2 * (n - 1), _Zm) != fileRoot, "file root verification");
         selfdestruct(receiver);
     }
 

@@ -24,13 +24,14 @@ from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment, EnvironmentWaitResult
 from ...utils.bytes import generate_bytes
 from ...utils.json_stream import JsonObjectSocketStream
-from ...utils.merkle import from_bytes, mt2obj, obj2mt
+from ...utils.merkle import MerkleTreeNode, from_bytes, mt2obj, obj2mt
 from ..strategy import BuyerStrategy, SellerStrategy
 from .protocol import Fairswap
 from .util import (
     B032,
     LeafDigestMismatchError,
     NodeDigestMismatchError,
+    crypt,
     decode,
     encode,
     keccak,
@@ -50,7 +51,7 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
             data = fp.read()
         data_merkle = from_bytes(data, keccak, slice_count=self.protocol.slice_count)
         data_key = generate_bytes(32)
-        data_merkle_encrypted = encode(data_merkle, data_key)
+        data_merkle_encrypted = self.encode_file(data_merkle, data_key)
 
         # deploy contract
         scscm = SolidityContractSourceCodeManager()
@@ -106,6 +107,14 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
             self.logger.debug("timeout reached, requesting refund")
             environment.send_contract_transaction(contract, "refund")
             return
+
+    def encode_file(self, data_merkle: MerkleTreeNode, data_key: bytes) -> MerkleTreeNode:
+        return encode(data_merkle, data_key)
+
+
+class RootForgingSeller(FaithfulSeller):
+    def encode_file(self, data_merkle: MerkleTreeNode, data_key: bytes) -> MerkleTreeNode:
+        return encode(data_merkle, generate_bytes(32, avoid=data_key))
 
 
 class FairswapBuyer(BuyerStrategy[Fairswap]):
@@ -179,39 +188,51 @@ class FaithfulBuyer(FairswapBuyer):
         self.logger.debug("key revealed")
 
         # === PHASE 4: complain ===
-        data_merkle, errors = decode(data_merkle_encrypted, data_key)
-        if len(errors) == 0:
-            self.logger.debug("file successfully decrypted, quitting.")
-            # not calling `noComplain` here, no benefit for buyer (rational party)
-            return
-        elif isinstance(errors[-1], LeafDigestMismatchError):
-            error: NodeDigestMismatchError = errors[-1]
+        if (
+            crypt(data_merkle_encrypted.leaves[-2].data, 2 * self.protocol.slice_count - 2, data_key)
+            != self.expected_plain_digest
+        ):
             environment.send_contract_transaction(
                 contract,
-                "complainAboutLeaf",
-                error.index_out,
-                error.index_in,
-                error.out.data,
-                error.in1.data_as_list(),
-                error.in2.data_as_list(),
-                data_merkle_encrypted.get_proof(error.out),
-                data_merkle_encrypted.get_proof(error.in1),
+                "complainAboutRoot",
+                data_merkle_encrypted.leaves[-2].data,
+                data_merkle_encrypted.get_proof(data_merkle_encrypted.leaves[-2]),
             )
             return
         else:
-            error = errors[-1]
-            environment.send_contract_transaction(
-                contract,
-                "complainAboutNode",
-                error.index_out,
-                error.index_in,
-                error.out.data,
-                error.in1.data,
-                error.in2.data,
-                data_merkle_encrypted.get_proof(error.out),
-                data_merkle_encrypted.get_proof(error.in1),
-            )
-            return
+            data_merkle, errors = decode(data_merkle_encrypted, data_key)
+            if len(errors) == 0:
+                self.logger.debug("file successfully decrypted, quitting.")
+                # not calling `noComplain` here, no benefit for buyer (rational party)
+                return
+            elif isinstance(errors[-1], LeafDigestMismatchError):
+                error: NodeDigestMismatchError = errors[-1]
+                environment.send_contract_transaction(
+                    contract,
+                    "complainAboutLeaf",
+                    error.index_out,
+                    error.index_in,
+                    error.out.data,
+                    error.in1.data_as_list(),
+                    error.in2.data_as_list(),
+                    data_merkle_encrypted.get_proof(error.out),
+                    data_merkle_encrypted.get_proof(error.in1),
+                )
+                return
+            else:
+                error = errors[-1]
+                environment.send_contract_transaction(
+                    contract,
+                    "complainAboutNode",
+                    error.index_out,
+                    error.index_in,
+                    error.out.data,
+                    error.in1.data,
+                    error.in2.data,
+                    data_merkle_encrypted.get_proof(error.out),
+                    data_merkle_encrypted.get_proof(error.in1),
+                )
+                return
 
 
 class GrievingBuyer(FairswapBuyer):

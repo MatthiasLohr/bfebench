@@ -27,7 +27,11 @@ logger = logging.getLogger(__name__)
 class CliRunTest(TestCase):
     TEST_PROTOCOLS = {
         "Fairswap": {
-            "strategy_pairs": [("Faithful", "Faithful"), ("Faithful", "Grieving")],
+            "strategy_pairs": [
+                ("Faithful", "Faithful"),
+                ("Faithful", "Grieving"),
+                ("RootForging", "Faithful"),
+            ],
             "protocol_parameters": [("timeout", 10)],
         },
         "StateChannelFileSale": {
