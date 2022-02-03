@@ -25,7 +25,7 @@ pragma solidity ^0.6.1;
 contract FileSale {
 
     uint constant depth = {{ merkle_tree_depth }};
-    uint constant length = {{ slice_length }};
+    uint constant length = {{ slice_length / 32 }};
     uint constant n = {{ slice_count }};
 
     enum stage {created, initialized, accepted, keyRevealed, finished}
@@ -90,11 +90,11 @@ contract FileSale {
     function complainAboutLeaf(uint _indexOut, uint _indexIn, bytes32 _Zout, bytes32[length] memory _Zin1,
                                bytes32[length] memory _Zin2, bytes32[depth] memory _proofZout, bytes32[depth] memory _proofZin)
                               allowed(receiver, stage.keyRevealed) public {
-        require (vrfy(_indexOut, _Zout, _proofZout));
+        require (vrfy(_indexOut, _Zout, _proofZout), "output proof verification");
         bytes32 Xout = cryptSmall(_indexOut, _Zout);
-        require (vrfy(_indexIn, keccak256(abi.encode(_Zin1)), _proofZin));
-        require (_proofZin[depth - 1] == keccak256(abi.encode(_Zin2)));
-        require (Xout != keccak256(abi.encode(cryptLarge(_indexIn, _Zin1), cryptLarge(_indexIn + 1, _Zin2))));
+        require (vrfy(_indexIn, keccak256(abi.encode(_Zin1)), _proofZin), "in1 proof verification");
+        require (_proofZin[depth - 1] == keccak256(abi.encode(_Zin2)), "in2 proof verification");
+        require (Xout != keccak256(abi.encode(cryptLarge(_indexIn, _Zin1), cryptLarge(_indexIn + 1, _Zin2))), "result verification");
         selfdestruct(receiver);
     }
 
@@ -102,11 +102,11 @@ contract FileSale {
     function complainAboutNode(uint _indexOut, uint _indexIn, bytes32 _Zout, bytes32 _Zin1, bytes32 _Zin2,
                                bytes32[depth] memory _proofZout, bytes32[depth] memory _proofZin)
                               allowed(receiver, stage.keyRevealed) public {
-        require (vrfy(_indexOut, _Zout, _proofZout));
+        require (vrfy(_indexOut, _Zout, _proofZout), "output proof verification");
         bytes32 Xout = cryptSmall(_indexOut, _Zout);
-        require (vrfy(_indexIn, _Zin1, _proofZin));
-        require (_proofZin[depth - 1] == _Zin2);
-        require (Xout != keccak256(abi.encode(cryptSmall(_indexIn, _Zin1), cryptSmall(_indexIn+ 1, _Zin2))));
+        require (vrfy(_indexIn, _Zin1, _proofZin), "in1 proof verification");
+        require (_proofZin[depth - 1] == _Zin2, "in2 proof verification");
+        require (Xout != keccak256(abi.encode(cryptSmall(_indexIn, _Zin1), cryptSmall(_indexIn+ 1, _Zin2))), "result verification");
         selfdestruct(receiver);
     }
 

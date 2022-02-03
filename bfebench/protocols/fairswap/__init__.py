@@ -17,11 +17,23 @@
 
 from ..protocol_spec import ProtocolSpec
 from .protocol import Fairswap
-from .strategies import FaithfulBuyer, FaithfulSeller, GrievingBuyer, RootForgingSeller
+from .strategies import (
+    FaithfulBuyer,
+    FaithfulSeller,
+    GrievingBuyer,
+    LeafForgingSeller,
+    NodeForgingSeller,
+    RootForgingSeller,
+)
 
 PROTOCOL_SPEC = ProtocolSpec(
     protocol=Fairswap,
-    seller_strategies={"Faithful": FaithfulSeller, "RootForging": RootForgingSeller},
+    seller_strategies={
+        "Faithful": FaithfulSeller,
+        "RootForging": RootForgingSeller,
+        "LeafForging": LeafForgingSeller,
+        "NodeForging": NodeForgingSeller,
+    },
     buyer_strategies={"Faithful": FaithfulBuyer, "Grieving": GrievingBuyer},
 )
 

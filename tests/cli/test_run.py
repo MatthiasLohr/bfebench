@@ -31,6 +31,8 @@ class CliRunTest(TestCase):
                 ("Faithful", "Faithful"),
                 ("Faithful", "Grieving"),
                 ("RootForging", "Faithful"),
+                ("HashForging", "Faithful"),
+                ("LeafForging", "Faithful"),
             ],
             "protocol_parameters": [("timeout", 10)],
         },

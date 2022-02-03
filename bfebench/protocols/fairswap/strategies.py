@@ -34,6 +34,8 @@ from .util import (
     crypt,
     decode,
     encode,
+    encode_forge_first_leaf,
+    encode_forge_first_leaf_first_hash,
     keccak,
 )
 
@@ -115,6 +117,16 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
 class RootForgingSeller(FaithfulSeller):
     def encode_file(self, data_merkle: MerkleTreeNode, data_key: bytes) -> MerkleTreeNode:
         return encode(data_merkle, generate_bytes(32, avoid=data_key))
+
+
+class LeafForgingSeller(FaithfulSeller):
+    def encode_file(self, data_merkle: MerkleTreeNode, data_key: bytes) -> MerkleTreeNode:
+        return encode_forge_first_leaf(data_merkle, data_key)
+
+
+class NodeForgingSeller(FaithfulSeller):
+    def encode_file(self, data_merkle: MerkleTreeNode, data_key: bytes) -> MerkleTreeNode:
+        return encode_forge_first_leaf_first_hash(data_merkle, data_key)
 
 
 class FairswapBuyer(BuyerStrategy[Fairswap]):
@@ -212,7 +224,7 @@ class FaithfulBuyer(FairswapBuyer):
                     "complainAboutLeaf",
                     error.index_out,
                     error.index_in,
-                    error.out.data,
+                    error.out.digest,
                     error.in1.data_as_list(),
                     error.in2.data_as_list(),
                     data_merkle_encrypted.get_proof(error.out),
@@ -226,9 +238,9 @@ class FaithfulBuyer(FairswapBuyer):
                     "complainAboutNode",
                     error.index_out,
                     error.index_in,
-                    error.out.data,
-                    error.in1.data,
-                    error.in2.data,
+                    error.out.digest,
+                    error.in1.digest,
+                    error.in2.digest,
                     data_merkle_encrypted.get_proof(error.out),
                     data_merkle_encrypted.get_proof(error.in1),
                 )
