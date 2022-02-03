@@ -53,3 +53,9 @@ class Adjudicator(object):
             yield tuple(self.params)
             yield tuple(self.state)
             yield self.sigs
+
+        @staticmethod
+        def from_tuple(*args: Any) -> "Adjudicator.SignedState":
+            return Adjudicator.SignedState(
+                Channel.Params.from_tuple(*args[0]), Channel.State.from_tuple(*args[1]), args[2]
+            )
