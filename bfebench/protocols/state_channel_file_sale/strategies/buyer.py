@@ -1,7 +1,7 @@
 # This file is part of the Blockchain-based Fair Exchange Benchmark Tool
 #    https://gitlab.com/MatthiasLohr/bfebench
 #
-# Copyright 2021 Matthias Lohr <mail@mlohr.com>
+# Copyright 2021-2022 Matthias Lohr <mail@mlohr.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -269,6 +269,27 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         # === PHASE 4: complain ===
         elif isinstance(errors[-1], LeafDigestMismatchError):
             error: NodeDigestMismatchError = errors[-1]
+
+            # print(MerkleTreeNode.validate_proof(
+            #     data_merkle_encrypted.digest,
+            #     data_merkle_encrypted.leaves[error.index_in],
+            #     error.index_in,
+            #     data_merkle_encrypted.get_proof(error.in1),
+            #     keccak
+            # ))
+            #
+            # print(environment.get_web3_contract(self.protocol.app_contract).functions.vrfy(
+            #     error.index_in,
+            #     data_merkle_encrypted.leaves[error.index_in].digest,
+            #     data_merkle_encrypted.get_proof(error.in1),
+            #     data_merkle_encrypted.digest
+            # ).call())
+            #
+            # print(len(data_merkle_encrypted.leaves[error.index_in].data))
+            # print(data_merkle_encrypted.leaves[error.index_in].data)
+            # print(len(data_merkle_encrypted.leaves[error.index_in].digest))
+            # print(data_merkle_encrypted.leaves[error.index_in].digest)
+
             raise StateChannelDisagreement(
                 reason="leaf hash mismatch",
                 last_common_state=last_common_state,
