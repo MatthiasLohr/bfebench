@@ -88,11 +88,6 @@ class BulkExecuteCommand(SubCommand):
                 )
 
             for seller_strategy_name, buyer_strategy_name in strategy_pairs:
-                logger.info(
-                    f"simulating {protocol_name} (seller: {seller_strategy_name}, buyer: {buyer_strategy_name})"
-                    f" size {size}..."
-                )
-
                 csv_filename = "bfebench-{protocol}-{seller_strategy}-{buyer_strategy}-{size}.csv".format(
                     protocol=protocol_name,
                     seller_strategy=seller_strategy_name,
@@ -132,6 +127,11 @@ class BulkExecuteCommand(SubCommand):
                 buyer_strategy = buyer_strategy_cls(protocol=protocol)
 
                 result_collector = SimulationResultCollector(csv_file=csv_filename)
+
+                logger.info(
+                    f"simulating {protocol_name} (seller: {seller_strategy_name}, buyer: {buyer_strategy_name})"
+                    f" size {size}..."
+                )
 
                 simulation = Simulation(
                     environments_configuration=environments_configuration,
