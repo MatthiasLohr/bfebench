@@ -8,5 +8,6 @@
 __pycache__/
 *.bin
 *.csv
+*.log
 *.pyc
 .environments.yaml

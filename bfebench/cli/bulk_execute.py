@@ -22,12 +22,15 @@ from typing import Iterable, Tuple
 
 import yaml
 
+import bfebench
+
 from ..environments_configuration import EnvironmentsConfiguration
 from ..protocols import PROTOCOL_SPECIFICATIONS
 from ..simulation import Simulation
 from ..simulation_result_collector import SimulationResultCollector
 from .command import SubCommand
 
+root_logger = logging.getLogger(bfebench.__name__)
 logger = logging.getLogger(__name__)
 
 
@@ -42,6 +45,7 @@ class BulkExecuteCommand(SubCommand):
             default="default-bulk-config.yaml",
         )
         argument_parser.add_argument(
+            "-i",
             "--target-iterations",
             help="number of desired iterations in total",
             type=int,
@@ -55,6 +59,7 @@ class BulkExecuteCommand(SubCommand):
             help="price to be paid for the file",
         )
         argument_parser.add_argument("-e", "--environments-configuration", default=".environments.yaml")
+        argument_parser.add_argument("--log-to-file", action="store_true", help="Write logs to logfile.")
 
     def __call__(self, args: Namespace) -> int:
         with open(args.bulk_config, "r") as fp:
@@ -94,6 +99,19 @@ class BulkExecuteCommand(SubCommand):
                     buyer_strategy=buyer_strategy_name,
                     size=size,
                 )
+
+                log_handler = logging.FileHandler(
+                    "bfebench-{protocol}-{seller_strategy}-{buyer_strategy}-{size}.log".format(
+                        protocol=protocol_name,
+                        seller_strategy=seller_strategy_name,
+                        buyer_strategy=buyer_strategy_name,
+                        size=size,
+                    )
+                )
+                log_handler.setFormatter(bfebench.log_formatter)
+
+                if args.log_to_file:
+                    root_logger.addHandler(log_handler)
 
                 try:
                     with open(csv_filename, "r") as f:
@@ -143,4 +161,6 @@ class BulkExecuteCommand(SubCommand):
                 )
                 simulation.run()
 
+                if args.log_to_file:
+                    root_logger.removeHandler(log_handler)
         return 0
