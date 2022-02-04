@@ -300,16 +300,19 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                     and last_local_state.version > last_channel_state.version
                     and time() > dispute.timeout + 1
                 ):
-                    environment.send_contract_transaction(
-                        self.protocol.adjudicator_contract,
-                        "progress",
-                        tuple(last_common_state.params),
-                        tuple(last_channel_state),
-                        tuple(last_local_state),
-                        0,  # seller is signing
-                        file_sale_helper.sign_channel_state(last_local_state),
-                    )
-                    continue
+                    # if seller is forging key, he will not try to progress
+                    last_local_app_state = FileSale.AppState.decode_abi(last_local_state.app_data)
+                    if keccak(last_local_app_state.key) == last_local_app_state.ciphertext_root:
+                        environment.send_contract_transaction(
+                            self.protocol.adjudicator_contract,
+                            "progress",
+                            tuple(last_common_state.params),
+                            tuple(last_channel_state),
+                            tuple(last_local_state),
+                            0,  # seller is signing
+                            file_sale_helper.sign_channel_state(last_local_state),
+                        )
+                        continue
 
             elif dispute.phase == Adjudicator.DisputePhase.FORCEEXEC:
                 # if FORCEEXEC phase timed out and we have an incentive

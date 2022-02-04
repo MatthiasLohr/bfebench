@@ -370,6 +370,21 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                 ):
                     # if we have a newer commonly signed state than already registered and an incentive to register:
                     file_sale_helper.dispute_register(last_common_state)
+                    continue
+
+                # if DISPUTE phase timed out and we have an incentive
+                if (
+                    last_channel_state.outcome.balances[0][1] > 0
+                    and time() > dispute.timeout + dispute.challenge_duration + 1
+                ):
+                    environment.send_contract_transaction(
+                        self.protocol.adjudicator_contract,
+                        "conclude",
+                        tuple(last_common_state.params),
+                        tuple(last_channel_state),
+                        [],
+                    )
+                    continue
 
             elif dispute.phase == Adjudicator.DisputePhase.FORCEEXEC:
                 if last_channel_app_state.phase == FileSalePhase.COMPLETED and complain_method is not None:
