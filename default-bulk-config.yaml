@@ -11,8 +11,8 @@ protocols:
         buyer: Faithful
       - seller: NodeForging
         buyer: Faithful
-      - seller: Faithful
-        buyer: LeafForging
+      - seller: LeafForging
+        buyer: Faithful
 
   - name: StateChannelFileSale
     parameters:
