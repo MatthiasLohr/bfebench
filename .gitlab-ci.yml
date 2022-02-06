@@ -7,7 +7,7 @@ variables:
 unittests:
   image: python:${python_version}
   services:
-    - name: trufflesuite/ganache:v7.0.0
+    - name: trufflesuite/ganache:v7.0.2
       alias: ganache
       command:
         - "--chain.hardfork=london"
