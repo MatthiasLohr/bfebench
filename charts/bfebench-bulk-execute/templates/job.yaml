@@ -55,7 +55,7 @@ spec:
               && mkdir -p testdata \
               && ./tools/generate-test-data.py --lower-boundary-power 10 --upper-boundary-power 20 testdata \
               && RESULT_FILE_NAME="bfebench-{{ $protocol.name }}-{{ $strategyPair.seller }}-{{ $strategyPair.buyer }}-{{ $fileSize }}" \
-              && bfebench -l DEBUG run -e /opt/bfebench/ganache.environments.yaml -n {{ $.Values.iterations }} {{ $protocol.name }} {{ $strategyPair.seller }} {{ $strategyPair.buyer }} \
+              && bfebench -l DEBUG run -e blockchain-networks/ganache/bfebench-environments.yaml -n {{ $.Values.iterations }} {{ $protocol.name }} {{ $strategyPair.seller }} {{ $strategyPair.buyer }} \
                 testdata/bfebench-test-{{ $fileSize }}.bin \
                 {{ include "bfebench.protocolParameters " $protocol.parameters }} \
                 --output-csv $RESULT_FILE_NAME.csv | tee $RESULT_FILE_NAME.log \
