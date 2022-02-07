@@ -10,4 +10,7 @@ __pycache__/
 *.csv
 *.log
 *.pyc
+*.tgz
+*.tgz.prov
 .environments.yaml
+values.*.yaml

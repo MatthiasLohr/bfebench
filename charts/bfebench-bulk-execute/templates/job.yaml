@@ -1,0 +1,85 @@
+# This file is part of the Blockchain-based Fair Exchange Benchmark Tool
+#    https://gitlab.com/MatthiasLohr/bfebench
+#
+# Copyright 2021-2022 Matthias Lohr <mail@mlohr.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{{ range $protocol := $.Values.bulkConfig.protocols }}
+{{ range $strategyPair := $protocol.strategyPairs }}
+{{ range $fileSize := $.Values.bulkConfig.fileSizes }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.names.fullname" $ }}-{{ printf "%s-%s-%s-%s" $protocol.name $strategyPair.seller $strategyPair.buyer $fileSize | sha256sum | trunc 8 }}
+  labels:
+    {{- include "common.labels.standard" $ | nindent 4 }}
+  annotations:
+    bfebench.matthiaslohr.gitlab.io/protocol: "{{ $protocol.name }}"
+    bfebench.matthiaslohr.gitlab.io/seller-strategy: "{{ $strategyPair.seller }}"
+    bfebench.matthiaslohr.gitlab.io/buyer-strategy: "{{ $strategyPair.buyer }}"
+    bfebench.matthiaslohr.gitlab.io/file-size: "{{ $fileSize }}"
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" $ | nindent 8 }}
+      annotations:
+        bfebench.matthiaslohr.gitlab.io/protocol: "{{ $protocol.name }}"
+        bfebench.matthiaslohr.gitlab.io/seller-strategy: "{{ $strategyPair.seller }}"
+        bfebench.matthiaslohr.gitlab.io/buyer-strategy: "{{ $strategyPair.buyer }}"
+        bfebench.matthiaslohr.gitlab.io/file-size: "{{ $fileSize }}"
+    spec:
+      restartPolicy: OnFailure
+      shareProcessNamespace: true
+      containers:
+        - name: bfebench
+          image: registry.gitlab.com/matthiaslohr/bfebench
+          imagePullPolicy: Always
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              apt update \
+              && apt install -y curl procps xz-utils \
+              && mkdir -p testdata \
+              && ./tools/generate-test-data.py --lower-boundary-power 10 --upper-boundary-power 20 testdata \
+              && RESULT_FILE_NAME="bfebench-{{ $protocol.name }}-{{ $strategyPair.seller }}-{{ $strategyPair.buyer }}-{{ $fileSize }}" \
+              && bfebench -l DEBUG run -e /opt/bfebench/ganache.environments.yaml -n {{ $.Values.iterations }} {{ $protocol.name }} {{ $strategyPair.seller }} {{ $strategyPair.buyer }} \
+                testdata/bfebench-test-{{ $fileSize }}.bin \
+                {{ include "bfebench.protocolParameters " $protocol.parameters }} \
+                --output-csv $RESULT_FILE_NAME.csv | tee $RESULT_FILE_NAME.log \
+              && killall node \
+              && xz $RESULT_FILE_NAME.log \
+              && curl -k -T $RESULT_FILE_NAME.csv -u "{{ $.Values.uploadSecret}}:" -H "X-Requested-With: XMLHttpRequest" {{ $.Values.uploadURL }}/$RESULT_FILE_NAME.csv \
+              && curl -k -T $RESULT_FILE_NAME.log.xz -u "{{ $.Values.uploadSecret}}:" -H "X-Requested-With: XMLHttpRequest" {{ $.Values.uploadURL }}/$RESULT_FILE_NAME.log.xz
+          securityContext:
+            capabilities:
+              add:
+                - SYS_PTRACE
+          resources:
+            requests:
+              cpu: "1000m"
+        - name: ganache
+          image: trufflesuite/ganache:v7.0.2
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--chain.hardfork=london"
+            - "--chain.vmErrorsOnRPCResponse"
+            - "--account=0x4fde7191483ae6eedbe01e6bbecff3a332048d596d58a73db1cd2cc4b64cf2e0,1000000000000000000000000000000000"
+            - "--account=0x689aeac4f710e2bce4439d54e52e447bdf7f1e128477d0969c4d38e819f3e31c,1000000000000000000000000000000000"
+            - "--account=0x80ecdac657040f31b8362de83dcc8bbdb8fddc417f51055e7e5a148bb50e220d,1000000000000000000000000000000000"
+            - "--miner.blockTime=1"
+{{- end -}}
+{{- end -}}
+{{- end -}}
