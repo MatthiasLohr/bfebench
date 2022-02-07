@@ -46,23 +46,8 @@ pre-commit checks:
   script:
     - pre-commit run --all-files
 
-
-build packages:
-  stage: build
-  image: python:${PYTHON_DEFAULT_VERSION}
-  script:
-    - python setup.py sdist bdist_wheel
-    - ls -lah dist/
-  artifacts:
-    paths:
-      - dist/*.tar.gz
-      - dist/*.whl
-
-
 create docker image:
   stage: build
-  needs:
-    - job: build packages
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
