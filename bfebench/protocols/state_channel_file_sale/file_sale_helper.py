@@ -84,10 +84,14 @@ class FileSaleHelper(object):
         )
 
     def encode_channel_state(self, state: Channel.State) -> bytes:
-        return cast(
-            bytes,
-            self._helper_web3_contract.functions.encodeChannelState(tuple(state)).call(),
-        )
+        try:
+            return cast(
+                bytes,
+                self._helper_web3_contract.functions.encodeChannelState(tuple(state)).call(),
+            )
+        except OverflowError as e:
+            logger.error("overflow error on channel state: %s" % str(tuple(state)))
+            raise e
 
     def hash_channel_state(self, state: Channel.State) -> bytes:
         return bytes(Web3.solidityKeccak(["bytes"], [self.encode_channel_state(state)]))
