@@ -15,8 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from eth_typing.evm import ChecksumAddress
+
+from ....environment import Environment
+from ....utils.json_stream import JsonObjectSocketStream
 from .seller import StateChannelFileSaleSeller
 
 
 class GrievingSeller(StateChannelFileSaleSeller):
-    pass  # TODO implement
+    def run(
+        self, environment: Environment, p2p_stream: JsonObjectSocketStream, opposite_address: ChecksumAddress
+    ) -> None:
+        self.open_state_channel(environment, p2p_stream)
+        self.logger.debug("state channel opened, expecting buyer to fund, so quitting")
+        return

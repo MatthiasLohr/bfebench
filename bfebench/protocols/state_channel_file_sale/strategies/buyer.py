@@ -151,7 +151,11 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
         p2p_stream.send_object({"action": "request", "file_root": self._expected_plain_digest.hex()})
 
         # === PHASE 1: wait for seller initialization ===
-        msg_init, _ = p2p_stream.receive_object()
+        try:
+            msg_init, _ = p2p_stream.receive_object(timeout=self.protocol.timeout)
+        except TimeoutError:
+            raise StateChannelDisagreement("seller does not reply to initialization", last_common_state)
+
         assert msg_init["action"] == "initialize"
         data_merkle_encrypted = obj2mt(
             data=msg_init.get("tree"),
