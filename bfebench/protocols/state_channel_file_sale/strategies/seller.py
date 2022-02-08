@@ -302,7 +302,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                 ):
                     # if seller is forging key, he will not try to progress
                     last_local_app_state = FileSale.AppState.decode_abi(last_local_state.app_data)
-                    if keccak(last_local_app_state.key) == last_local_app_state.ciphertext_root:
+                    if keccak(last_local_app_state.key) == last_local_app_state.key_commitment:
                         environment.send_contract_transaction(
                             self.protocol.adjudicator_contract,
                             "progress",
