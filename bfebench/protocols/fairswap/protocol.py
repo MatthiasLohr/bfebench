@@ -47,23 +47,18 @@ class Fairswap(Protocol):
 
         file_size = os.path.getsize(self.filename)
 
-        if slice_count is None:
-            if slice_length is None:
-                self._slice_length = DEFAULT_SLICE_LENGTH
-
-            if (file_size / self._slice_length).is_integer():
-                self._slice_count = int(file_size / self._slice_length)
-            else:
-                raise ProtocolInitializationError("file_size / slice_length must be int")
-        else:
+        if slice_length is None and slice_count is None:
+            self._slice_length = DEFAULT_SLICE_LENGTH
+            self._slice_count = int(file_size / self._slice_length)
+        elif slice_length is None and slice_count is not None:
             self._slice_count = int(slice_count)
-            if slice_length is None:
-                if (file_size / self.slice_count).is_integer():
-                    self._slice_length = int(file_size / self._slice_count)
-                else:
-                    raise ProtocolInitializationError("file_size / slice_count must be int")
-            else:
-                raise ProtocolInitializationError("you cannot set both slice_length and slice_count")
+            self._slice_length = int(file_size / self._slice_count)
+        elif slice_length is not None and slice_count is None:
+            self._slice_length = int(slice_length)
+            self._slice_count = int(file_size / self._slice_length)
+        elif slice_length is not None and slice_count is not None:
+            self._slice_length = int(slice_length)
+            self._slice_count = int(slice_count)
 
         if not log2(self._slice_count).is_integer():
             raise ProtocolInitializationError("slice_count must be a power of 2")
