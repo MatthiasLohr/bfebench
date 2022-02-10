@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  node1:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    command:
+      - "--keystore /etc/geth/keystore"
+      - "--unlock 0x1def2f122fc169104b27a99850e67c6e3fe7eede"
+      - "--password /etc/geth/node1.key.password"
+      - "--allow-insecure-unlock"
+      - "--mine"
+      - "--http"
+      - "--http.addr 0.0.0.0"
+      - "--http.api web3,eth"
+      - "--nodiscover"
+    environment:
+      GETH_DATADIR: /data
+      GETH_GENESIS: /etc/geth/genesis.json
+      GETH_ACCOUNT_PASSWORD: "${GETH_ACCOUNT_PASSWORD}"
+    volumes:
+      - "node1:/data"
+      - "./genesis.json:/etc/geth/genesis.json:ro"
+      - "./node1.key:/etc/geth/node1.key:ro"
+      - "./node1.account:/etc/geth/keystore/UTC--2021-09-17T12-50-30.526742169Z--1def2f122fc169104b27a99850e67c6e3fe7eede:ro"
+    ports:
+      - "8545:8545"
+    network_mode: bridge
+    restart: always
+
+volumes:
+  node1:
