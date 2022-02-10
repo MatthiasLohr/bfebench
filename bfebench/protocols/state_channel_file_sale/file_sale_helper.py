@@ -65,7 +65,7 @@ class FileSaleHelper(object):
         )
 
     def get_funding_holdings(self, funding_id: bytes) -> int:
-        return cast(int, self._asset_holder_web3_contract.functions.holdings(funding_id).call())
+        return int(self._asset_holder_web3_contract.functions.holdings(funding_id).call())
 
     def is_valid_transition(
         self,
