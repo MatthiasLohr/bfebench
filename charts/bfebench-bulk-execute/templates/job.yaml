@@ -31,6 +31,7 @@ metadata:
     bfebench.matthiaslohr.gitlab.io/buyer-strategy: "{{ $strategyPair.buyer }}"
     bfebench.matthiaslohr.gitlab.io/file-size: "{{ $fileSize }}"
 spec:
+  backoffLimit: 100000
   template:
     metadata:
       labels:
