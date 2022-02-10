@@ -1,4 +1,22 @@
 protocols:
+  - name: StateChannelFileSale
+    parameters:
+      file_sale_iterations: 5
+      timeout: 10
+    strategy_pairs:
+      - seller: Faithful
+        buyer: Faithful
+      - seller: Grieving
+        buyer: Faithful
+      - seller: KeyForging
+        buyer: Faithful
+      - seller: RootForging
+        buyer: Faithful
+      - seller: NodeForging
+        buyer: Faithful
+      - seller: LeafForging
+        buyer: Faithful
+
   - name: Fairswap
     parameters:
       timeout: 10
@@ -14,32 +32,15 @@ protocols:
       - seller: LeafForging
         buyer: Faithful
 
-  - name: StateChannelFileSale
-    parameters:
-      file_sale_iterations: 10
-      timeout: 10
-    strategy_pairs:
-      - seller: Faithful
-        buyer: Faithful
-      - seller: Grieving
-        buyer: Faithful
-      - seller: KeyForging
-        buyer: Faithful
-      - seller: RootForging
-        buyer: Faithful
-      - seller: NodeForging
-        buyer: Faithful
-      - seller: LeafForging
-        buyer: Faithful
 sizes:
-  - 1KiB
-  - 2KiB
-  - 4KiB
-  - 8KiB
-  - 16KiB
-  - 32KiB
-  - 64KiB
-  - 128KiB
-  - 256KiB
-  - 512KiB
   - 1MiB
+  - 512KiB
+  - 256KiB
+  - 128KiB
+  - 64KiB
+  - 32KiB
+  - 16KiB
+  - 8KiB
+  - 4KiB
+  - 2KiB
+  - 1KiB
