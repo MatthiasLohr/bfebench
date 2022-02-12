@@ -197,9 +197,14 @@ class JsonObjectSocketStreamForwarder(object):
         counter: "JsonObjectSocketStreamForwarder.Counter",
     ) -> None:
         while True:
-            received, bytes_count = source.receive_object()
-            if received is None:  # socket has been closed cleanly
+            try:
+                received, bytes_count = source.receive_object()
+                if received is None:  # socket has been closed cleanly
+                    break
+            except OSError as e:
+                logger.error("could not write to socket: %s" % str(e))
                 break
+
             counter.count += 1
             counter.bytes += bytes_count
             target.send_object(received)
