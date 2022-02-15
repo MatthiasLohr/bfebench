@@ -1,8 +1,8 @@
 protocols:
   - name: StateChannelFileSale
     parameters:
-      file_sale_iterations: 5
-      timeout: 10
+      file_sale_iterations: 3
+      timeout: 20
     strategy_pairs:
       - seller: Faithful
         buyer: Faithful
@@ -19,7 +19,7 @@ protocols:
 
   - name: Fairswap
     parameters:
-      timeout: 10
+      timeout: 20
     strategy_pairs:
       - seller: Faithful
         buyer: Faithful

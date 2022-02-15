@@ -9,7 +9,7 @@ bulkConfig:
   protocols:
     - name: Fairswap
       parameters:
-        timeout: 15
+        timeout: 20
       strategyPairs:
         - seller: Faithful
           buyer: Faithful
@@ -24,8 +24,8 @@ bulkConfig:
 
     - name: StateChannelFileSale
       parameters:
-        file_sale_iterations: 5
-        timeout: 15
+        file_sale_iterations: 3
+        timeout: 20
       strategyPairs:
         - seller: Faithful
           buyer: Faithful
