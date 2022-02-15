@@ -1,4 +1,4 @@
-{{ define "bfebench.protocolParameters "}}
+{{ define "bfebench.protocolParameters" }}
 {{- $parametersList := list -}}
 {{ range $key, $value := . }}
 {{- $parametersList = append $parametersList (printf "-p %s %s" $key ($value | toString)) -}}

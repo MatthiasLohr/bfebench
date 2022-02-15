@@ -68,7 +68,7 @@ spec:
               && RESULT_FILE_NAME="bfebench-{{ $protocol.name }}-{{ $strategyPair.seller }}-{{ $strategyPair.buyer }}-{{ $fileSize }}" \
               && bfebench -l DEBUG run -e blockchain-networks/ganache/bfebench-environments.yaml -n {{ $.Values.iterations }} {{ $protocol.name }} {{ $strategyPair.seller }} {{ $strategyPair.buyer }} \
                 testdata/bfebench-test-{{ $fileSize }}.bin \
-                {{ include "bfebench.protocolParameters " $protocol.parameters }} \
+                {{ include "bfebench.protocolParameters" $protocol.parameters }} \
                 --output-csv $RESULT_FILE_NAME.csv 2>&1 | tee $RESULT_FILE_NAME.log \
               && killall node \
               && xz $RESULT_FILE_NAME.log \
