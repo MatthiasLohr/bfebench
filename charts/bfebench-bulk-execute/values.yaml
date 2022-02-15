@@ -1,7 +1,9 @@
 uploadURL: ""
 uploadSecret: ""
 
-iterations: 1
+iterations: 100
+
+readinessLogTimeout: 300
 
 bulkConfig:
   protocols:
