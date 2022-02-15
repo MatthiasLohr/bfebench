@@ -162,6 +162,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             app_data=new_app_state.encode_abi(),
         )
 
+        self.logger.debug("sending initialization message")
         p2p_stream.send_object(
             {
                 "action": "initialize",
