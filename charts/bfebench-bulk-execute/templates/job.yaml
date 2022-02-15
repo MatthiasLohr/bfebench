@@ -80,7 +80,7 @@ spec:
                 - SYS_PTRACE
           livenessProbe:
             exec:
-              command: ["bash", "-c", "timeout={{ .Values.readinessLogTimeout }}; [ ! -z \"`find *.log -newermt @$[$(date +%s)-${timeout}]`\" ]"]
+              command: ["bash", "-c", "timeout={{ $.Values.readinessLogTimeout }}; [ ! -z \"`find *.log -newermt @$[$(date +%s)-${timeout}]`\" ]"]
             initialDelaySeconds: 60
             periodSeconds: 60
           resources:
