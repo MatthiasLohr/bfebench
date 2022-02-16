@@ -22,14 +22,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "common.names.fullname" $ }}-{{ printf "%s-%s-%s-%s" $protocol.name $strategyPair.seller $strategyPair.buyer $fileSize | sha256sum | trunc 8 }}
+  name: {{ include "common.names.fullname" $ }}-{{ printf "%s-%s-%s-%s" $protocol.name $strategyPair.seller $strategyPair.buyer $fileSize.size | sha256sum | trunc 8 }}
   labels:
     {{- include "common.labels.standard" $ | nindent 4 }}
   annotations:
     bfebench.matthiaslohr.gitlab.io/protocol: "{{ $protocol.name }}"
     bfebench.matthiaslohr.gitlab.io/seller-strategy: "{{ $strategyPair.seller }}"
     bfebench.matthiaslohr.gitlab.io/buyer-strategy: "{{ $strategyPair.buyer }}"
-    bfebench.matthiaslohr.gitlab.io/file-size: "{{ $fileSize }}"
+    bfebench.matthiaslohr.gitlab.io/file-size: "{{ $fileSize.size }}"
 spec:
   backoffLimit: 100000
   template:
@@ -40,7 +40,7 @@ spec:
         bfebench.matthiaslohr.gitlab.io/protocol: "{{ $protocol.name }}"
         bfebench.matthiaslohr.gitlab.io/seller-strategy: "{{ $strategyPair.seller }}"
         bfebench.matthiaslohr.gitlab.io/buyer-strategy: "{{ $strategyPair.buyer }}"
-        bfebench.matthiaslohr.gitlab.io/file-size: "{{ $fileSize }}"
+        bfebench.matthiaslohr.gitlab.io/file-size: "{{ $fileSize.size }}"
     spec:
       restartPolicy: OnFailure
       shareProcessNamespace: true
@@ -65,9 +65,10 @@ spec:
               && apt install -y curl procps psmisc xz-utils \
               && mkdir -p testdata \
               && ./tools/generate-test-data.py --lower-boundary-power 10 --upper-boundary-power 20 testdata \
-              && RESULT_FILE_NAME="bfebench-{{ $protocol.name }}-{{ $strategyPair.seller }}-{{ $strategyPair.buyer }}-{{ $fileSize }}" \
+              && RESULT_FILE_NAME="bfebench-{{ $protocol.name }}-{{ $strategyPair.seller }}-{{ $strategyPair.buyer }}-{{ $fileSize.size }}" \
               && bfebench -l DEBUG run -e blockchain-networks/ganache/bfebench-environments.yaml -n {{ $.Values.iterations }} {{ $protocol.name }} {{ $strategyPair.seller }} {{ $strategyPair.buyer }} \
-                testdata/bfebench-test-{{ $fileSize }}.bin \
+                testdata/bfebench-test-{{ $fileSize.size }}.bin \
+                -p timeout {{ $fileSize.timeout }} \
                 {{ include "bfebench.protocolParameters" $protocol.parameters }} \
                 --output-csv $RESULT_FILE_NAME.csv 2>&1 | tee $RESULT_FILE_NAME.log \
               && killall node \

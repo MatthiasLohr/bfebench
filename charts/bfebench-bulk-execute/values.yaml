@@ -9,7 +9,6 @@ bulkConfig:
   protocols:
     - name: Fairswap
       parameters:
-        timeout: 20
       strategyPairs:
         - seller: Faithful
           buyer: Faithful
@@ -25,7 +24,6 @@ bulkConfig:
     - name: StateChannelFileSale
       parameters:
         file_sale_iterations: 3
-        timeout: 20
       strategyPairs:
         - seller: Faithful
           buyer: Faithful
@@ -41,14 +39,25 @@ bulkConfig:
           buyer: Faithful
 
   fileSizes:
-  - 1MiB
-  - 512KiB
-  - 256KiB
-  - 128KiB
-  - 64KiB
-  - 32KiB
-  - 16KiB
-  - 8KiB
-  - 4KiB
-  - 2KiB
-  - 1KiB
+  - size: 1MiB
+    timeout: 60
+  - size: 512KiB
+    timeout: 30
+  - size: 256KiB
+    timeout: 20
+  - size: 128KiB
+    timeout: 15
+  - size: 64KiB
+    timeout: 12
+  - size: 32KiB
+    timeout: 11
+  - size: 16KiB
+    timeout: 10
+  - size: 8KiB
+    timeout: 10
+  - size: 4KiB
+    timeout: 10
+  - size: 2KiB
+    timeout: 10
+  - size: 1KiB
+    timeout: 10
