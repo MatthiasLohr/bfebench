@@ -13,7 +13,7 @@ unittests:
   image: python:${python_version}
   services:
     - name: trufflesuite/ganache:v7.0.2
-      alias: ganache
+      alias: ganache-p${python_version}-test
       command:
         - "--chain.hardfork=london"
         - "--chain.vmErrorsOnRPCResponse"
