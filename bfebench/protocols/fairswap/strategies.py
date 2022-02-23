@@ -97,7 +97,7 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
         self.logger.debug("accepted")
 
         # === PHASE 3: reveal key ===
-        environment.send_contract_transaction(contract, "revealKey", data_key)
+        environment.send_contract_transaction(contract, "revealKey", data_key, gas_limit=65000)
 
         # === PHASE 5: finalize
         self.logger.debug("waiting for confirmation or timeout...")
@@ -182,7 +182,9 @@ class FaithfulBuyer(FairswapBuyer):
             self.logger.debug("wrong ciphertext hash")
             return
 
-        tx_receipt = environment.send_contract_transaction(contract, "accept", value=self.protocol.price)
+        tx_receipt = environment.send_contract_transaction(
+            contract, "accept", value=self.protocol.price, gas_limit=50000
+        )
         self.logger.debug("Sent 'accept' transaction (%s Gas used)" % tx_receipt["gasUsed"])
 
         # === PHASE 3: wait for key revelation ===

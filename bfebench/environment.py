@@ -123,11 +123,13 @@ class Environment(object):
         return self._web3.eth.contract(address=contract.address, abi=contract.abi)
 
     def send_contract_transaction(
-        self, contract: Contract, method: str, *args: Any, value: int = 0, **kwargs: Any
+        self, contract: Contract, method: str, *args: Any, value: int = 0, gas_limit: int | None = None, **kwargs: Any
     ) -> TxReceipt:
         web3_contract = self.get_web3_contract(contract)
         web3_contract_method = getattr(web3_contract.functions, method)
-        tx_receipt = self._send_transaction(factory=web3_contract_method(*args, **kwargs), value=value)
+        tx_receipt = self._send_transaction(
+            factory=web3_contract_method(*args, **kwargs), value=value, gas_limit=gas_limit
+        )
 
         logger.debug(
             "%s invoked %s.%s(), %d gas used" % (self.wallet_name, contract.name, method, tx_receipt["gasUsed"])
@@ -143,6 +145,7 @@ class Environment(object):
         to: ChecksumAddress | None = None,
         factory: Any | None = None,
         value: int = 0,
+        gas_limit: int | None = None,
     ) -> TxReceipt:
         tx_draft = {
             "from": self.wallet_address,
@@ -150,6 +153,8 @@ class Environment(object):
             "chainId": self.web3.eth.chain_id,
             "value": value,
         }
+        if gas_limit is not None:
+            tx_draft["gas"] = gas_limit
 
         if to is not None:
             tx_draft["to"] = to
