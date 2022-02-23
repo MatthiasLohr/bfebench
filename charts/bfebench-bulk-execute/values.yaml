@@ -5,6 +5,12 @@ iterations: 100
 
 readinessLogTimeout: 300
 
+job:
+  resources:
+    requests:
+      cpu: "1000m"
+
+
 bulkConfig:
   protocols:
     - name: Fairswap

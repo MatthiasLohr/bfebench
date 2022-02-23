@@ -117,11 +117,7 @@ spec:
               command: ["bash", "-c", "timeout={{ $.Values.readinessLogTimeout }}; [ ! -z \"`find *.log -newermt @$[$(date +%s)-${timeout}]`\" ]"]
             initialDelaySeconds: 60
             periodSeconds: 60
-          resources:
-            requests:
-              cpu: "1000m"
-            limits:
-              cpu: "1000m"
+          resources: {{ $.Values.job.resources | toYaml | nindent 12 }}
       volumes:
         - name: config
           configMap:
