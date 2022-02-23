@@ -45,49 +45,16 @@ spec:
       restartPolicy: OnFailure
       shareProcessNamespace: true
       containers:
-        - name: geth
-          image: ethereum/client-go:latest
+        - name: ganache
+          image: trufflesuite/ganache:v7.0.2
           imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "-c"]
           args:
-            - |
-              if [ ! -d "$GETH_DATADIR/geth" ] ; then \
-                echo "Initializing geth data..."; \
-                geth init --datadir "$GETH_DATADIR" "$GETH_GENESIS"; \
-                echo "Initialization finished."; \
-              fi ; \
-              geth --datadir "$GETH_DATADIR" --networkid 1981 \
-                --keystore /etc/geth/keystore \
-                --unlock 0x1def2f122fc169104b27a99850e67c6e3fe7eede \
-                --password /etc/geth/node1.key.password \
-                --allow-insecure-unlock \
-                --mine \
-                --http \
-                --http.addr 0.0.0.0 \
-                --http.api web3,eth \
-                --nodiscover
-          env:
-            - name: GETH_DATADIR
-              value: /data
-            - name: GETH_GENESIS
-              value: /etc/geth/genesis.json
-          volumeMounts:
-            - name: config
-              subPath: genesis.json
-              mountPath: /etc/geth/genesis.json
-              readOnly: true
-            - name: config
-              subPath: node1.key
-              mountPath: /etc/geth/node1.key
-              readOnly: true
-            - name: config
-              subPath: node1.account
-              mountPath: /etc/geth/keystore/UTC--2021-09-17T12-50-30.526742169Z--1def2f122fc169104b27a99850e67c6e3fe7eede
-              readOnly: true
-            - name: config
-              subPath: node1.key.password
-              mountPath: /etc/geth/node1.key.password
-              readOnly: true
+            - "--chain.hardfork=london"
+            - "--chain.vmErrorsOnRPCResponse"
+            - "--account=0x4fde7191483ae6eedbe01e6bbecff3a332048d596d58a73db1cd2cc4b64cf2e0,1000000000000000000000000000000000"
+            - "--account=0x689aeac4f710e2bce4439d54e52e447bdf7f1e128477d0969c4d38e819f3e31c,1000000000000000000000000000000000"
+            - "--account=0x80ecdac657040f31b8362de83dcc8bbdb8fddc417f51055e7e5a148bb50e220d,1000000000000000000000000000000000"
+            - "--miner.blockTime=1"
         - name: bfebench
           image: registry.gitlab.com/matthiaslohr/bfebench
           imagePullPolicy: Always
@@ -104,7 +71,7 @@ spec:
                 -p timeout {{ $fileSize.timeout }} \
                 {{ include "bfebench.protocolParameters" $protocol.parameters }} \
                 --output-csv $RESULT_FILE_NAME.csv 2>&1 | tee $RESULT_FILE_NAME.log \
-              && killall geth \
+              && killall node \
               && xz $RESULT_FILE_NAME.log \
               && curl -k -T $RESULT_FILE_NAME.csv -u "{{ $.Values.uploadSecret}}:" -H "X-Requested-With: XMLHttpRequest" {{ $.Values.uploadURL }}/$RESULT_FILE_NAME.csv \
               && curl -k -T $RESULT_FILE_NAME.log.xz -u "{{ $.Values.uploadSecret}}:" -H "X-Requested-With: XMLHttpRequest" {{ $.Values.uploadURL }}/$RESULT_FILE_NAME.log.xz
@@ -118,10 +85,6 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 60
           resources: {{ $.Values.job.resources | toYaml | nindent 12 }}
-      volumes:
-        - name: config
-          configMap:
-            name: {{ include "common.names.fullname" $ }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
