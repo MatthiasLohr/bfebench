@@ -72,6 +72,8 @@ spec:
                 -p timeout {{ $fileSize.timeout }} \
                 {{ include "bfebench.protocolParameters" $protocol.parameters }} \
                 --output-csv $RESULT_FILE_NAME.csv 2>&1 | tee $RESULT_FILE_NAME.log ; \
+              echo "bfebench exit code: $?" ; \
+              if [ "$?" != "0" ] ; then exit 1 ; fi ; \
               killall node ; \
               xz $RESULT_FILE_NAME.log ; \
               curl -k -T $RESULT_FILE_NAME.csv -u "{{ $.Values.uploadSecret}}:" -H "X-Requested-With: XMLHttpRequest" {{ $.Values.uploadURL }}/$RESULT_FILE_NAME.csv ; \
