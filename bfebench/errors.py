@@ -28,6 +28,10 @@ class EnvironmentsConfigurationError(BaseError):
     pass
 
 
+class EnvironmentRuntimeError(BaseError):
+    pass
+
+
 class ProtocolError(BaseError):
     pass
 

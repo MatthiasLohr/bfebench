@@ -21,6 +21,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 
 from .environments_configuration import EnvironmentsConfiguration
+from .errors import ProtocolError
 from .protocols import BuyerStrategy, Protocol, SellerStrategy
 from .simulation_result import IterationResult
 from .simulation_result_collector import SimulationResultCollector
@@ -108,6 +109,12 @@ class Simulation(object):
 
             seller_process.join()
             buyer_process.join()
+
+            if seller_process.exitcode != 0:
+                raise ProtocolError(f"seller process exited with code {seller_process.exitcode}")
+
+            if buyer_process.exitcode != 0:
+                raise ProtocolError(f"buyer process exited with code {buyer_process.exitcode}")
 
             logger.debug("tearing down protocol iteration")
             self.protocol.tear_down_iteration(

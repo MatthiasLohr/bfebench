@@ -33,6 +33,7 @@ from web3.middleware.signing import construct_sign_and_send_raw_middleware
 from web3.types import TxReceipt
 
 from .contract import Contract
+from .errors import EnvironmentRuntimeError
 
 DEFAULT_WAIT_POLL_INTERVAL = 0.3  # 300 ms
 
@@ -127,9 +128,12 @@ class Environment(object):
     ) -> TxReceipt:
         web3_contract = self.get_web3_contract(contract)
         web3_contract_method = getattr(web3_contract.functions, method)
-        tx_receipt = self._send_transaction(
-            factory=web3_contract_method(*args, **kwargs), value=value, gas_limit=gas_limit
-        )
+        try:
+            tx_receipt = self._send_transaction(
+                factory=web3_contract_method(*args, **kwargs), value=value, gas_limit=gas_limit
+            )
+        except EnvironmentRuntimeError as e:
+            raise EnvironmentRuntimeError(f"error sending contract transaction {contract.name}.{method}()", e)
 
         logger.debug(
             "%s invoked %s.%s(), %d gas used" % (self.wallet_name, contract.name, method, tx_receipt["gasUsed"])
@@ -169,10 +173,10 @@ class Environment(object):
         self._total_tx_fees += tx_receipt["gasUsed"]  # type: ignore
 
         if tx_receipt is None:
-            raise RuntimeError(f"could not receive transaction receipt for tx {tx_draft}")
+            raise EnvironmentRuntimeError(f"could not receive transaction receipt for tx {tx_draft}")
 
         if tx_receipt["status"] != 1:
-            raise RuntimeError(f"transaction failed\ntx: {tx_draft}\ntx receipt: {tx_receipt}")
+            raise EnvironmentRuntimeError(f"transaction failed\ntx: {tx_draft}\ntx receipt: {tx_receipt}")
 
         return tx_receipt
 
