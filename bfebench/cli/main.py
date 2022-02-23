@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import logging
+import sys
 
 from bfebench.errors import BaseError
 
@@ -28,7 +29,7 @@ from .run import RunCommand
 logger = logging.getLogger(__name__)
 
 
-def main() -> int:
+def main() -> None:
     scm = SubCommandManager()
 
     scm.add_sub_command("bulk-execute", BulkExecuteCommand)
@@ -37,7 +38,9 @@ def main() -> int:
     scm.add_sub_command("list-strategies", ListStrategiesCommand)
 
     try:
-        return scm.run()
+        exit_code = scm.run()
     except BaseError as e:
         logger.error("A general error occurred.", exc_info=e)
-        return 1
+        exit_code = 1
+
+    sys.exit(exit_code)
