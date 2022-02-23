@@ -61,7 +61,8 @@ spec:
           command: [ "/bin/bash", "-c" ]
           args:
             - |
-              set -e ;
+              set -e ; \
+              set -o pipefail ; \
               apt update ; \
               apt install -y curl procps psmisc xz-utils ; \
               mkdir -p testdata ; \
