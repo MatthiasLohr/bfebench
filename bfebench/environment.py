@@ -168,6 +168,12 @@ class Environment(object):
         self._total_tx_count += 1
         self._total_tx_fees += tx_receipt["gasUsed"]  # type: ignore
 
+        if tx_receipt is None:
+            raise RuntimeError(f"could not receive transaction receipt for tx {tx_draft}")
+
+        if tx_receipt["status"] != 1:
+            raise RuntimeError(f"transaction failed\ntx: {tx_draft}\ntx receipt: {tx_receipt}")
+
         return tx_receipt
 
     def wait(
