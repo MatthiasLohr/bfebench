@@ -366,7 +366,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                         tuple(last_common_state.params),
                         tuple(last_channel_state),
                         [],
-                        gas_limit=150000,
+                        gas_limit=200000,
                     )
                     continue
 
@@ -417,7 +417,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                         tuple(last_common_state.params),
                         tuple(last_channel_state),
                         [],
-                        gas_limit=150000,
+                        gas_limit=200000,
                     )
                     continue
 
