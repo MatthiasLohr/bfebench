@@ -265,7 +265,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
             tuple(self.protocol.channel_params),
             tuple(last_common_state.state),
             last_common_state.sigs,
-            gas_limit=200000,
+            gas_limit=300000,
         )
 
         file_sale_helper.withdraw_holdings(last_common_state.state.channel_id)
@@ -325,7 +325,7 @@ class StateChannelFileSaleSeller(SellerStrategy[StateChannelFileSale]):
                         tuple(last_common_state.params),
                         tuple(last_channel_state),
                         [],
-                        gas_limit=200000,
+                        gas_limit=300000,
                     )
                     continue
 
