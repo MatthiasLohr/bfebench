@@ -406,6 +406,7 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                         tuple(last_local_state),
                         1,  # buyer is signing
                         file_sale_helper.sign_channel_state(last_local_state),
+                        gas_limit=120000,
                     )
                     continue
 
