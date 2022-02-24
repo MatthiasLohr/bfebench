@@ -180,7 +180,7 @@ class FileSaleHelper(object):
 
     def dispute_register(self, last_common_state: Adjudicator.SignedState) -> None:
         self._environment.send_contract_transaction(
-            self._protocol.adjudicator_contract, "register", tuple(last_common_state), []
+            self._protocol.adjudicator_contract, "register", tuple(last_common_state), [], gas_limit=150000
         )
 
     def dispute_get_updates(
