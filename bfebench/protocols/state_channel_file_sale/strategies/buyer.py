@@ -411,7 +411,8 @@ class StateChannelFileSaleBuyer(BuyerStrategy[StateChannelFileSale]):
                     continue
 
                 # if FORCEEXEC phase timed out and we have an incentive
-                if last_channel_state.outcome.balances[0][1] > 0 and time() > dispute.timeout + 1:
+                # We also wait a bit more, since we expect the seller to move first.
+                if last_channel_state.outcome.balances[0][1] > 0 and time() > dispute.timeout + self.protocol.timeout:
                     environment.send_contract_transaction(
                         self.protocol.adjudicator_contract,
                         "conclude",

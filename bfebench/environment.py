@@ -167,16 +167,16 @@ class Environment(object):
             tx_draft = factory.buildTransaction(tx_draft)
 
         tx_hash = self.web3.eth.send_transaction(tx_draft)
-        tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
-
-        self._total_tx_count += 1
-        self._total_tx_fees += tx_receipt["gasUsed"]  # type: ignore
+        tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash, poll_latency=1)
 
         if tx_receipt is None:
-            raise EnvironmentRuntimeError(f"could not receive transaction receipt for tx {tx_draft}")
+            raise EnvironmentRuntimeError(f"could not get transaction receipt for tx {tx_draft}")
 
         if tx_receipt["status"] != 1:
             raise EnvironmentRuntimeError(f"transaction failed\ntx: {tx_draft}\ntx receipt: {tx_receipt}")
+
+        self._total_tx_count += 1
+        self._total_tx_fees += tx_receipt["gasUsed"]
 
         return tx_receipt
 
