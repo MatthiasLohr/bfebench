@@ -21,15 +21,17 @@ from eth_typing.evm import ChecksumAddress
 
 from ..environment import Environment
 from ..errors import BaseError
+from ..utils.types import to_bool
 
 
 class Protocol(object):
-    def __init__(self, filename: str, price: int, **kwargs: Any) -> None:
+    def __init__(self, filename: str, price: int, send_buyer_confirmation: bool = False, **kwargs: Any) -> None:
         if len(kwargs) > 0:
             raise BaseError("unhandled protocol keyword parameters: %s" % ", ".join(kwargs.keys()))
 
         self._filename = filename
         self._price = int(price)
+        self._send_buyer_confirmation = to_bool(send_buyer_confirmation)
 
     @property
     def filename(self) -> str:
@@ -38,6 +40,10 @@ class Protocol(object):
     @property
     def price(self) -> int:
         return self._price
+
+    @property
+    def send_buyer_confirmation(self) -> bool:
+        return self._send_buyer_confirmation
 
     def set_up_simulation(
         self,

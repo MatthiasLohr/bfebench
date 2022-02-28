@@ -216,8 +216,11 @@ class FaithfulBuyer(FairswapBuyer):
         else:
             data_merkle, errors = decode(data_merkle_encrypted, data_key)
             if len(errors) == 0:
-                self.logger.debug("file successfully decrypted, quitting.")
-                # not calling `noComplain` here, no benefit for buyer (rational party)
+                if self.protocol.send_buyer_confirmation:
+                    environment.send_contract_transaction(contract, "noComplain")
+                else:
+                    self.logger.debug("file successfully decrypted, quitting.")
+                    # not calling `noComplain` here, no benefit for buyer (rational party)
                 return
             elif isinstance(errors[-1], LeafDigestMismatchError):
                 error: NodeDigestMismatchError = errors[-1]
