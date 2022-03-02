@@ -73,7 +73,8 @@ class FaithfulSeller(SellerStrategy[Fairswap]):
         )
         contracts = scscm.compile(Fairswap.CONTRACT_SOLC_VERSION)
         contract = contracts[Fairswap.CONTRACT_NAME]
-        environment.deploy_contract(contract)
+        tx_receipt = environment.deploy_contract(contract)
+        self.logger.debug("deployed contract at %s (%s gas used)" % (contract.address, tx_receipt["gasUsed"]))
         web3_contract = environment.get_web3_contract(contract)
 
         p2p_stream.send_object(
