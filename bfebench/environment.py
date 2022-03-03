@@ -28,9 +28,10 @@ from hexbytes.main import HexBytes
 from web3 import Web3
 from web3.contract import Contract as Web3Contract
 from web3.datastructures import AttributeDict
+from web3.exceptions import TimeExhausted
 from web3.middleware.geth_poa import geth_poa_middleware
 from web3.middleware.signing import construct_sign_and_send_raw_middleware
-from web3.types import TxReceipt
+from web3.types import TxParams, TxReceipt
 
 from .contract import Contract
 from .errors import EnvironmentRuntimeError
@@ -166,8 +167,7 @@ class Environment(object):
         if factory is not None:
             tx_draft = factory.buildTransaction(tx_draft)
 
-        tx_hash = self.web3.eth.send_transaction(tx_draft)
-        tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash, poll_latency=1)
+        tx_receipt = self._send_transaction_raw_retry(tx_draft)
 
         if tx_receipt is None:
             raise EnvironmentRuntimeError(f"could not get transaction receipt for tx {tx_draft}")
@@ -179,6 +179,17 @@ class Environment(object):
         self._total_tx_fees += tx_receipt["gasUsed"]
 
         return tx_receipt
+
+    def _send_transaction_raw_retry(self, tx_draft: TxParams, retries: int = 3) -> TxReceipt:
+        for retry in range(1, retries + 1):
+            try:
+                tx_hash = self.web3.eth.send_transaction(tx_draft)
+                tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash, poll_latency=1, timeout=60)
+                return tx_receipt
+            except TimeExhausted as e:
+                if retry == retries:
+                    raise e
+        raise RuntimeError("should never reach here")
 
     def wait(
         self,
