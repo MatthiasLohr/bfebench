@@ -187,6 +187,11 @@ class Environment(object):
                 tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash, poll_latency=1, timeout=60)
                 return tx_receipt
             except TimeExhausted as e:
+                try:
+                    logger.warning(f"txpool_contents: {str(self.web3.geth.txpool.contents())}")  # type: ignore
+                except BaseException as txpool_error:
+                    logger.warning(f"Error fetching txpool_contents: {txpool_error}")
+
                 if retry == retries:
                     raise e
         raise RuntimeError("should never reach here")
