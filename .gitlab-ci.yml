@@ -12,7 +12,7 @@ stages:
 unittests:
   image: python:${python_version}
   services:
-    - name: trufflesuite/ganache:v7.0.2
+    - name: trufflesuite/ganache:v7.0.3
       alias: ganache
       command:
         - "--chain.hardfork=london"
