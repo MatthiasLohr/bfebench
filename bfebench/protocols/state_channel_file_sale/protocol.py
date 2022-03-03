@@ -20,7 +20,6 @@ from __future__ import annotations
 import logging
 import os
 from math import log2
-from random import randint
 from typing import Any, Callable
 
 from eth_typing.evm import ChecksumAddress
@@ -28,6 +27,7 @@ from eth_typing.evm import ChecksumAddress
 from ...contract import Contract, SolidityContractSourceCodeManager
 from ...environment import Environment
 from ...protocols import Protocol
+from ...utils.bytes import generate_bytes
 from ..fairswap.protocol import DEFAULT_SLICE_LENGTH, DEFAULT_TIMEOUT
 from .perun import Adjudicator, Channel
 
@@ -151,7 +151,7 @@ class StateChannelFileSale(Protocol):
 
         self._channel_params = Channel.Params(
             challenge_duration=self.timeout,
-            nonce=randint(0, 2 ** 256),
+            nonce=int.from_bytes(generate_bytes(32), "big", signed=False),
             participants=[seller_address, buyer_address],
             app=app_contract_address,
             ledger_channel=True,
