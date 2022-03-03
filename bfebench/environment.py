@@ -154,7 +154,7 @@ class Environment(object):
     ) -> TxReceipt:
         tx_draft = {
             "from": self.wallet_address,
-            "nonce": self.web3.eth.get_transaction_count(self.wallet_address, "pending"),
+            "nonce": self.web3.eth.get_transaction_count(self.wallet_address, "latest"),
             "chainId": self.web3.eth.chain_id,
             "value": value,
         }
@@ -188,7 +188,9 @@ class Environment(object):
                 return tx_receipt
             except TimeExhausted as e:
                 try:
+                    tx_count = self.web3.eth.get_transaction_count("latest")
                     logger.warning(f"txpool_contents: {str(self.web3.geth.txpool.content())}")  # type: ignore
+                    logger.warning(f"eth_getTransactionCount: {tx_count}")
                 except BaseException as txpool_error:
                     logger.warning(f"Error fetching txpool_contents: {txpool_error}")
 
